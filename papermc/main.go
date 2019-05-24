@@ -14,17 +14,17 @@ import (
 const url = "https://papermc.io/api/v1/"
 
 func Register() (string, models.LatestVersionFunction) {
-	return "papermc", LatestVersion
+	return "PaperMC", LatestVersion
 }
 
 func GetTypes() ([]string, error) {
 	return []string{"paper"}, nil
 }
 
-func LatestVersion(serverType string) (semver.Version, error) {
+func LatestVersion(name string) (semver.Version, error) {
 	latestVersion := semver.MustParse("0.0.1")
 
-	r, err := http.Get(url + serverType)
+	r, err := http.Get(url + name)
 	if err != nil {
 		return latestVersion, err
 	}

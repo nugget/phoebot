@@ -39,7 +39,7 @@ go_library(
         "//models:go_default_library",
         "//papermc:go_default_library",
         "//serverpro:go_default_library",
-        "//vendor/github.com/blang/semver:go_default_library",
+        "//state:go_default_library",
         "//vendor/github.com/bwmarrin/discordgo:go_default_library",
         "//vendor/github.com/spf13/viper:go_default_library",
     ],

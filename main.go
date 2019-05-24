@@ -7,156 +7,30 @@
 package main
 
 import (
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
 	"regexp"
 	"strings"
 	"syscall"
-	"time"
 
-	"github.com/blang/semver"
 	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/papermc"
 	"github.com/nugget/phoebot/serverpro"
+	"github.com/nugget/phoebot/state"
 	"github.com/spf13/viper"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-type Subscription struct {
-	ChannelID string  `xml:"channelID"`
-	Product   Product `xml:"product"`
-	Target    string  `xml:"target"`
-}
-
-type SubChannel struct {
-	Operation string
-	Sub       Subscription
-}
-
-type Check struct {
-	Version semver.Version
-	Time    time.Time
-}
-
-type State struct {
-	LatestVersion map[string]Check `xml:"latestVersions"`
-	Subscriptions []Subscription   `xml:"subscription"`
-}
-
-type DiscordMessage struct {
-	ChannelID string
-	Message   string
-}
-
-type Announcement struct {
-	Product Product
-	Message string
-}
-
-type Product struct {
-	Name     string                       `xml:"name"`
-	Class    string                       `xml:"class"`
-	Type     string                       `xml:"type"`
-	Function models.LatestVersionFunction `xml:"function"`
-}
-
 var (
+	s              state.State
 	STATEFILE      string
-	ProductList    []Product
-	msgStream      chan DiscordMessage
-	subStream      chan SubChannel
-	announceStream chan Announcement
-	dg             *discordgo.Session
+	msgStream      chan models.DiscordMessage
+	subStream      chan models.SubChannel
+	announceStream chan models.Announcement
 )
-
-func (s *State) SaveState(fileName string) error {
-	file, err := xml.MarshalIndent(s, "", " ")
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("-- \n%s\n-- \n", string(file))
-
-	err = ioutil.WriteFile(fileName, file, 0644)
-	return err
-}
-
-func (s *State) LoadState(fileName string) (err error) {
-	file, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-	err = xml.Unmarshal(file, &s)
-
-	fmt.Printf("-- \n%s\n-- \n", string(file))
-
-	return err
-}
-
-func SubscriptionsMatch(a, b Subscription) bool {
-	if a.ChannelID == b.ChannelID {
-		if a.Product.Name == b.Product.Name {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (s *State) SubscriptionExists(sub Subscription) bool {
-	for _, v := range s.Subscriptions {
-		if SubscriptionsMatch(sub, v) {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *State) AddSubscription(sub Subscription) error {
-	if !s.SubscriptionExists(sub) {
-		log.Printf("Adding %+v to subscription list", sub)
-		s.Subscriptions = append(s.Subscriptions, sub)
-		message := fmt.Sprintf("You are now subscribed to receive updates to this channel for %s releases on server.pro", sub.Product.Name)
-		dg.ChannelMessageSend(sub.ChannelID, message)
-	}
-
-	//if sub.Product.Name == "Paper" {
-	//	message := fmt.Sprintf("The highest version of PaperMC currently offered on server.pro is %s", s.PaperVersion)
-	//	dg.ChannelMessageSend(sub.ChannelID, message)
-	//}
-
-	log.Printf("%d subscriptions in current state", len(s.Subscriptions))
-
-	return nil
-}
-
-func (s *State) DropSubscription(sub Subscription) error {
-	var newSubs []Subscription
-
-	log.Printf("Dropping %+v from subscription list", sub)
-
-	for _, v := range s.Subscriptions {
-		if v.ChannelID != sub.ChannelID && v.Product.Name != sub.Product.Name {
-			newSubs = append(newSubs, v)
-		}
-	}
-
-	if len(s.Subscriptions) != len(newSubs) {
-		message := fmt.Sprintf("You are no longer subscribed to receive updates to this channel for %s releases on server.pro", sub.Product.Name)
-		dg.ChannelMessageSend(sub.ChannelID, message)
-	}
-
-	s.Subscriptions = newSubs
-
-	log.Printf("%d subscriptions in current state", len(s.Subscriptions))
-
-	return nil
-}
 
 func shutdown() {
 	log.Printf("Shutting down...")
@@ -172,7 +46,7 @@ func setupConfig() *viper.Viper {
 	return c
 }
 
-func processSubStream(s *State) {
+func processSubStream(s *state.State) {
 	for {
 		d, stillOpen := <-subStream
 		log.Printf("subStream: %+v (%+v)", d, stillOpen)
@@ -200,7 +74,7 @@ func processSubStream(s *State) {
 	}
 }
 
-func processAnnounceStream(s *State) {
+func processAnnounceStream(s *state.State) {
 	for {
 		d, stillOpen := <-announceStream
 		log.Printf("announceStream: %+v (%+v)", d, stillOpen)
@@ -210,7 +84,7 @@ func processAnnounceStream(s *State) {
 				if sub.Target != "" {
 					d.Message = fmt.Sprintf("%s: %s", sub.Target, d.Message)
 				}
-				dg.ChannelMessageSend(sub.ChannelID, d.Message)
+				s.Dg.ChannelMessageSend(sub.ChannelID, d.Message)
 			}
 		}
 		if !stillOpen {
@@ -229,149 +103,119 @@ func processMsgStream() {
 	}
 }
 
-func LookupProduct(serverType string) Product {
-	for _, p := range ProductList {
-		return p
+func Dumper(res []string) {
+	log.Printf("(%d) %s", len(res), strings.Join(res, ":"))
+	for i, v := range res {
+		log.Printf("  %d: '%s'", i, v)
 	}
-
-	return Product{}
 }
 
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	// This isn't required in this specific example but it's a good practice.
-	if m.Author.ID == s.State.User.ID {
+	if dm.Author.ID == ds.State.User.ID {
 		return
 	}
 
 	forMe := false
-	for _, u := range m.Mentions {
-		if u.ID == s.State.User.ID {
+	for _, u := range dm.Mentions {
+		if u.ID == ds.State.User.ID {
 			forMe = true
 		}
 	}
 
 	if forMe {
-		subEx := regexp.MustCompile("(?i) ((un)?(sub)(scribe)?) ([^ ]+) ?(.*)")
+		subEx := regexp.MustCompile("(?i) ((un)?(sub)(scribe)?) ([^ ]+) ([^ ]+) ?(.*)")
 
-		if subEx.MatchString(m.Content) {
-			res := subEx.FindStringSubmatch(m.Content)
-			log.Printf("(%d) %s", len(res), strings.Join(res, ":"))
-			for i, v := range res {
-				log.Printf("  %d: '%s'", i, v)
-			}
-			if len(res) == 7 {
+		if subEx.MatchString(dm.Content) {
+			res := subEx.FindStringSubmatch(dm.Content)
+			Dumper(res)
+			if len(res) == 8 {
+				var err error
+
+				sc := models.SubChannel{}
+
 				xUN := strings.ToLower(res[2])
 				xSUB := strings.ToLower(res[3])
-				serverType := strings.Title(res[5])
-				target := res[6]
 
-				product := LookupProduct(serverType)
+				class := strings.ToLower(res[5])
+				name := strings.Title(res[6])
+				sc.Sub.Product, err = s.GetProduct(class, name)
+				if err != nil {
+					log.Printf("GetProduct error: %v", err)
+					ds.ChannelMessageSend(dm.ChannelID, "I've never heard of that")
+				} else {
+					sc.Sub.ChannelID = dm.ChannelID
+					sc.Sub.Target = res[7]
 
-				if xUN == "un" {
-					sub := Subscription{m.ChannelID, product, target}
-					subStream <- SubChannel{"DROP", sub}
-				} else if xSUB == "sub" {
-					sub := Subscription{m.ChannelID, product, target}
-					subStream <- SubChannel{"ADD", sub}
+					if xUN == "un" {
+						sc.Operation = "DROP"
+					} else if xSUB == "sub" {
+						sc.Operation = "ADD"
+					}
+
+					subStream <- sc
 				}
 			}
 		} else {
 			message := fmt.Sprintf("I don't know what you're saying.  Try asking something like `subscribe paper [optional target]` or `unsubscribe paper`")
-			s.ChannelMessageSend(m.ChannelID, message)
-		}
-	}
-}
-
-func (s *State) Looper(stream chan Announcement, product Product, interval int, fn models.LatestVersionFunction) {
-	lastCheck := s.LatestVersion[product.Name]
-
-	log.Printf("serverpro waiting for %s version > %s", product.Name, lastCheck.Version)
-
-	for {
-		maxVer, err := fn(product.Type)
-		if err != nil {
-			log.Printf("Error fetching %s Latest Version: %v", product.Name, err)
-		} else {
-			if maxVer.GT(lastCheck.Version) {
-				message := fmt.Sprintf("Version %v of %v is available now", maxVer, product.Name)
-				stream <- Announcement{product, message}
-			} else {
-				message := fmt.Sprintf("Version %v of %v is still the best", maxVer, product.Name)
-				//stream <- Announcement{serverType, message}
-				log.Printf(message)
-			}
-
-			s.LatestVersion[product.Name] = Check{maxVer, time.Now()}
-
+			ds.ChannelMessageSend(dm.ChannelID, message)
 		}
 
-		time.Sleep(time.Duration(interval) * time.Second)
 	}
-}
-
-func LoadProducts(regFunc models.RegisterFunction, typesFunc models.GetTypesFunction) {
-	class, fn := regFunc()
-	typeList, err := typesFunc()
-	if err != nil {
-		log.Printf("Error fetching serverpro product list: %v", err)
-	} else {
-		for _, t := range typeList {
-			p := Product{}
-			p.Name = t
-			p.Class = class
-			p.Type = t
-			p.Function = fn
-
-			ProductList = append(ProductList, p)
-		}
-	}
-
-	log.Printf("Loaded %d products to ProductList", len(ProductList))
-	log.Printf("%+v", ProductList)
 }
 
 func main() {
 	config := setupConfig()
 	STATEFILE = config.GetString("STATE_FILENAME")
 
-	currentState := State{}
-
-	LoadProducts(serverpro.Register, serverpro.GetTypes)
-	LoadProducts(papermc.Register, papermc.GetTypes)
-
-	err := currentState.LoadState(STATEFILE)
+	err := s.LoadState(STATEFILE)
 	if err != nil {
 		log.Printf("Unable to read state file: %v", err)
 	}
 
-	log.Printf("Loaded State: %+v", currentState)
+	log.Printf("Loaded State from %s", STATEFILE)
 
-	dg, err = discordgo.New("Bot " + config.GetString("DISCORD_BOT_TOKEN"))
+	s.DedupeProducts()
+
+	err = s.LoadProducts(serverpro.Register, serverpro.GetTypes)
+	if err != nil {
+		log.Printf("Error loading products: %v", err)
+	}
+
+	err = s.LoadProducts(papermc.Register, papermc.GetTypes)
+	if err != nil {
+		log.Printf("Error loading products: %v", err)
+	}
+
+	s.Dg, err = discordgo.New("Bot " + config.GetString("DISCORD_BOT_TOKEN"))
 	if err != nil {
 		log.Fatalf("Error creating Discord session: ", err)
 	}
 
-	// fmt.Printf("\n%+v\n", dg)
+	// fmt.Printf("\n%+v\n\n", s.Products)
 
-	dg.AddHandler(messageCreate)
+	s.Dg.AddHandler(messageCreate)
 
-	err = dg.Open()
+	err = s.Dg.Open()
 	if err != nil {
 		log.Fatalf("Error opening Discord connection: ", err)
 	}
 
-	log.Printf("Connected to Discord as %s (SessionID %s)", dg.State.User, dg.State.SessionID)
+	log.Printf("Connected to Discord as %s (SessionID %s)", s.Dg.State.User, s.Dg.State.SessionID)
 
-	msgStream = make(chan DiscordMessage)
-	subStream = make(chan SubChannel)
-	announceStream = make(chan Announcement)
+	msgStream = make(chan models.DiscordMessage)
+	subStream = make(chan models.SubChannel)
+	announceStream = make(chan models.Announcement)
 
 	go processMsgStream()
-	go processSubStream(&currentState)
-	go processAnnounceStream(&currentState)
+	go processSubStream(&s)
+	go processAnnounceStream(&s)
 
-	// go Looper(announceStream, serverpro.LatestVersion, "Paper", config.GetInt("MC_CHECK_INTERVAL"), &currentState)
+	for _, s := range s.Subscriptions {
+		log.Printf("sub: %+v", s)
+		// go s.Looper(announceStream, "serverpro", "Paper", 60, serverpro.LatestVersion)
+	}
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}
 
@@ -379,9 +223,9 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	dg.Close()
+	s.Dg.Close()
 
-	err = currentState.SaveState(STATEFILE)
+	err = s.SaveState(STATEFILE)
 	if err != nil {
 		log.Printf("Error writing state file: %v", err)
 	} else {

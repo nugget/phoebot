@@ -40,13 +40,13 @@ func getXML() (string, error) {
 	xmlCache := string(bodyBytes)
 	cacheTime := time.Now()
 
-	log.Printf("Fetched %d bytes from %d at %s", len(xmlCache), url, cacheTime)
+	log.Printf("Fetched %d bytes from %s at %s", len(xmlCache), url, cacheTime)
 
 	return xmlCache, nil
 }
 
 func Register() (string, models.LatestVersionFunction) {
-	return "hosted", LatestVersion
+	return "server.pro", LatestVersion
 }
 
 func GetTypes() (types []string, err error) {
