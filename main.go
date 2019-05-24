@@ -146,7 +146,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 
 		if subEx.MatchString(dm.Content) {
 			res := subEx.FindStringSubmatch(dm.Content)
-			Dumper(res)
+			// Dumper(res)
 			if len(res) == 8 {
 				var err error
 
@@ -179,7 +179,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 			}
 
 		} else {
-			message := fmt.Sprintf("I don't know what you're saying.  Try asking something like `subscribe paper [optional target]` or `unsubscribe paper`")
+			message := fmt.Sprintf("I don't know what you're saying.  Try asking something like `subscribe server.pro paper [optional target]` or `unsubscribe server.pro paper`")
 			ds.ChannelMessageSend(dm.ChannelID, message)
 		}
 	} else if dm.Content == "listSubscriptions" {
