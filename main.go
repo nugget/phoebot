@@ -299,6 +299,4 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, message)
 		}
 	}
-
-	// log.Printf("<D> %+v", *m.Message)
 }
