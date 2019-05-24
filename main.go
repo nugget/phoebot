@@ -13,6 +13,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"regexp"
+	"strings"
 	"syscall"
 
 	"github.com/blang/semver"
@@ -25,6 +27,7 @@ import (
 type Subscription struct {
 	ChannelID  string `xml:"channelID"`
 	ServerType string `xml:"serverType"`
+	Target     string `xml:"target"`
 }
 
 type SubChannel struct {
@@ -44,6 +47,7 @@ type DiscordMessage struct {
 }
 
 var (
+	PRODUCTLIST    = []string{"Paper", "Vanilla", "Vanilla Snapshot"}
 	STATEFILE      string
 	msgStream      chan DiscordMessage
 	subStream      chan SubChannel
@@ -57,7 +61,7 @@ func (s *State) SaveState(fileName string) error {
 		return err
 	}
 
-	fmt.Printf("-- \n%s\n-- \n", string(file))
+	// fmt.Printf("-- \n%s\n-- \n", string(file))
 
 	err = ioutil.WriteFile(fileName, file, 0644)
 	return err
@@ -70,7 +74,7 @@ func (s *State) LoadState(fileName string) (err error) {
 	}
 	err = xml.Unmarshal(file, &s)
 
-	fmt.Printf("-- \n%s\n-- \n", string(file))
+	// fmt.Printf("-- \n%s\n-- \n", string(file))
 
 	return err
 }
@@ -108,7 +112,7 @@ func (s *State) DropSubscription(sub Subscription) error {
 	log.Printf("Dropping %+v from subscription list", sub)
 
 	for _, v := range s.Subscriptions {
-		if v != sub {
+		if v.ChannelID != sub.ChannelID && v.ServerType != sub.ServerType {
 			newSubs = append(newSubs, v)
 		}
 	}
@@ -134,6 +138,7 @@ func setupConfig() *viper.Viper {
 	c.AutomaticEnv()
 	c.SetDefault("MC_CHECK_INTERVAL", 600)
 	c.SetDefault("STATE_FILENAME", "/phoebot/state.xml")
+	// c.SetDefault("PRODUCTLIST", "Paper, Vanilla, CraftBukkit, Spigot, Vanilla Snapshot, Forge")
 
 	return c
 }
@@ -173,6 +178,9 @@ func processAnnounceStream(s *State) {
 
 		for _, sub := range s.Subscriptions {
 			if sub.ServerType == d.ServerType {
+				if sub.Target != "" {
+					d.Message = fmt.Sprintf("%s: %s", sub.Target, d.Message)
+				}
 				dg.ChannelMessageSend(sub.ChannelID, d.Message)
 			}
 		}
@@ -210,6 +218,8 @@ func main() {
 		log.Fatalf("Error creating Discord session: ", err)
 	}
 
+	// fmt.Printf("\n%+v\n", dg)
+
 	dg.AddHandler(messageCreate)
 
 	err = dg.Open()
@@ -229,7 +239,7 @@ func main() {
 
 	go serverpro.LoopLatestVersion(announceStream, "Paper", config.GetInt("MC_CHECK_INTERVAL"), &currentState.PaperVersion)
 
-	msgStream <- DiscordMessage{"Moo", "Cow"}
+	// msgStream <- DiscordMessage{"Moo", "Cow"}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
@@ -253,25 +263,42 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	// If the message is "ping" reply with "Pong!"
-	if m.Content == "ping" {
-		s.ChannelMessageSend(m.ChannelID, "Pong!")
+
+	forMe := false
+	for _, u := range m.Mentions {
+		if u.ID == s.State.User.ID {
+			forMe = true
+		}
 	}
 
-	// If the message is "pong" reply with "Ping!"
-	if m.Content == "pong" {
-		s.ChannelMessageSend(m.ChannelID, "Ping!")
+	if forMe {
+		subEx := regexp.MustCompile("(?i) ((un)?(sub)(scribe)?) ([^ ]+) ?(.*)")
+
+		if subEx.MatchString(m.Content) {
+			res := subEx.FindStringSubmatch(m.Content)
+			log.Printf("(%d) %s", len(res), strings.Join(res, ":"))
+			for i, v := range res {
+				log.Printf("  %d: '%s'", i, v)
+			}
+			if len(res) == 7 {
+				xUN := strings.ToLower(res[2])
+				xSUB := strings.ToLower(res[3])
+				serverType := strings.Title(res[5])
+				target := res[6]
+
+				if xUN == "un" {
+					sub := Subscription{m.ChannelID, serverType, target}
+					subStream <- SubChannel{"DROP", sub}
+				} else if xSUB == "sub" {
+					sub := Subscription{m.ChannelID, serverType, target}
+					subStream <- SubChannel{"ADD", sub}
+				}
+			}
+		} else {
+			message := fmt.Sprintf("I don't know what you're saying.  Try asking something like `subscribe paper [optional target]` or `unsubscribe paper`")
+			s.ChannelMessageSend(m.ChannelID, message)
+		}
 	}
 
-	if m.Content == "papersubscribe" {
-		sub := Subscription{m.ChannelID, "Paper"}
-		subStream <- SubChannel{"ADD", sub}
-	}
-
-	if m.Content == "paperunsubscribe" {
-		sub := Subscription{m.ChannelID, "Paper"}
-		subStream <- SubChannel{"DROP", sub}
-	}
-
-	log.Printf("<%s> %s", m.Author, m.Content)
+	// log.Printf("<D> %+v", *m.Message)
 }

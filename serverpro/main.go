@@ -38,7 +38,6 @@ func LatestVersion(serverType string) (semver.Version, error) {
 	}
 
 	body := string(bodyBytes)
-
 	paper := gjson.Get(body, fmt.Sprintf("mc.%s", serverType))
 
 	paper.ForEach(func(key, value gjson.Result) bool {
@@ -75,9 +74,9 @@ func LoopLatestVersion(stream chan Announcement, serverType string, interval int
 				*val = waitingFor
 				stream <- Announcement{serverType, message}
 			} else {
-				message := fmt.Sprintf("Version %v of %v is still the best", maxVer, serverType)
-				// stream <- Announcement{serverType, message}
-				log.Printf(message)
+				//message := fmt.Sprintf("Version %v of %v is still the best", maxVer, serverType)
+				//stream <- Announcement{serverType, message}
+				//log.Printf(message)
 			}
 		}
 
