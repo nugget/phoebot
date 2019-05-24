@@ -66,17 +66,15 @@ func LoopLatestVersion(stream chan Announcement, serverType string, interval int
 		if err != nil {
 			log.Printf("Error fetching %s Latest Version: %v", serverType, err)
 		} else {
-			log.Printf("Latest version of %s is %v", serverType, maxVer)
-
 			if maxVer.GT(waitingFor) {
 				message := fmt.Sprintf("Version %v of %v is available now", maxVer, serverType)
 				waitingFor = maxVer
 				*val = waitingFor
 				stream <- Announcement{serverType, message}
 			} else {
-				//message := fmt.Sprintf("Version %v of %v is still the best", maxVer, serverType)
+				message := fmt.Sprintf("Version %v of %v is still the best", maxVer, serverType)
 				//stream <- Announcement{serverType, message}
-				//log.Printf(message)
+				log.Printf(message)
 			}
 		}
 
