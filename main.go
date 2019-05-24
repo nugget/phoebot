@@ -1,3 +1,9 @@
+//
+// Copyright (c) 2019 David McNett.  All Rights Reserved.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+//
+
 package main
 
 import (

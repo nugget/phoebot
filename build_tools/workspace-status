@@ -18,7 +18,7 @@ fi
 
 echo "CURRENT_TIME $builddate"
 echo "CURRENT_EPOCH $buildepoch"
-echo "STABLE_GIT_COMMIT $gitcommit"
-echo "STABLE_GIT_VERSION $version"
-echo "STABLE_GIT_BRANCH $gitbranch"
+echo "GIT_COMMIT $gitcommit"
+echo "GIT_VERSION $version"
+echo "GIT_BRANCH $gitbranch"
 echo "STABLE_PLATFORM $platform"

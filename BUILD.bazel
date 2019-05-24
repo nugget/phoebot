@@ -24,9 +24,9 @@ go_library(
     importpath = "github.com/nugget/phoebot",
     visibility = ["//visibility:private"],
     x_defs = {
-        "main.VERSION": "{STABLE_GIT_VERSION}",
-        "main.GITBRANCH": "{STABLE_GIT_BRANCH}",
-        "main.GITCOMMIT": "{STABLE_GIT_COMMIT}",
+        "main.VERSION": "{GIT_VERSION}",
+        "main.GITBRANCH": "{GIT_BRANCH}",
+        "main.GITCOMMIT": "{GIT_COMMIT}",
         "main.GOVERSION": "{STABLE_BASEL_VERSION}",
         "main.BUILDENV": "{STABLE_PLATFORM}",
         "main.BUILDEPOCH_STR": "{BUILD_TIMESTAMP}",
@@ -97,7 +97,7 @@ container_push(
     registry = DOCKER_REGISTRY,
     format = "Docker",
     repository = DOCKER_REPO,
-    tag = "{STABLE_GIT_VERSION}",
+    tag = "{GIT_VERSION}",
 )
 
 k8s_object(
