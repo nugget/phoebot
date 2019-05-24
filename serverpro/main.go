@@ -9,7 +9,9 @@ package serverpro
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/blang/semver"
 	"github.com/tidwall/gjson"
@@ -48,4 +50,29 @@ func LatestVersion(serverType string) (semver.Version, error) {
 	})
 
 	return latestVersion, nil
+}
+
+func LoopLatestVersion(serverType string, interval int, val *semver.Version) {
+	waitingFor := *val
+
+	log.Printf("serverpro waiting for %s version > %s", serverType, waitingFor)
+
+	for {
+		maxVer, err := LatestVersion(serverType)
+		if err != nil {
+			log.Printf("Error fetching %s Latest Version: %v", serverType, err)
+		} else {
+			log.Printf("Latest version of %s is %v", serverType, maxVer)
+
+			if maxVer.GT(waitingFor) {
+				log.Printf("Version %v of %v is available now", maxVer, serverType)
+				waitingFor = maxVer
+				*val = waitingFor
+			} else {
+				log.Printf("Version %v of %v is still the best", maxVer, serverType)
+			}
+		}
+
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
 }

@@ -7,47 +7,100 @@
 package main
 
 import (
-	logger "log"
+	"encoding/xml"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/blang/semver"
 	"github.com/nugget/phoebot/serverpro"
+	"github.com/spf13/viper"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-var (
-	latestVersion string = "0.0.1"
-)
+type state struct {
+	HostedVersion semver.Version `xml:"hostedVersion"`
+	PaperVersion  semver.Version `xml:"paperVersion"`
+}
+
+func saveState(fileName string, s state) error {
+	file, err := xml.MarshalIndent(s, "", " ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(fileName, file, 0644)
+	return err
+}
+
+func loadState(fileName string) (s state, err error) {
+	file, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return s, err
+	}
+	err = xml.Unmarshal(file, &s)
+
+	return s, err
+}
+
+func shutdown() {
+	log.Printf("Shutting down...")
+}
+
+func setupConfig() *viper.Viper {
+	c := viper.New()
+	c.AutomaticEnv()
+	c.SetDefault("MC_CHECK_INTERVAL", 600)
+	c.SetDefault("STATE_FILENAME", "/phoebot/state.xml")
+
+	return c
+}
 
 func main() {
-	dg, err := discordgo.New("Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
+	config := setupConfig()
+
+	STATEFILE := config.GetString("STATE_FILENAME")
+
+	currentState, err := loadState(STATEFILE)
 	if err != nil {
-		logger.Fatalf("Error creating Discord session: ", err)
+		log.Printf("Unable to read state file: %v", err)
+	}
+
+	log.Printf("Loaded State: %+v", currentState)
+
+	dg, err := discordgo.New("Bot " + config.GetString("DISCORD_BOT_TOKEN"))
+	if err != nil {
+		log.Fatalf("Error creating Discord session: ", err)
 	}
 
 	dg.AddHandler(messageCreate)
 
 	err = dg.Open()
 	if err != nil {
-		logger.Fatalf("Error opening Discord connection: ", err)
+		log.Fatalf("Error opening Discord connection: ", err)
 	}
 
-	logger.Printf("Connected to Discord as %s (SessionID %s)", dg.State.User, dg.State.SessionID)
+	log.Printf("Connected to Discord as %s (SessionID %s)", dg.State.User, dg.State.SessionID)
 
-	lv, err := serverpro.LatestVersion("Paper")
-	if err != nil {
-		logger.Printf("Unable to get latest version: %v", err)
-	} else {
-		logger.Printf("lv: %+v", lv)
-	}
+	go serverpro.LoopLatestVersion("Paper", config.GetInt("MC_CHECK_INTERVAL"), &currentState.PaperVersion)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
 	dg.Close()
+
+	err = saveState(STATEFILE, currentState)
+	if err != nil {
+		log.Printf("Error writing state file: %v", err)
+	} else {
+		log.Printf("Saved state to %s", STATEFILE)
+	}
+
+	shutdown()
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -66,5 +119,5 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Ping!")
 	}
 
-	logger.Printf("<%s> %s", m.Author, m.Content)
+	log.Printf("<%s> %s", m.Author, m.Content)
 }
