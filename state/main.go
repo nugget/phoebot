@@ -104,6 +104,15 @@ func (s *State) DropSubscription(sub models.Subscription) error {
 	return nil
 }
 
+func (s *State) ListSubscriptions() error {
+	log.Printf("There are %d subscriptions:", len(s.Subscriptions))
+	for i, v := range s.Subscriptions {
+		log.Printf("%4d: %+v", i, v)
+	}
+
+	return nil
+}
+
 func (s *State) GetProduct(class, name string) (models.Product, error) {
 	for _, p := range s.Products {
 		if strings.ToLower(p.Class) == strings.ToLower(class) {

@@ -130,7 +130,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 
 		if subEx.MatchString(dm.Content) {
 			res := subEx.FindStringSubmatch(dm.Content)
-			Dumper(res)
+			//Dumper(res)
 			if len(res) == 8 {
 				var err error
 
@@ -178,6 +178,8 @@ func main() {
 		log.Printf("Unable to read state file: %v", err)
 	}
 
+	s.ListSubscriptions()
+
 	log.Printf("Loaded State from %s", STATEFILE)
 
 	s.DedupeProducts()
@@ -201,7 +203,7 @@ func main() {
 
 	err = s.Dg.Open()
 	if err != nil {
-		log.Fatalf("Error opening Discord connection: ", err)
+		log.Fatalf("Error opening Discord connection: %v", err)
 	}
 
 	log.Printf("Connected to Discord as %s (SessionID %s)", s.Dg.State.User, s.Dg.State.SessionID)
@@ -215,6 +217,7 @@ func main() {
 	go processAnnounceStream(&s)
 
 	go s.Looper(announceStream, "server.pro", "Paper", config.GetInt("MC_CHECK_INTERVAL"), serverpro.LatestVersion)
+	go s.Looper(announceStream, "server.pro", "Vanilla", config.GetInt("MC_CHECK_INTERVAL"), serverpro.LatestVersion)
 	go s.Looper(announceStream, "PaperMC", "paper", config.GetInt("MC_CHECK_INTERVAL"), papermc.LatestVersion)
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}

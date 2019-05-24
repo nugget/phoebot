@@ -19,7 +19,8 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-const url = "https://server.pro/r/server/getGametypes"
+const URI = "https://server.pro/r/server/getGametypes"
+const CLASS = "server.pro"
 
 var (
 	xmlCache  string
@@ -27,30 +28,48 @@ var (
 )
 
 func getXML() (string, error) {
-	r, err := http.Get(url)
-	if err != nil {
-		return "", err
+	expires := time.Now().Add(time.Duration(-60) * time.Second)
+
+	if cacheTime.After(expires) {
+		log.Printf("Using cached %d bytes from %s at %s", len(xmlCache), URI, cacheTime)
+	} else {
+		r, err := http.Get(URI)
+		if err != nil {
+			return "", err
+		}
+
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return "", err
+		}
+
+		xmlCache = string(bodyBytes)
+		cacheTime = time.Now()
+
+		log.Printf("Fetched %d bytes from %s at %s", len(xmlCache), URI, cacheTime)
 	}
-
-	bodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return "", err
-	}
-
-	xmlCache := string(bodyBytes)
-	cacheTime := time.Now()
-
-	log.Printf("Fetched %d bytes from %s at %s", len(xmlCache), url, cacheTime)
 
 	return xmlCache, nil
 }
 
 func Register() (string, models.LatestVersionFunction) {
-	return "server.pro", LatestVersion
+	return CLASS, LatestVersion
 }
 
 func GetTypes() (types []string, err error) {
-	return []string{"Paper"}, nil
+	body, err := getXML()
+	if err != nil {
+		return types, err
+	}
+
+	plist := gjson.Get(body, "mc")
+
+	plist.ForEach(func(key, value gjson.Result) bool {
+		types = append(types, key.String())
+		return true
+	})
+
+	return types, err
 }
 
 func LatestVersion(serverType string) (semver.Version, error) {
@@ -61,9 +80,9 @@ func LatestVersion(serverType string) (semver.Version, error) {
 		return latestVersion, err
 	}
 
-	paper := gjson.Get(body, fmt.Sprintf("mc.%s", serverType))
+	server := gjson.Get(body, fmt.Sprintf("mc.%s", serverType))
 
-	paper.ForEach(func(key, value gjson.Result) bool {
+	server.ForEach(func(key, value gjson.Result) bool {
 		v, err := semver.ParseTolerant(key.String())
 		if err != nil {
 			return false

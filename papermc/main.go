@@ -10,10 +10,11 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-const url = "https://papermc.io/api/v1/"
+const URI = "https://papermc.io/api/v1/"
+const CLASS = "PaperMC"
 
 func Register() (string, models.LatestVersionFunction) {
-	return "PaperMC", LatestVersion
+	return CLASS, LatestVersion
 }
 
 func GetTypes() ([]string, error) {
@@ -23,7 +24,7 @@ func GetTypes() ([]string, error) {
 func LatestVersion(name string) (semver.Version, error) {
 	latestVersion := semver.MustParse("0.0.1")
 
-	r, err := http.Get(url + name)
+	r, err := http.Get(URI + name)
 	if err != nil {
 		return latestVersion, err
 	}
