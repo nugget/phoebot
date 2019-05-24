@@ -118,19 +118,35 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		return
 	}
 
+	channel, err := ds.State.Channel(dm.ChannelID)
+	if err != nil {
+		log.Printf("Unable to load channel info: %v", err)
+		channel.Name = "unknown"
+	}
+
 	forMe := false
+
 	for _, u := range dm.Mentions {
 		if u.ID == ds.State.User.ID {
 			forMe = true
 		}
 	}
 
+	if channel.Type == 1 && channel.Name == "" {
+		// This is a private message window
+		forMe = true
+		channel.Name = "PM"
+	}
+
+	origin := fmt.Sprintf("#%s <%s>", channel.Name, dm.Author.Username)
+
 	if forMe {
-		subEx := regexp.MustCompile("(?i) ((un)?(sub)(scribe)?) ([^ ]+) ([^ ]+) ?(.*)")
+		log.Printf(">> %v %+v", origin, dm.Content)
+		subEx := regexp.MustCompile("(?i)((un)?(sub)(scribe)?) ([^ ]+) ([^ ]+) ?(.*)")
 
 		if subEx.MatchString(dm.Content) {
 			res := subEx.FindStringSubmatch(dm.Content)
-			//Dumper(res)
+			Dumper(res)
 			if len(res) == 8 {
 				var err error
 
@@ -161,11 +177,16 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 					subStream <- sc
 				}
 			}
+
 		} else {
 			message := fmt.Sprintf("I don't know what you're saying.  Try asking something like `subscribe paper [optional target]` or `unsubscribe paper`")
 			ds.ChannelMessageSend(dm.ChannelID, message)
 		}
-
+	} else if dm.Content == "listSubscriptions" {
+		err := s.ListSubscriptions()
+		if err != nil {
+			log.Printf("Unable to List Subscriptions: %v", err)
+		}
 	}
 }
 
@@ -178,7 +199,12 @@ func main() {
 		log.Printf("Unable to read state file: %v", err)
 	}
 
-	s.ListSubscriptions()
+	s.Dg, err = discordgo.New("Bot " + config.GetString("DISCORD_BOT_TOKEN"))
+	if err != nil {
+		log.Fatalf("Error creating Discord session: ", err)
+	}
+
+	s.Dg.AddHandler(messageCreate)
 
 	log.Printf("Loaded State from %s", STATEFILE)
 
@@ -193,13 +219,6 @@ func main() {
 	if err != nil {
 		log.Printf("Error loading products: %v", err)
 	}
-
-	s.Dg, err = discordgo.New("Bot " + config.GetString("DISCORD_BOT_TOKEN"))
-	if err != nil {
-		log.Fatalf("Error creating Discord session: ", err)
-	}
-
-	s.Dg.AddHandler(messageCreate)
 
 	err = s.Dg.Open()
 	if err != nil {

@@ -107,7 +107,12 @@ func (s *State) DropSubscription(sub models.Subscription) error {
 func (s *State) ListSubscriptions() error {
 	log.Printf("There are %d subscriptions:", len(s.Subscriptions))
 	for i, v := range s.Subscriptions {
-		log.Printf("%4d: %+v", i, v)
+		channel, err := s.Dg.State.Channel(v.ChannelID)
+		if err != nil {
+			log.Printf("%4d: %s %s/%s", i, v.ChannelID, v.Class, v.Name)
+		} else {
+			log.Printf("%4d: #%s %s/%s", i, channel.Name, v.Class, v.Name)
+		}
 	}
 
 	return nil
