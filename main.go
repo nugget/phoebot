@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/nugget/phoebot/serverpro"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func main() {
