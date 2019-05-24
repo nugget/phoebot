@@ -13,31 +13,54 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/nugget/phoebot/models"
+
 	"github.com/blang/semver"
 	"github.com/tidwall/gjson"
 )
 
 const url = "https://server.pro/r/server/getGametypes"
 
-type Announcement struct {
-	ServerType string
-	Message    string
+var (
+	xmlCache  string
+	cacheTime time.Time
+)
+
+func getXML() (string, error) {
+	r, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", err
+	}
+
+	xmlCache := string(bodyBytes)
+	cacheTime := time.Now()
+
+	log.Printf("Fetched %d bytes from %d at %s", len(xmlCache), url, cacheTime)
+
+	return xmlCache, nil
+}
+
+func Register() (string, models.LatestVersionFunction) {
+	return "hosted", LatestVersion
+}
+
+func GetTypes() (types []string, err error) {
+	return []string{"Paper"}, nil
 }
 
 func LatestVersion(serverType string) (semver.Version, error) {
 	latestVersion := semver.MustParse("0.0.1")
 
-	r, err := http.Get(url)
+	body, err := getXML()
 	if err != nil {
 		return latestVersion, err
 	}
 
-	bodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return latestVersion, err
-	}
-
-	body := string(bodyBytes)
 	paper := gjson.Get(body, fmt.Sprintf("mc.%s", serverType))
 
 	paper.ForEach(func(key, value gjson.Result) bool {
@@ -54,30 +77,4 @@ func LatestVersion(serverType string) (semver.Version, error) {
 	})
 
 	return latestVersion, nil
-}
-
-func LoopLatestVersion(stream chan Announcement, serverType string, interval int, val *semver.Version) {
-	waitingFor := *val
-
-	log.Printf("serverpro waiting for %s version > %s", serverType, waitingFor)
-
-	for {
-		maxVer, err := LatestVersion(serverType)
-		if err != nil {
-			log.Printf("Error fetching %s Latest Version: %v", serverType, err)
-		} else {
-			if maxVer.GT(waitingFor) {
-				message := fmt.Sprintf("Version %v of %v is available now", maxVer, serverType)
-				waitingFor = maxVer
-				*val = waitingFor
-				stream <- Announcement{serverType, message}
-			} else {
-				message := fmt.Sprintf("Version %v of %v is still the best", maxVer, serverType)
-				//stream <- Announcement{serverType, message}
-				log.Printf(message)
-			}
-		}
-
-		time.Sleep(time.Duration(interval) * time.Second)
-	}
 }
