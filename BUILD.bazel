@@ -98,7 +98,6 @@ container_push(
     format = "Docker",
     repository = DOCKER_REPO,
     tag = "{STABLE_GIT_VERSION}",
-    stamp = True,
 )
 
 k8s_object(
