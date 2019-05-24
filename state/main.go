@@ -176,7 +176,7 @@ func (s *State) DedupeProducts() error {
 
 func (s *State) Looper(stream chan models.Announcement, class string, name string, interval int, fn models.LatestVersionFunction) {
 	p, _ := s.GetProduct(class, name)
-	log.Printf("serverpro waiting for %s version greater than %s", p, p.Latest.Version)
+	log.Printf("serverpro waiting for %s/%s version greater than %s", p.Class, p.Name, p.Latest.Version)
 
 	for {
 		maxVer, err := fn(p.Name)
