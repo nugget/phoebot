@@ -19,6 +19,11 @@ import (
 
 const url = "https://server.pro/r/server/getGametypes"
 
+type Announcement struct {
+	ServerType string
+	Message    string
+}
+
 func LatestVersion(serverType string) (semver.Version, error) {
 	latestVersion := semver.MustParse("0.0.1")
 
@@ -52,7 +57,7 @@ func LatestVersion(serverType string) (semver.Version, error) {
 	return latestVersion, nil
 }
 
-func LoopLatestVersion(serverType string, interval int, val *semver.Version) {
+func LoopLatestVersion(stream chan Announcement, serverType string, interval int, val *semver.Version) {
 	waitingFor := *val
 
 	log.Printf("serverpro waiting for %s version > %s", serverType, waitingFor)
@@ -65,11 +70,14 @@ func LoopLatestVersion(serverType string, interval int, val *semver.Version) {
 			log.Printf("Latest version of %s is %v", serverType, maxVer)
 
 			if maxVer.GT(waitingFor) {
-				log.Printf("Version %v of %v is available now", maxVer, serverType)
+				message := fmt.Sprintf("Version %v of %v is available now", maxVer, serverType)
 				waitingFor = maxVer
 				*val = waitingFor
+				stream <- Announcement{serverType, message}
 			} else {
-				log.Printf("Version %v of %v is still the best", maxVer, serverType)
+				message := fmt.Sprintf("Version %v of %v is still the best", maxVer, serverType)
+				// stream <- Announcement{serverType, message}
+				log.Printf(message)
 			}
 		}
 
