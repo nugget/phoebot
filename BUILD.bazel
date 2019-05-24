@@ -1,0 +1,111 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_push", "container_image", "container_bundle")
+load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@io_bazel_rules_k8s//k8s:object.bzl", "k8s_object")
+
+DOCKER_REGISTRY = "index.docker.io"
+
+DOCKER_ORG = "nugget"
+
+NAME = "phoebot"
+
+DOCKER_REPO = DOCKER_ORG + "/" + NAME
+
+gazelle(
+    name = "gazelle",
+    prefix = "github.com/nugget/phoebot",
+    external = "vendored",
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/nugget/phoebot",
+    visibility = ["//visibility:private"],
+    x_defs = {
+        "main.VERSION": "{STABLE_GIT_VERSION}",
+        "main.GITBRANCH": "{STABLE_GIT_BRANCH}",
+        "main.GITCOMMIT": "{STABLE_GIT_COMMIT}",
+        "main.GOVERSION": "{STABLE_BASEL_VERSION}",
+        "main.BUILDENV": "{STABLE_PLATFORM}",
+        "main.BUILDEPOCH_STR": "{BUILD_TIMESTAMP}",
+        "main.BUILDDATE": "{CURRENT_TIME}",
+        "main.BUILDHOST": "{BUILD_HOST}",
+        "main.BUILDUSER": "{BUILD_USER}",
+        "main.BUILDEMBEDLABEL": "{BUILD_EMBED_LABEL}",
+    },
+    deps = ["//serverpro:go_default_library"],
+)
+
+go_binary(
+    name = NAME,
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
+
+#
+# We build docker images using a nested go_image crafted to become the base layer
+# of our actual container_image build target.  This is because Bazel rigidly
+# constrains all the ${language}_image rules to mirror the options present in the
+# corresponding ${language}_binary rules.  That means that none of the docker
+# specific options are available to us.
+#
+#  See https://github.com/bazelbuild/rules_docker/issues/309#issuecomment-406343864
+#
+go_image(
+    name = "docker_base",
+    embed = [":go_default_library"],
+    goarch = "amd64",
+    goos = "linux",
+    pure = "on",
+)
+
+#
+# This is the "real" container build target, which uses the above-defined
+# go image as the base layer and gives us a context where we can apply all the
+# docker-related options we may want.
+#
+container_image(
+    name = "image",
+    repository = DOCKER_ORG,
+    base = ":docker_base",
+    tars = [":ca-root.tar"],
+    creation_time = "{BUILD_TIMESTAMP}",
+    labels = {
+        "Version": "{GIT_VERSION}",
+        "GitBranch": "{GIT_BRANCH}",
+        "GitCommit": "{GIT_COMMIT}",
+        "Builder": "{BUILD_USER}@{BUILD_HOST} on {STABLE_PLATFORM}",
+    },
+    stamp = True,
+)
+
+container_bundle(
+    name = "docker",
+    images = {
+        DOCKER_REPO + ":latest": ":image",
+    },
+)
+
+container_push(
+    name = "push_docker",
+    image = ":image",
+    registry = DOCKER_REGISTRY,
+    format = "Docker",
+    repository = DOCKER_REPO,
+    tag = "{STABLE_GIT_VERSION}",
+    stamp = True,
+)
+
+k8s_object(
+    name = "deploy",
+    kind = "deployment",
+    template = ":k8s/deployment.yaml",
+    cluster = "nuggethaus",
+    namespace = "phoebot",
+    user = "user-hcfd8",
+    images = {
+        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
+    },
+)
