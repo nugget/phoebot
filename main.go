@@ -3,11 +3,15 @@ package main
 import (
 	"fmt"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/nugget/phoebot/serverpro"
 )
 
 func main() {
-	fmt.Println("vim-go")
+	dg, err := discordgo.New("Bot " + os.Env("DISCORD_BOT_TOKEN"))
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	lv, err := serverpro.LatestVersion("Paper")
 

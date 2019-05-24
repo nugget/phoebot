@@ -35,7 +35,10 @@ go_library(
         "main.BUILDUSER": "{BUILD_USER}",
         "main.BUILDEMBEDLABEL": "{BUILD_EMBED_LABEL}",
     },
-    deps = ["//serverpro:go_default_library"],
+    deps = [
+        "//serverpro:go_default_library",
+        "//vendor/github.com/bwmarrin/discordgo:go_default_library",
+    ],
 )
 
 go_binary(
