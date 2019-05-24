@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -189,6 +190,9 @@ func (s *State) DedupeProducts() error {
 }
 
 func (s *State) Looper(stream chan models.Announcement, class string, name string, interval int, fn models.LatestVersionFunction) {
+	slew := rand.Intn(10)
+	interval = interval + slew
+
 	p, _ := s.GetProduct(class, name)
 	log.Printf("serverpro waiting for %s/%s version greater than %s", p.Class, p.Name, p.Latest.Version)
 

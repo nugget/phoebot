@@ -193,6 +193,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 func main() {
 	config := setupConfig()
 	STATEFILE = config.GetString("STATE_FILENAME")
+	INTERVAL := config.GetInt("MC_CHECK_INTERVAL")
 
 	err := s.LoadState(STATEFILE)
 	if err != nil {
@@ -235,9 +236,9 @@ func main() {
 	go processSubStream(&s)
 	go processAnnounceStream(&s)
 
-	go s.Looper(announceStream, "server.pro", "Paper", config.GetInt("MC_CHECK_INTERVAL"), serverpro.LatestVersion)
-	go s.Looper(announceStream, "server.pro", "Vanilla", config.GetInt("MC_CHECK_INTERVAL"), serverpro.LatestVersion)
-	go s.Looper(announceStream, "PaperMC", "paper", config.GetInt("MC_CHECK_INTERVAL"), papermc.LatestVersion)
+	go s.Looper(announceStream, "server.pro", "Paper", INTERVAL, serverpro.LatestVersion)
+	go s.Looper(announceStream, "server.pro", "Vanilla", INTERVAL, serverpro.LatestVersion)
+	go s.Looper(announceStream, "PaperMC", "paper", INTERVAL, papermc.LatestVersion)
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}
 
