@@ -41,7 +41,6 @@ func setupConfig() *viper.Viper {
 	c.AutomaticEnv()
 	c.SetDefault("MC_CHECK_INTERVAL", 600)
 	c.SetDefault("STATE_FILENAME", "/phoebot/state.xml")
-	// c.SetDefault("PRODUCTLIST", "Paper, Vanilla, CraftBukkit, Spigot, Vanilla Snapshot, Forge")
 
 	return c
 }
@@ -215,8 +214,8 @@ func main() {
 	go processSubStream(&s)
 	go processAnnounceStream(&s)
 
-	go s.Looper(announceStream, "server.pro", "Paper", 60, serverpro.LatestVersion)
-	go s.Looper(announceStream, "PaperMC", "paper", 60, papermc.LatestVersion)
+	go s.Looper(announceStream, "server.pro", "Paper", config.GetInt("MC_CHECK_INTERVAL"), serverpro.LatestVersion)
+	go s.Looper(announceStream, "PaperMC", "paper", config.GetInt("MC_CHECK_INTERVAL"), papermc.LatestVersion)
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}
 
