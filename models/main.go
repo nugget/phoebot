@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/blang/semver"
@@ -12,9 +11,10 @@ type RegisterFunction func() (string, LatestVersionFunction)
 type GetTypesFunction func() ([]string, error)
 
 type Subscription struct {
-	ChannelID string  `xml:"channelID"`
-	Product   Product `xml:"product"`
-	Target    string  `xml:"target"`
+	ChannelID string `xml:"channelID"`
+	Class     string `xml:"class"`
+	Name      string `xml:"name"`
+	Target    string `xml:"target"`
 }
 
 type SubChannel struct {
@@ -42,8 +42,4 @@ type Product struct {
 	Name     string                `xml:"type"`
 	Latest   LatestVersion         `xml:"lastCheck"`
 	Function LatestVersionFunction `xml:"-"`
-}
-
-func (p Product) String() string {
-	return fmt.Sprintf("%s:%s", p.Class, p.Name)
 }

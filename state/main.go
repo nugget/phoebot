@@ -25,7 +25,7 @@ func (s *State) SaveState(fileName string) error {
 		return err
 	}
 
-	fmt.Printf("-- \n%s\n-- \n", string(file))
+	//fmt.Printf("-- \n%s\n-- \n", string(file))
 
 	err = ioutil.WriteFile(fileName, file, 0644)
 	return err
@@ -38,15 +38,15 @@ func (s *State) LoadState(fileName string) (err error) {
 	}
 	err = xml.Unmarshal(file, &s)
 
-	fmt.Printf("-- \n%s\n-- \n", string(file))
+	//fmt.Printf("-- \n%s\n-- \n", string(file))
 
 	return err
 }
 
 func SubscriptionsMatch(a, b models.Subscription) bool {
 	if a.ChannelID == b.ChannelID {
-		if a.Product.Class == b.Product.Class {
-			if a.Product.Name == b.Product.Name {
+		if strings.ToLower(a.Class) == strings.ToLower(b.Class) {
+			if strings.ToLower(a.Name) == strings.ToLower(b.Name) {
 				return true
 			}
 		}
@@ -65,20 +65,15 @@ func (s *State) SubscriptionExists(sub models.Subscription) bool {
 }
 
 func (s *State) AddSubscription(sub models.Subscription) error {
-	if sub.Product.Class == "" || sub.Product.Name == "" {
-		return fmt.Errorf("Cannot add malformed subscription: %+v", sub.Product)
+	if sub.Class == "" || sub.Name == "" {
+		return fmt.Errorf("Cannot add malformed subscription: %s/%s", sub.Class, sub.Name)
 	} else {
 		if !s.SubscriptionExists(sub) {
 			log.Printf("Adding %+v to subscription list", sub)
 			s.Subscriptions = append(s.Subscriptions, sub)
-			message := fmt.Sprintf("You are now subscribed to receive updates to this channel for %s releases %s", sub.Product.Name, sub.Product.Class)
+			message := fmt.Sprintf("You are now subscribed to receive updates to this channel for %s releases from %s", sub.Name, sub.Class)
 			s.Dg.ChannelMessageSend(sub.ChannelID, message)
 		}
-
-		//if sub.Product.Name == "Paper" {
-		//	message := fmt.Sprintf("The highest version of PaperMC currently offered on server.pro is %s", s.PaperVersion)
-		//	Dg.ChannelMessageSend(sub.ChannelID, message)
-		//}
 
 		log.Printf("%d subscriptions in current state", len(s.Subscriptions))
 	}
@@ -98,7 +93,7 @@ func (s *State) DropSubscription(sub models.Subscription) error {
 	}
 
 	if len(s.Subscriptions) != len(newSubs) {
-		message := fmt.Sprintf("You are no longer subscribed to receive updates to this channel for %s releases on %s", sub.Product.Name, sub.Product.Class)
+		message := fmt.Sprintf("You are no longer subscribed to receive updates to this channel for %s releases from %s", sub.Name, sub.Class)
 		s.Dg.ChannelMessageSend(sub.ChannelID, message)
 	}
 
@@ -130,11 +125,16 @@ func (s *State) PutProduct(n models.Product) error {
 
 	added := false
 	for _, p := range s.Products {
+
 		if p.Class == "" || p.Name == "" {
 			log.Printf("Not putting malformed product: %+v", p)
 			// Skip this one
 		} else if p.Class == n.Class && p.Name == n.Name {
-			newProducts = append(newProducts, n)
+			if n.Latest.Time.After(p.Latest.Time) {
+				newProducts = append(newProducts, n)
+			} else {
+				newProducts = append(newProducts, p)
+			}
 			added = true
 		} else {
 			newProducts = append(newProducts, p)
@@ -176,7 +176,7 @@ func (s *State) DedupeProducts() error {
 
 func (s *State) Looper(stream chan models.Announcement, class string, name string, interval int, fn models.LatestVersionFunction) {
 	p, _ := s.GetProduct(class, name)
-	log.Printf("serverpro waiting for %s version > %s", p, p.Latest.Version)
+	log.Printf("serverpro waiting for %s version greater than %s", p, p.Latest.Version)
 
 	for {
 		maxVer, err := fn(p.Name)
@@ -184,11 +184,11 @@ func (s *State) Looper(stream chan models.Announcement, class string, name strin
 			log.Printf("Error fetching %s Latest Version: %v", p, err)
 		} else {
 			if maxVer.GT(p.Latest.Version) {
-				message := fmt.Sprintf("Version %v of %v is available now", maxVer, p)
+				message := fmt.Sprintf("Version %v of %s on %s is available now", maxVer, p.Name, p.Class)
 				stream <- models.Announcement{p, message}
 			} else {
-				message := fmt.Sprintf("Version %v of %v is still the best", maxVer, p)
-				//stream <- models.Announcement{p, message}
+				message := fmt.Sprintf("Version %v of %s on %s is still the best", maxVer, p.Name, p.Class)
+				// stream <- models.Announcement{p, message}
 				log.Printf(message)
 			}
 

@@ -2,7 +2,6 @@ package papermc
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/nugget/phoebot/models"
@@ -36,7 +35,6 @@ func LatestVersion(name string) (semver.Version, error) {
 
 	body := string(bodyBytes)
 	paper := gjson.Get(body, "versions")
-	log.Printf("%v", paper)
 
 	paper.ForEach(func(key, value gjson.Result) bool {
 		v, err := semver.ParseTolerant(value.String())

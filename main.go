@@ -80,11 +80,13 @@ func processAnnounceStream(s *state.State) {
 		log.Printf("announceStream: %+v (%+v)", d, stillOpen)
 
 		for _, sub := range s.Subscriptions {
-			if sub.Product.Name == d.Product.Name {
-				if sub.Target != "" {
-					d.Message = fmt.Sprintf("%s: %s", sub.Target, d.Message)
+			if strings.ToLower(sub.Class) == strings.ToLower(d.Product.Class) {
+				if strings.ToLower(sub.Name) == strings.ToLower(d.Product.Name) {
+					if sub.Target != "" {
+						d.Message = fmt.Sprintf("%s: %s", sub.Target, d.Message)
+					}
+					s.Dg.ChannelMessageSend(sub.ChannelID, d.Message)
 				}
-				s.Dg.ChannelMessageSend(sub.ChannelID, d.Message)
 			}
 		}
 		if !stillOpen {
@@ -138,14 +140,17 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 				xUN := strings.ToLower(res[2])
 				xSUB := strings.ToLower(res[3])
 
-				class := strings.ToLower(res[5])
-				name := strings.Title(res[6])
-				sc.Sub.Product, err = s.GetProduct(class, name)
+				class := res[5]
+				name := res[6]
+
+				p, err := s.GetProduct(class, name)
 				if err != nil {
 					log.Printf("GetProduct error: %v", err)
 					ds.ChannelMessageSend(dm.ChannelID, "I've never heard of that")
 				} else {
 					sc.Sub.ChannelID = dm.ChannelID
+					sc.Sub.Class = p.Class
+					sc.Sub.Name = p.Name
 					sc.Sub.Target = res[7]
 
 					if xUN == "un" {
@@ -193,8 +198,6 @@ func main() {
 		log.Fatalf("Error creating Discord session: ", err)
 	}
 
-	// fmt.Printf("\n%+v\n\n", s.Products)
-
 	s.Dg.AddHandler(messageCreate)
 
 	err = s.Dg.Open()
@@ -212,10 +215,8 @@ func main() {
 	go processSubStream(&s)
 	go processAnnounceStream(&s)
 
-	for _, s := range s.Subscriptions {
-		log.Printf("sub: %+v", s)
-		// go s.Looper(announceStream, "serverpro", "Paper", 60, serverpro.LatestVersion)
-	}
+	go s.Looper(announceStream, "server.pro", "Paper", 60, serverpro.LatestVersion)
+	go s.Looper(announceStream, "PaperMC", "paper", 60, papermc.LatestVersion)
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}
 
