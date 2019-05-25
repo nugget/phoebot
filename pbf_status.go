@@ -41,7 +41,7 @@ func uname() string {
 		))
 	}
 
-	w.WriteString("Source code and issue tracker are at https://github.com/nugget/phoebot\n")
+	u.WriteString("Source code and issue tracker are at https://github.com/nugget/phoebot\n")
 
 	return u.String()
 }
