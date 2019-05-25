@@ -22,6 +22,16 @@ func GetTypes() ([]string, error) {
 	return []string{"paper"}, nil
 }
 
+func fixMalformedVersion(v string) string {
+	switch v {
+	case "1.13-pre7":
+		// Short version cannot contain PreRelease/Build meta data error
+		return "1.13.0-pre7"
+	}
+
+	return v
+}
+
 func LatestVersion(name string) (semver.Version, error) {
 	latestVersion := semver.MustParse("0.0.1")
 
@@ -39,7 +49,9 @@ func LatestVersion(name string) (semver.Version, error) {
 	paper := gjson.Get(body, "versions")
 
 	paper.ForEach(func(key, value gjson.Result) bool {
-		v, err := semver.ParseTolerant(value.String())
+		versionString := fixMalformedVersion(value.String())
+
+		v, err := semver.ParseTolerant(versionString)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"error":   err,
