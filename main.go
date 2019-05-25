@@ -149,7 +149,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 				if DEBUG {
 					log.Printf("Hook hit on %+v", t)
 				}
-				t.Hook(s, dm)
+				t.Hook(&s, dm)
 			}
 		}
 	}

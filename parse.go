@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/state"
@@ -11,7 +13,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-type hookFunction func(state.State, *discordgo.MessageCreate) error
+type hookFunction func(*state.State, *discordgo.MessageCreate) error
 
 type Trigger struct {
 	Regexp *regexp.Regexp
@@ -34,7 +36,7 @@ func regSubscriptions() (t Trigger) {
 	return t
 }
 
-func procSubscriptions(s state.State, dm *discordgo.MessageCreate) error {
+func procSubscriptions(s *state.State, dm *discordgo.MessageCreate) error {
 	t := regSubscriptions()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
@@ -79,34 +81,35 @@ func regVersion() (t Trigger) {
 	return t
 }
 
-func procVersion(s state.State, dm *discordgo.MessageCreate) error {
+func procVersion(s *state.State, dm *discordgo.MessageCreate) error {
+	cutoff := time.Now().Add(time.Duration(-1) * time.Hour)
+
 	mS := discordgo.MessageSend{}
-	mS.Content = "Content"
 
 	mE := discordgo.MessageEmbed{}
-	mE.Description = "Description"
-
-	mF := discordgo.MessageEmbedFooter{}
-	mF.Text = "Footer Text"
-
-	mE.Footer = &mF
+	mE.Description = "Current Minecraft Versions:"
 
 	mE.Fields = make([]*discordgo.MessageEmbedField, 0)
 
-	mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
-		Name:   "F1 Name",
-		Value:  "F1 Value",
-		Inline: true,
-	})
+	for _, p := range s.Products {
+		if p.Latest.Time.After(cutoff) {
+			mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
+				Name:   fmt.Sprintf("%s %s", p.Class, p.Name),
+				Value:  fmt.Sprintf("%s", p.Latest.Version),
+				Inline: true,
+			})
+		} else {
+			fmt.Printf("cutoff: %s\nversio: %s\n\n", cutoff, p.Latest.Time)
+		}
 
-	mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
-		Name:   "F2 Name",
-		Value:  "F2 Value",
-		Inline: true,
-	})
+	}
 
 	mS.Embed = &mE
 
-	s.Dg.ChannelMessageSendComplex(dm.ChannelID, &mS)
+	if len(mE.Fields) > 0 {
+		s.Dg.ChannelMessageSendComplex(dm.ChannelID, &mS)
+	} else {
+		s.Dg.ChannelMessageSend(dm.ChannelID, "I haven't seen any new versions lately, sorry. Try again later.")
+	}
 	return nil
 }
