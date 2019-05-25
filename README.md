@@ -9,7 +9,7 @@ To add the bot to a Discord server, visit [this activation link].
 
 ### Functions
 
-There are two types of commands/functions that Phoebot supports.  Some comamnds
+There are two types of commands/functions that Phoebot supports.  Some commands
 are "targeted" and you need to tag `@Phoebot` in your request on a public
 channel, or you need to make the request in a direct message to Phoebot
 privately for it to work.  Without a tag or DM, the command will be ignored.
@@ -42,7 +42,7 @@ optional recipient `@here`
 You can turn this off by issuing an `unsubscribe` command.
 
 We will be adding more sources and products over time, including things like
-popular datapacks and addons.
+popular data packs and add-ons.
 
 #### Version Report
 
@@ -62,10 +62,13 @@ Just include a date-time in this form in your Discord message:
 2019-05-25 14:45 CDT
 ```
 
-The time must be in 24-hour "military" form.  Most popular timezones are
+The time must be in 24-hour "military" form.  Most popular time zones are
 supported. If yours is not, please open an issue here on Github describing what
 you need.  The time does not need to be alone on a line, it can be contained
 within a longer message and the conversion will still work.
+
+Phoebot also has support for the custom time zones "SYDNEY" and "BRISBANE" to
+allow for special-handling of our favorite Australian users.
 
 ### Status Report
 
