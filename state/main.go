@@ -229,7 +229,6 @@ func (s *State) Looper(stream chan models.Announcement, class string, name strin
 		"class":         p.Class,
 		"name":          p.Name,
 		"latestVersion": p.Latest.Version,
-		"function":      fn,
 	}).Info("New Looper waiting for version")
 
 	for {
