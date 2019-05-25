@@ -34,6 +34,7 @@ var (
 
 func shutdown() {
 	logrus.Infof("Shutting down...")
+	os.Exit(0)
 }
 
 func setupConfig() *viper.Viper {

@@ -2,3 +2,5 @@
 *.fish
 bazel*
 .DS_Store
+coverage.txt
+phoebot
