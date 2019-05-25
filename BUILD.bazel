@@ -20,7 +20,10 @@ gazelle(
 
 go_library(
     name = "go_default_library",
-    srcs = ["main.go"],
+    srcs = [
+        "main.go",
+        "parse.go",
+    ],
     importpath = "github.com/nugget/phoebot",
     visibility = ["//visibility:private"],
     x_defs = {
