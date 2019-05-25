@@ -173,9 +173,9 @@ func procTimezones(dm *discordgo.MessageCreate) error {
 	tzList := []string{
 		"America/Los_Angeles",
 		"America/New_York",
-		"Asia/Kolkata",
 		"Europe/London",
 		"Europe/Amsterdam",
+		"Asia/Kolkata",
 		"Australia/Brisbane",
 	}
 
