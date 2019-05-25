@@ -22,6 +22,7 @@ func LoadTriggers() error {
 	triggers = append(triggers, regSubscriptions())
 	triggers = append(triggers, regVersion())
 	triggers = append(triggers, regTimezones())
+	triggers = append(triggers, regStatus())
 
 	return nil
 }
