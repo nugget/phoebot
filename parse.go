@@ -133,6 +133,8 @@ func prettyTimezone(tz string) string {
 func smartLoc(tz string) (loc *time.Location) {
 	var name string
 
+	tz = strings.ToUpper(tz)
+
 	switch tz {
 	case "EDT", "EST":
 		name = "America/New_York"
@@ -168,7 +170,7 @@ func procTimezones(dm *discordgo.MessageCreate) error {
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 	//Dumper(res)
 
-	parseLoc := smartLoc(strings.ToUpper(res[3]))
+	parseLoc := smartLoc(res[3])
 	r, err := time.ParseInLocation("2006-01-02 15:04", res[2], parseLoc)
 	if err != nil {
 		log.Printf("time parse error: %v", err)
