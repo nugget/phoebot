@@ -164,6 +164,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	logrus.WithFields(logrus.Fields{
 		"direct":    direct,
 		"channel":   channel.Name,
+		"username":  dm.Author.Username,
 		"channelID": dm.ChannelID,
 	}).Debug(logMsg)
 
