@@ -21,8 +21,14 @@ gazelle(
 go_library(
     name = "go_default_library",
     srcs = [
+        "builddata.go",
         "main.go",
         "parse.go",
+        "pbf_status.go",
+        "pbf_subscriptions.go",
+        "pbf_template.go",
+        "pbf_timezones.go",
+        "pbf_versions.go",
     ],
     importpath = "github.com/nugget/phoebot",
     visibility = ["//visibility:private"],
