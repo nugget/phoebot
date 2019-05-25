@@ -21,6 +21,7 @@ gazelle(
 go_library(
     name = "go_default_library",
     srcs = [
+        "builddata.go",
         "main.go",
         "parse.go",
     ],
