@@ -26,7 +26,6 @@ import (
 var (
 	s              state.State
 	STATEFILE      string
-	DEBUG          bool
 	msgStream      chan models.DiscordMessage
 	subStream      chan models.SubChannel
 	announceStream chan models.Announcement
@@ -125,10 +124,11 @@ func processMsgStream() {
 }
 
 func Dumper(res []string) {
-	logrus.Printf("(%d) %s", len(res), strings.Join(res, ":"))
+	logrus.WithField("elements", len(res)).Debug("Dumper contents of 'res' slice:")
 	for i, v := range res {
-		logrus.Printf("  %d: '%s'", i, v)
+		logrus.Debugf("  %d: '%s' (%d)", i, v, len(v))
 	}
+
 }
 
 func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
@@ -177,13 +177,17 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 
 func main() {
 	config := setupConfig()
+
 	STATEFILE = config.GetString("STATE_FILENAME")
-	DEBUG = config.GetBool("PHOEBOT_DEBUG")
 
-	INTERVAL := config.GetInt("MC_CHECK_INTERVAL")
-	DISCORD_BOT_TOKEN := config.GetString("DISCORD_BOT_TOKEN")
+	interval := config.GetInt("MC_CHECK_INTERVAL")
+	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
 
-	if DISCORD_BOT_TOKEN == "" {
+	for _, f := range []string{"DISCORD_BOT_TOKEN"} {
+		tV := config.GetString(f)
+		if tV == "" {
+			logrus.WithField("variable", f).Fatal("Missing environment variable")
+		}
 	}
 
 	err := s.LoadState(STATEFILE)
@@ -195,7 +199,7 @@ func main() {
 
 	LoadTriggers()
 
-	s.Dg, err = discordgo.New("Bot " + DISCORD_BOT_TOKEN)
+	s.Dg, err = discordgo.New("Bot " + discordBotToken)
 	if err != nil {
 		logrus.WithError(err).Fatal("Unable to eonnect to Discord")
 	}
@@ -232,9 +236,9 @@ func main() {
 	go processSubStream(&s)
 	go processAnnounceStream(&s)
 
-	go s.Looper(announceStream, "server.pro", "Paper", INTERVAL, serverpro.LatestVersion)
-	go s.Looper(announceStream, "server.pro", "Vanilla", INTERVAL, serverpro.LatestVersion)
-	go s.Looper(announceStream, "PaperMC", "paper", INTERVAL, papermc.LatestVersion)
+	go s.Looper(announceStream, "server.pro", "Paper", interval, serverpro.LatestVersion)
+	go s.Looper(announceStream, "server.pro", "Vanilla", interval, serverpro.LatestVersion)
+	go s.Looper(announceStream, "PaperMC", "paper", interval, papermc.LatestVersion)
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}
 

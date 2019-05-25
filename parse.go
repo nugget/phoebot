@@ -18,6 +18,7 @@ func LoadTriggers() error {
 	// This is the baseline feature you can use to pattern new features you
 	// want to add
 	triggers = append(triggers, regTemplate())
+	triggers = append(triggers, regLoglevel())
 
 	triggers = append(triggers, regSubscriptions())
 	triggers = append(triggers, regVersion())
