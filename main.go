@@ -175,6 +175,29 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	}
 }
 
+func LogLevel(reqLevel string) (setLevel logrus.Level, err error) {
+	reqLevel = strings.ToLower(reqLevel)
+
+	switch reqLevel {
+	case "trace":
+		setLevel = logrus.TraceLevel
+	case "debug":
+		setLevel = logrus.DebugLevel
+	case "info":
+		setLevel = logrus.InfoLevel
+	case "warn":
+		setLevel = logrus.WarnLevel
+	case "error":
+		setLevel = logrus.ErrorLevel
+	default:
+		return setLevel, fmt.Errorf("Unrecognized log level '%s'", reqLevel)
+	}
+
+	logrus.SetLevel(setLevel)
+
+	return setLevel, nil
+}
+
 func main() {
 	config := setupConfig()
 
@@ -182,6 +205,14 @@ func main() {
 
 	interval := config.GetInt("MC_CHECK_INTERVAL")
 	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
+	debugLevel := config.GetString("PHOEBOT_DEBUG")
+
+	if debugLevel != "" {
+		_, err := LogLevel(debugLevel)
+		if err != nil {
+			logrus.WithError(err).Error("Unable to set LogLevel")
+		}
+	}
 
 	for _, f := range []string{"DISCORD_BOT_TOKEN"} {
 		tV := config.GetString(f)

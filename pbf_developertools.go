@@ -25,27 +25,14 @@ func procLoglevel(dm *discordgo.MessageCreate) error {
 
 	reqLevel := strings.ToLower(res[1])
 
-	var setLevel logrus.Level
-
-	switch reqLevel {
-	case "trace":
-		setLevel = logrus.TraceLevel
-	case "debug":
-		setLevel = logrus.DebugLevel
-	case "info":
-		setLevel = logrus.InfoLevel
-	case "warn":
-		setLevel = logrus.WarnLevel
-	case "error":
-		setLevel = logrus.ErrorLevel
-	default:
-		s.Dg.ChannelMessageSend(dm.ChannelID, "I don't recognize that log level.")
-		return fmt.Errorf("Unrecognized loglevel '%s'", reqLevel)
-	}
-
 	oldLevel := logrus.GetLevel()
-	logrus.SetLevel(setLevel)
-	newLevel := logrus.GetLevel()
+
+	newLevel, err := LogLevel(reqLevel)
+	if err != nil {
+		logrus.WithError(err).Info("Failed to set LogLevel")
+		s.Dg.ChannelMessageSend(dm.ChannelID, fmt.Sprintf("%s", err))
+		return err
+	}
 
 	if oldLevel != newLevel {
 		logrus.WithFields(logrus.Fields{
