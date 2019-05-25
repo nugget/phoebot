@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/nugget/phoebot/models"
+	"github.com/sirupsen/logrus"
 
 	"github.com/blang/semver"
 	"github.com/tidwall/gjson"
@@ -40,7 +41,10 @@ func LatestVersion(name string) (semver.Version, error) {
 	paper.ForEach(func(key, value gjson.Result) bool {
 		v, err := semver.ParseTolerant(value.String())
 		if err != nil {
-			//log.Printf("Unable to parse version '%v': %v", value, err)
+			logrus.WithFields(logrus.Fields{
+				"error":   err,
+				"version": value,
+			}).Warn("Unable to parse PaperMC version")
 		} else {
 			if v.GT(latestVersion) {
 				latestVersion = v

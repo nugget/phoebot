@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"strings"
@@ -18,9 +17,10 @@ import (
 	"github.com/nugget/phoebot/papermc"
 	"github.com/nugget/phoebot/serverpro"
 	"github.com/nugget/phoebot/state"
-	"github.com/spf13/viper"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 )
 
 func shutdown() {
-	log.Printf("Shutting down...")
+	logrus.Infof("Shutting down...")
 }
 
 func setupConfig() *viper.Viper {
@@ -49,23 +49,33 @@ func setupConfig() *viper.Viper {
 func processSubStream(s *state.State) {
 	for {
 		d, stillOpen := <-subStream
-		log.Printf("subStream: %+v (%+v)", d, stillOpen)
+
+		logrus.WithFields(logrus.Fields{
+			"data":      d,
+			"stillOpen": stillOpen,
+		}).Debug("subStream message received")
 
 		if d.Operation == "DROP" {
 			err := s.DropSubscription(d.Sub)
 			if err != nil {
-				log.Printf("Error adding subscription: %v", err)
+				logrus.WithFields(logrus.Fields{
+					"error": err,
+					"sub":   d.Sub,
+				}).Error("Unable to drop subscription")
 			}
 		} else {
 			err := s.AddSubscription(d.Sub)
 			if err != nil {
-				log.Printf("Error adding subscription: %v", err)
+				logrus.WithFields(logrus.Fields{
+					"error": err,
+					"sub":   d.Sub,
+				}).Error("Unable to add subscription")
 			}
 		}
 
 		err := s.SaveState(STATEFILE)
 		if err != nil {
-			log.Printf("Error saving state: %v", err)
+			logrus.WithError(err).Error("Unable to write state file from subStream")
 		}
 
 		if !stillOpen {
@@ -77,7 +87,11 @@ func processSubStream(s *state.State) {
 func processAnnounceStream(s *state.State) {
 	for {
 		d, stillOpen := <-announceStream
-		log.Printf("announceStream: %+v (%+v)", d, stillOpen)
+
+		logrus.WithFields(logrus.Fields{
+			"data":      d,
+			"stillOpen": stillOpen,
+		}).Debug("announceStream message received")
 
 		for _, sub := range s.Subscriptions {
 			if strings.ToLower(sub.Class) == strings.ToLower(d.Product.Class) {
@@ -98,7 +112,12 @@ func processAnnounceStream(s *state.State) {
 func processMsgStream() {
 	for {
 		d, stillOpen := <-msgStream
-		log.Printf("msgStream: %+v (%+v)", d, stillOpen)
+
+		logrus.WithFields(logrus.Fields{
+			"data":      d,
+			"stillOpen": stillOpen,
+		}).Debug("messageStream message received")
+
 		if !stillOpen {
 			return
 		}
@@ -106,9 +125,9 @@ func processMsgStream() {
 }
 
 func Dumper(res []string) {
-	log.Printf("(%d) %s", len(res), strings.Join(res, ":"))
+	logrus.Printf("(%d) %s", len(res), strings.Join(res, ":"))
 	for i, v := range res {
-		log.Printf("  %d: '%s'", i, v)
+		logrus.Printf("  %d: '%s'", i, v)
 	}
 }
 
@@ -121,7 +140,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 
 	channel, err := ds.State.Channel(dm.ChannelID)
 	if err != nil {
-		log.Printf("Unable to load channel info: %v", err)
+		logrus.WithError(err).Error("Unavle to load channel info")
 		channel.Name = "unknown"
 	}
 
@@ -139,9 +158,13 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		channel.Name = "PM"
 	}
 
-	origin := fmt.Sprintf("#%s <%s>", channel.Name, dm.Author.Username)
+	logMsg := fmt.Sprintf("<%s> %s", dm.Author.Username, dm.Content)
 
-	log.Printf("(%d) [%v] >> %v %+v", len(triggers), direct, origin, dm.Content)
+	logrus.WithFields(logrus.Fields{
+		"direct":    direct,
+		"channel":   channel.Name,
+		"channelID": dm.ChannelID,
+	}).Debug(logMsg)
 
 	for _, t := range triggers {
 		if direct == t.Direct || t.Direct == false {
@@ -150,49 +173,56 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 			}
 		}
 	}
-	log.Printf("-- ")
 }
 
 func main() {
 	config := setupConfig()
 	STATEFILE = config.GetString("STATE_FILENAME")
-	INTERVAL := config.GetInt("MC_CHECK_INTERVAL")
 	DEBUG = config.GetBool("PHOEBOT_DEBUG")
+
+	INTERVAL := config.GetInt("MC_CHECK_INTERVAL")
+	DISCORD_BOT_TOKEN := config.GetString("DISCORD_BOT_TOKEN")
+
+	if DISCORD_BOT_TOKEN == "" {
+	}
 
 	err := s.LoadState(STATEFILE)
 	if err != nil {
-		log.Printf("Unable to read state file: %v", err)
+		logrus.WithError(err).Warn("Unable to read state file")
+	} else {
+		logrus.WithField("filename", STATEFILE).Infof("Loaded saved state")
 	}
 
 	LoadTriggers()
 
-	s.Dg, err = discordgo.New("Bot " + config.GetString("DISCORD_BOT_TOKEN"))
+	s.Dg, err = discordgo.New("Bot " + DISCORD_BOT_TOKEN)
 	if err != nil {
-		log.Fatalf("Error creating Discord session: ", err)
+		logrus.WithError(err).Fatal("Unable to eonnect to Discord")
 	}
 
 	s.Dg.AddHandler(messageCreate)
-
-	log.Printf("Loaded State from %s", STATEFILE)
 
 	s.DedupeProducts()
 
 	err = s.LoadProducts(serverpro.Register, serverpro.GetTypes)
 	if err != nil {
-		log.Printf("Error loading products: %v", err)
+		logrus.WithError(err).Warn("Error loading products from serverpro")
 	}
 
 	err = s.LoadProducts(papermc.Register, papermc.GetTypes)
 	if err != nil {
-		log.Printf("Error loading products: %v", err)
+		logrus.WithError(err).Warn("Error loading products from papermc")
 	}
 
 	err = s.Dg.Open()
 	if err != nil {
-		log.Fatalf("Error opening Discord connection: %v", err)
+		logrus.WithError(err).Fatal("Error connecting to Discord")
 	}
 
-	log.Printf("Connected to Discord as %s (SessionID %s)", s.Dg.State.User, s.Dg.State.SessionID)
+	logrus.WithFields(logrus.Fields{
+		"user":      s.Dg.State.User,
+		"sessionID": s.Dg.State.SessionID,
+	}).Info("Connected to Discord")
 
 	msgStream = make(chan models.DiscordMessage)
 	subStream = make(chan models.SubChannel)
@@ -216,9 +246,9 @@ func main() {
 
 	err = s.SaveState(STATEFILE)
 	if err != nil {
-		log.Printf("Error writing state file: %v", err)
+		logrus.WithError(err).Error("Unable to write state file")
 	} else {
-		log.Printf("Saved state to %s", STATEFILE)
+		logrus.WithField("filename", STATEFILE).Info("Saved state to disk")
 	}
 
 	shutdown()

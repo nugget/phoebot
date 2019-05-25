@@ -6,6 +6,7 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 func regVersion() (t Trigger) {
@@ -18,6 +19,7 @@ func regVersion() (t Trigger) {
 
 func procVersion(dm *discordgo.MessageCreate) error {
 	cutoff := semver.MustParse("0.0.0")
+	logrus.WithField("cutoff", cutoff).Debug("Ignoring products older than this")
 
 	mS := discordgo.MessageSend{}
 
@@ -34,7 +36,12 @@ func procVersion(dm *discordgo.MessageCreate) error {
 				Inline: true,
 			})
 		} else {
-			fmt.Printf("cutoff: %s\nversio: %s\n\n", cutoff, p.Latest.Time)
+			logrus.WithFields(logrus.Fields{
+				"class":   p.Class,
+				"name":    p.Name,
+				"version": p.Latest.Version,
+				"time":    p.Latest.Time,
+			}).Debug("Skipped product")
 		}
 
 	}

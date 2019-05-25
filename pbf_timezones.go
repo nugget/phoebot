@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 func regTimezones() (t Trigger) {
@@ -59,7 +59,11 @@ func smartLoc(tz string) (loc *time.Location) {
 
 	loc, err := time.LoadLocation(name)
 	if err != nil {
-		log.Printf("LoadLocation error: %v", err)
+		logrus.WithFields(logrus.Fields{
+			"error": err,
+			"name":  name,
+			"tz":    tz,
+		}).Error("Cannot load location")
 	}
 	return loc
 }
@@ -77,16 +81,22 @@ func procTimezones(dm *discordgo.MessageCreate) error {
 	t := regTimezones()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 	//Dumper(res)
+	timeString := res[2] // This is the user-entered time string
+	tzAbbr := res[3]     // This is the user-entered timezone abbreviation
 
-	parseLoc := smartLoc(res[3])
-	log.Printf("parseLoc: %v", parseLoc)
-	r, err := time.ParseInLocation("2006-01-02 15:04", res[2], parseLoc)
+	parseLoc := smartLoc(tzAbbr)
+
+	logrus.WithFields(logrus.Fields{
+		"tz":      tzAbbr,
+		"pareLoc": parseLoc,
+	}).Debug("SmartLoc mapped TZ to name")
+
+	r, err := time.ParseInLocation("2006-01-02 15:04", timeString, parseLoc)
 	if err != nil {
-		log.Printf("time parse error: %v", err)
 		return err
 	}
 
-	log.Printf("%v", r)
+	logrus.WithField("r", r).Debug("ParseInLocation successful")
 
 	mS := discordgo.MessageSend{}
 	mE := discordgo.MessageEmbed{}
@@ -100,21 +110,28 @@ func procTimezones(dm *discordgo.MessageCreate) error {
 	for _, l := range tzList {
 		loc, err := time.LoadLocation(l)
 		if err != nil {
-			log.Printf("LoadLocation error: %v", err)
+			logrus.WithFields(logrus.Fields{
+				"l":     l,
+				"error": err,
+			}).Error("Unable to load timezone location")
+		} else {
+			locName := fmt.Sprintf("%s", loc)
+			timezone := r.In(loc).Format("MST")
+			formatted := r.In(loc).Format("Mon 3:04PM")
+
+			timezone = fmt.Sprintf("%s (%s)", prettyTimezone(locName), timezone)
+
+			mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
+				Name:   timezone,
+				Value:  formatted,
+				Inline: true,
+			})
+			logrus.WithFields(logrus.Fields{
+				"locName":   locName,
+				"timezone":  timezone,
+				"formatted": formatted,
+			}).Debug("Converted time")
 		}
-
-		locName := fmt.Sprintf("%s", loc)
-		timezone := r.In(loc).Format("MST")
-		formatted := r.In(loc).Format("Mon 3:04PM")
-
-		timezone = fmt.Sprintf("%s (%s)", prettyTimezone(locName), timezone)
-
-		mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
-			Name:   timezone,
-			Value:  formatted,
-			Inline: true,
-		})
-		log.Printf("%s %s (%s)", formatted, timezone, loc)
 	}
 
 	mS.Embed = &mE

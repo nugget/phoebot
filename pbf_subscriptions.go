@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
 	"regexp"
 	"strings"
 
 	"github.com/nugget/phoebot/models"
+	"github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -35,7 +35,7 @@ func procSubscriptions(dm *discordgo.MessageCreate) error {
 
 		p, err := s.GetProduct(class, name)
 		if err != nil {
-			log.Printf("GetProduct error: %v", err)
+			logrus.WithError(err).Warn("Unable to get product")
 			s.Dg.ChannelMessageSend(dm.ChannelID, "I've never heard of that one, sorry.")
 		} else {
 			sc.Sub.ChannelID = dm.ChannelID

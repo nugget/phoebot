@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/nugget/phoebot/models"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 type State struct {
@@ -70,13 +70,19 @@ func (s *State) AddSubscription(sub models.Subscription) error {
 		return fmt.Errorf("Cannot add malformed subscription: %s/%s", sub.Class, sub.Name)
 	} else {
 		if !s.SubscriptionExists(sub) {
-			log.Printf("Adding %+v to subscription list", sub)
 			s.Subscriptions = append(s.Subscriptions, sub)
 			message := fmt.Sprintf("You are now subscribed to receive updates to this channel for %s releases from %s", sub.Name, sub.Class)
 			s.Dg.ChannelMessageSend(sub.ChannelID, message)
+
+			logrus.WithFields(logrus.Fields{
+				"name":      sub.Name,
+				"class":     sub.Class,
+				"channelID": sub.ChannelID,
+				"target":    sub.Target,
+			}).Info("Added new subscription")
 		}
 
-		log.Printf("%d subscriptions in current state", len(s.Subscriptions))
+		logrus.WithField("subCount", len(s.Subscriptions)).Debug("Active subscription count")
 	}
 
 	return nil
@@ -85,8 +91,6 @@ func (s *State) AddSubscription(sub models.Subscription) error {
 func (s *State) DropSubscription(sub models.Subscription) error {
 	var newSubs []models.Subscription
 
-	log.Printf("Dropping %+v from subscription list", sub)
-
 	for _, v := range s.Subscriptions {
 		if !SubscriptionsMatch(sub, v) {
 			newSubs = append(newSubs, v)
@@ -94,26 +98,36 @@ func (s *State) DropSubscription(sub models.Subscription) error {
 	}
 
 	if len(s.Subscriptions) != len(newSubs) {
+		logrus.WithFields(logrus.Fields{
+			"name":      sub.Name,
+			"class":     sub.Class,
+			"channelID": sub.ChannelID,
+			"target":    sub.Target,
+		}).Info("Deopped subscription")
+
 		message := fmt.Sprintf("You are no longer subscribed to receive updates to this channel for %s releases from %s", sub.Name, sub.Class)
 		s.Dg.ChannelMessageSend(sub.ChannelID, message)
 	}
 
 	s.Subscriptions = newSubs
 
-	log.Printf("%d subscriptions in current state", len(s.Subscriptions))
+	logrus.WithField("subCount", len(s.Subscriptions)).Debug("Active subscription count")
 
 	return nil
 }
 
 func (s *State) ListSubscriptions() error {
-	log.Printf("There are %d subscriptions:", len(s.Subscriptions))
+	logrus.WithField("subCount", len(s.Subscriptions)).Info("Active subscription count")
 	for i, v := range s.Subscriptions {
-		channel, err := s.Dg.State.Channel(v.ChannelID)
-		if err != nil {
-			log.Printf("%4d: %s %s/%s", i, v.ChannelID, v.Class, v.Name)
-		} else {
-			log.Printf("%4d: #%s %s/%s", i, channel.Name, v.Class, v.Name)
-		}
+		channel, _ := s.Dg.State.Channel(v.ChannelID)
+
+		logrus.WithFields(logrus.Fields{
+			"channelID":   v.ChannelID,
+			"channelName": channel.Name,
+			"class":       v.Class,
+			"name":        v.Name,
+			"target":      v.Target,
+		}).Infof("Subscription %d", i)
 	}
 
 	return nil
@@ -142,8 +156,10 @@ func (s *State) PutProduct(n models.Product) error {
 	for _, p := range s.Products {
 
 		if p.Class == "" || p.Name == "" {
-			log.Printf("Not putting malformed product: %+v", p)
-			// Skip this one
+			logrus.WithFields(logrus.Fields{
+				"class": p.Class,
+				"name":  p.Name,
+			}).Info("Skipping malformed product")
 		} else if p.Class == n.Class && p.Name == n.Name {
 			if n.Function == nil {
 				n.Function = p.Function
@@ -172,11 +188,15 @@ func (s *State) DedupeProducts() error {
 	newProducts := []models.Product{}
 	exists := make(map[string]bool)
 
-	for _, p := range s.Products {
+	for i, p := range s.Products {
 		key := fmt.Sprintf("%v-%v", p.Class, p.Name)
 		if !exists[key] {
 			if p.Class == "" || p.Name == "" {
-				log.Printf("Skipping malformed product during dedupe: %+v", p)
+				logrus.WithFields(logrus.Fields{
+					"class": p.Class,
+					"name":  p.Name,
+					"i":     i,
+				}).Info("Skipping malformed product (Dedupe)")
 			} else {
 				newProducts = append(newProducts, p)
 			}
@@ -185,7 +205,10 @@ func (s *State) DedupeProducts() error {
 	}
 
 	if len(s.Products) != len(newProducts) {
-		log.Printf("Deduped product list from %d to %d items", len(s.Products), len(newProducts))
+		logrus.WithFields(logrus.Fields{
+			"startCount": len(s.Products),
+			"endCount":   len(newProducts),
+		}).Info("Deduped product list")
 	}
 	s.Products = newProducts
 
@@ -196,21 +219,52 @@ func (s *State) Looper(stream chan models.Announcement, class string, name strin
 	slew := rand.Intn(10)
 	interval = interval + slew
 
-	p, _ := s.GetProduct(class, name)
-	log.Printf("serverpro waiting for %s/%s version greater than %s", p.Class, p.Name, p.Latest.Version)
+	p, err := s.GetProduct(class, name)
+	if err != nil {
+		logrus.WithError(err).Error("Looper unable to load product")
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"class":         p.Class,
+		"name":          p.Name,
+		"latestVersion": p.Latest.Version,
+		"function":      fn,
+	}).Info("New Looper waiting for version")
 
 	for {
 		maxVer, err := fn(p.Name)
 		if err != nil {
-			log.Printf("Error fetching %s Latest Version: %v", p, err)
+			logrus.WithFields(logrus.Fields{
+				"class":         p.Class,
+				"name":          p.Name,
+				"latestVersion": p.Latest.Version,
+				"error":         err,
+			}).Warn("Unable to fetch latest version")
 		} else {
 			if maxVer.GT(p.Latest.Version) {
+				logrus.WithFields(logrus.Fields{
+					"class":         p.Class,
+					"name":          p.Name,
+					"latestVersion": p.Latest.Version,
+					"newVersion":    maxVer,
+				}).Info("New version detected!")
+
 				message := fmt.Sprintf("Version %v of %s on %s is available now", maxVer, p.Name, p.Class)
 				stream <- models.Announcement{p, message}
 			} else {
-				message := fmt.Sprintf("Version %v of %s on %s is still the best", maxVer, p.Name, p.Class)
+				logrus.WithFields(logrus.Fields{
+					"class":         p.Class,
+					"name":          p.Name,
+					"latestVersion": p.Latest.Version,
+					"newVersion":    maxVer,
+				}).Debug("Version unchanged")
+
+				// Uncomment this to report versions to Discord on every fetch
+				// even if the version has not changed
+				//
+				// message := fmt.Sprintf("Version %v of %s on %s is still the best", maxVer, p.Name, p.Class)
 				// stream <- models.Announcement{p, message}
-				log.Printf(message)
 			}
 
 			p.Latest.Version = maxVer
@@ -218,7 +272,12 @@ func (s *State) Looper(stream chan models.Announcement, class string, name strin
 
 			err := s.PutProduct(p)
 			if err != nil {
-				log.Printf("Error putting '%+v': %v", p, err)
+				logrus.WithFields(logrus.Fields{
+					"class":         p.Class,
+					"name":          p.Name,
+					"latestVersion": p.Latest.Version,
+					"error":         err,
+				}).Warn("Unable to PutProduct")
 			}
 		}
 
@@ -233,7 +292,7 @@ func (s *State) LoadProducts(regFunc models.RegisterFunction, typesFunc models.G
 
 	typeList, err := typesFunc()
 	if err != nil {
-		log.Printf("Error fetching %s product list: %v", class, err)
+		// log.Printf("Error fetching %s product list: %v", class, err)
 		return err
 	} else {
 		for _, name := range typeList {
@@ -244,14 +303,18 @@ func (s *State) LoadProducts(regFunc models.RegisterFunction, typesFunc models.G
 
 			err := s.PutProduct(p)
 			if err != nil {
-				log.Printf("Error putting: %v", err)
+				logrus.WithError(err).Warn("LoadProducts unable to PutProduct")
 			} else {
 				count++
 			}
 		}
 	}
 
-	log.Printf("Loaded %d products from %s (%d total)", count, class, len(s.Products))
+	logrus.WithFields(logrus.Fields{
+		"class": class,
+		"count": count,
+		"total": len(s.Products),
+	}).Info("Loaded productlist")
 
 	return nil
 }
