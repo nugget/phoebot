@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/nugget/phoebot.svg?style=svg&circle-token=672825c48e9ccd415262e2777de633518e4543bd)](https://circleci.com/gh/nugget/phoebot)
+[![CircleCI](https://circleci.com/gh/nugget/phoebot.svg?style=svg)](https://circleci.com/gh/nugget/phoebot)
 
 ## Phoebot Phoenixcraft SMP Assistant
 
