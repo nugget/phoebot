@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"regexp"
 	"strings"
 	"syscall"
 
@@ -27,9 +26,11 @@ import (
 var (
 	s              state.State
 	STATEFILE      string
+	DEBUG          bool
 	msgStream      chan models.DiscordMessage
 	subStream      chan models.SubChannel
 	announceStream chan models.Announcement
+	triggers       []Trigger
 )
 
 func shutdown() {
@@ -124,68 +125,32 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		channel.Name = "unknown"
 	}
 
-	forMe := false
+	direct := false
 
 	for _, u := range dm.Mentions {
 		if u.ID == ds.State.User.ID {
-			forMe = true
+			direct = true
 		}
 	}
 
 	if channel.Type == 1 && channel.Name == "" {
 		// This is a private message window
-		forMe = true
+		direct = true
 		channel.Name = "PM"
 	}
 
 	origin := fmt.Sprintf("#%s <%s>", channel.Name, dm.Author.Username)
 
-	if forMe {
-		log.Printf(">> %v %+v", origin, dm.Content)
-		subEx := regexp.MustCompile("(?i)((un)?(sub)(scribe)?) ([^ ]+) ([^ ]+) ?(.*)")
+	log.Printf("(%d) [%v] >> %v %+v", len(triggers), direct, origin, dm.Content)
 
-		if subEx.MatchString(dm.Content) {
-			res := subEx.FindStringSubmatch(dm.Content)
-			// Dumper(res)
-			if len(res) == 8 {
-				var err error
-
-				sc := models.SubChannel{}
-
-				xUN := strings.ToLower(res[2])
-				xSUB := strings.ToLower(res[3])
-
-				class := res[5]
-				name := res[6]
-
-				p, err := s.GetProduct(class, name)
-				if err != nil {
-					log.Printf("GetProduct error: %v", err)
-					ds.ChannelMessageSend(dm.ChannelID, "I've never heard of that")
-				} else {
-					sc.Sub.ChannelID = dm.ChannelID
-					sc.Sub.Class = p.Class
-					sc.Sub.Name = p.Name
-					sc.Sub.Target = res[7]
-
-					if xUN == "un" {
-						sc.Operation = "DROP"
-					} else if xSUB == "sub" {
-						sc.Operation = "ADD"
-					}
-
-					subStream <- sc
+	for _, t := range triggers {
+		if direct == t.Direct {
+			if t.Regexp.MatchString(dm.Content) {
+				if DEBUG {
+					log.Printf("Hook hit on %+v", t)
 				}
+				t.Hook(s, dm)
 			}
-
-		} else {
-			message := fmt.Sprintf("I don't know what you're saying.  Try asking something like `subscribe server.pro paper [optional target]` or `unsubscribe server.pro paper`")
-			ds.ChannelMessageSend(dm.ChannelID, message)
-		}
-	} else if dm.Content == "listSubscriptions" {
-		err := s.ListSubscriptions()
-		if err != nil {
-			log.Printf("Unable to List Subscriptions: %v", err)
 		}
 	}
 }
@@ -194,11 +159,14 @@ func main() {
 	config := setupConfig()
 	STATEFILE = config.GetString("STATE_FILENAME")
 	INTERVAL := config.GetInt("MC_CHECK_INTERVAL")
+	DEBUG = config.GetBool("PHOEBOT_DEBUG")
 
 	err := s.LoadState(STATEFILE)
 	if err != nil {
 		log.Printf("Unable to read state file: %v", err)
 	}
+
+	LoadTriggers()
 
 	s.Dg, err = discordgo.New("Bot " + config.GetString("DISCORD_BOT_TOKEN"))
 	if err != nil {
