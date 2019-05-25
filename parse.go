@@ -116,7 +116,7 @@ func procVersion(dm *discordgo.MessageCreate) error {
 }
 
 func regTimezones() (t Trigger) {
-	exp := "((20[0-9][0-9]-[0-1][0-9]-[0-3][0-9] [0-2]?[0-9]:[0-5][0-9]) ([A-Z]+))"
+	exp := "(?i)((20[0-9][0-9]-[0-1][0-9]-[0-3][0-9] [0-2]?[0-9]:[0-5][0-9]) ([A-Z]+))"
 	t.Regexp = regexp.MustCompile(exp)
 	t.Hook = procTimezones
 	t.Direct = false
