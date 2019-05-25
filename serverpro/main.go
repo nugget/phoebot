@@ -9,13 +9,13 @@ package serverpro
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/nugget/phoebot/models"
 
 	"github.com/blang/semver"
+	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -31,7 +31,11 @@ func getXML() (string, error) {
 	expires := time.Now().Add(time.Duration(-60) * time.Second)
 
 	if cacheTime.After(expires) {
-		log.Printf("Using cached %d bytes from %s at %s", len(xmlCache), URI, cacheTime)
+		logrus.WithFields(logrus.Fields{
+			"URI":       URI,
+			"bytes":     len(xmlCache),
+			"cacheTime": cacheTime,
+		}).Debug("Using cached server.pro gametypes")
 	} else {
 		r, err := http.Get(URI)
 		if err != nil {
@@ -46,7 +50,11 @@ func getXML() (string, error) {
 		xmlCache = string(bodyBytes)
 		cacheTime = time.Now()
 
-		log.Printf("Fetched %d bytes from %s at %s", len(xmlCache), URI, cacheTime)
+		logrus.WithFields(logrus.Fields{
+			"URI":       URI,
+			"bytes":     len(xmlCache),
+			"cacheTime": cacheTime,
+		}).Debug("Fetched server.pro gametypes")
 	}
 
 	return xmlCache, nil

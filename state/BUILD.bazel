@@ -8,5 +8,6 @@ go_library(
     deps = [
         "//models:go_default_library",
         "//vendor/github.com/bwmarrin/discordgo:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )

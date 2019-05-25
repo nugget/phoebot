@@ -76,6 +76,13 @@ Asking Phoebot for a `status report` will provide details about the bot's
 current code and runtime statistics.  This is for internal/developer use and
 probably isn't very interesting to anyone else.
 
+## Developer Notes
+
+### Console Logging
+
+You can send the command `set loglevel to <level>` on Discord to dynamically
+change the verbosity of the console logging.  This is useful for debugging.
+
 [this activation link]: https://discordapp.com/oauth2/authorize?client_id=581247665933779013&scope=bot&permissions=150528
 [Application Form]: https://docs.google.com/forms/d/e/1FAIpQLSdvj5J4vLsOIuvWof3B4jiZYXXpFKfsZMMSUtwKjTN5ThXDRw/viewform
 [Discord server]: https://discord.gg/a6KnJcj

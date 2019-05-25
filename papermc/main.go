@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/nugget/phoebot/models"
+	"github.com/sirupsen/logrus"
 
 	"github.com/blang/semver"
 	"github.com/tidwall/gjson"
@@ -19,6 +20,16 @@ func Register() (string, models.LatestVersionFunction) {
 
 func GetTypes() ([]string, error) {
 	return []string{"paper"}, nil
+}
+
+func fixMalformedVersion(v string) string {
+	switch v {
+	case "1.13-pre7":
+		// Short version cannot contain PreRelease/Build meta data error
+		return "1.13.0-pre7"
+	}
+
+	return v
 }
 
 func LatestVersion(name string) (semver.Version, error) {
@@ -38,9 +49,14 @@ func LatestVersion(name string) (semver.Version, error) {
 	paper := gjson.Get(body, "versions")
 
 	paper.ForEach(func(key, value gjson.Result) bool {
-		v, err := semver.ParseTolerant(value.String())
+		versionString := fixMalformedVersion(value.String())
+
+		v, err := semver.ParseTolerant(versionString)
 		if err != nil {
-			//log.Printf("Unable to parse version '%v': %v", value, err)
+			logrus.WithFields(logrus.Fields{
+				"error":   err,
+				"version": value,
+			}).Warn("Unable to parse PaperMC version")
 		} else {
 			if v.GT(latestVersion) {
 				latestVersion = v

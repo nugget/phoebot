@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//models:go_default_library",
         "//vendor/github.com/blang/semver:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/tidwall/gjson:go_default_library",
     ],
 )
