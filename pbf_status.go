@@ -30,7 +30,7 @@ func uname() string {
 		BUILDENV,
 	))
 
-	u.WriteString(fmt.Sprintf("Branch %s commit %s\n",
+	u.WriteString(fmt.Sprintf("Branch `%s` commit `%s`\n",
 		GITBRANCH,
 		GITCOMMIT,
 	))
@@ -40,6 +40,8 @@ func uname() string {
 			BUILDEMBEDLABEL,
 		))
 	}
+
+	w.WriteString("Source code and issue tracker are at https://github.com/nugget/phoebot\n")
 
 	return u.String()
 }

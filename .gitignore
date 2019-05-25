@@ -1,3 +1,4 @@
 # Configuration files
 *.fish
 bazel*
+.DS_Store
