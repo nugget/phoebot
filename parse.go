@@ -148,13 +148,22 @@ func smartLoc(tz string) (loc *time.Location) {
 		name = "Europe/London"
 	case "CET", "CEST":
 		name = "Europe/Paris"
-	case "AEST", "AEDT":
+	case "AEST", "AEDT", "BRISBANE":
+		name = "Australia/Brisbane"
+	case "SYDNEY":
 		name = "Australia/Sydney"
-	default:
+	case "ACDT", "ACST":
+		name = "Australia/Adelaide"
+	case "UTC":
 		name = "UTC"
+	default:
+		name = "Unknown"
 	}
 
-	loc, _ = time.LoadLocation(name)
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		log.Printf("LoadLocation error: %v", err)
+	}
 	return loc
 }
 
@@ -163,7 +172,9 @@ func procTimezones(dm *discordgo.MessageCreate) error {
 		"America/Los_Angeles",
 		"America/New_York",
 		"Europe/London",
-		"Australia/Sydney",
+		"Asia/Tokyo",
+		"Australia/Adelaide",
+		"Australia/Brisbane",
 	}
 
 	t := regTimezones()
@@ -171,6 +182,7 @@ func procTimezones(dm *discordgo.MessageCreate) error {
 	//Dumper(res)
 
 	parseLoc := smartLoc(res[3])
+	log.Printf("parseLoc: %v", parseLoc)
 	r, err := time.ParseInLocation("2006-01-02 15:04", res[2], parseLoc)
 	if err != nil {
 		log.Printf("time parse error: %v", err)
@@ -183,13 +195,16 @@ func procTimezones(dm *discordgo.MessageCreate) error {
 	mE := discordgo.MessageEmbed{}
 
 	mF := discordgo.MessageEmbedFooter{}
-	mF.Text = r.Format("Converted from Mon 2-Jan-2006 15:04 MST")
+	mF.Text = r.Format(fmt.Sprintf("Converted from Mon 2-Jan-2006 15:04 MST (%s)", prettyTimezone(fmt.Sprintf("%s", parseLoc))))
 	mE.Footer = &mF
 
 	mE.Fields = make([]*discordgo.MessageEmbedField, 0)
 
 	for _, l := range tzList {
-		loc, _ := time.LoadLocation(l)
+		loc, err := time.LoadLocation(l)
+		if err != nil {
+			log.Printf("LoadLocation error: %v", err)
+		}
 
 		locName := fmt.Sprintf("%s", loc)
 		timezone := r.In(loc).Format("MST")
