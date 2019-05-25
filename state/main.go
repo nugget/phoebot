@@ -132,7 +132,7 @@ func (s *State) GetProduct(class, name string) (models.Product, error) {
 }
 
 func (s *State) PutProduct(n models.Product) error {
-	if n.Class == "" || n.Name == "" || n.Function == nil {
+	if n.Class == "" || n.Name == "" {
 		return fmt.Errorf("Can't load malformed product: %+v", n)
 	}
 
@@ -145,6 +145,9 @@ func (s *State) PutProduct(n models.Product) error {
 			log.Printf("Not putting malformed product: %+v", p)
 			// Skip this one
 		} else if p.Class == n.Class && p.Name == n.Name {
+			if n.Function == nil {
+				n.Function = p.Function
+			}
 			if n.Latest.Time.After(p.Latest.Time) {
 				newProducts = append(newProducts, n)
 			} else {
@@ -213,7 +216,10 @@ func (s *State) Looper(stream chan models.Announcement, class string, name strin
 			p.Latest.Version = maxVer
 			p.Latest.Time = time.Now()
 
-			s.PutProduct(p)
+			err := s.PutProduct(p)
+			if err != nil {
+				log.Printf("Error putting '%+v': %v", p, err)
+			}
 		}
 
 		time.Sleep(time.Duration(interval) * time.Second)

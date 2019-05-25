@@ -144,15 +144,13 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	log.Printf("(%d) [%v] >> %v %+v", len(triggers), direct, origin, dm.Content)
 
 	for _, t := range triggers {
-		if direct == t.Direct {
+		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
-				if DEBUG {
-					log.Printf("Hook hit on %+v", t)
-				}
-				t.Hook(&s, dm)
+				t.Hook(dm)
 			}
 		}
 	}
+	log.Printf("-- ")
 }
 
 func main() {

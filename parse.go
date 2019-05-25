@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/nugget/phoebot/models"
-	"github.com/nugget/phoebot/state"
 
+	"github.com/blang/semver"
 	"github.com/bwmarrin/discordgo"
 )
 
-type hookFunction func(*state.State, *discordgo.MessageCreate) error
+type hookFunction func(*discordgo.MessageCreate) error
 
 type Trigger struct {
 	Regexp *regexp.Regexp
@@ -24,6 +24,7 @@ type Trigger struct {
 func LoadTriggers() error {
 	triggers = append(triggers, regSubscriptions())
 	triggers = append(triggers, regVersion())
+	triggers = append(triggers, regTimezones())
 
 	return nil
 }
@@ -36,7 +37,7 @@ func regSubscriptions() (t Trigger) {
 	return t
 }
 
-func procSubscriptions(s *state.State, dm *discordgo.MessageCreate) error {
+func procSubscriptions(dm *discordgo.MessageCreate) error {
 	t := regSubscriptions()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
@@ -81,8 +82,8 @@ func regVersion() (t Trigger) {
 	return t
 }
 
-func procVersion(s *state.State, dm *discordgo.MessageCreate) error {
-	cutoff := time.Now().Add(time.Duration(-1) * time.Hour)
+func procVersion(dm *discordgo.MessageCreate) error {
+	cutoff := semver.MustParse("0.0.0")
 
 	mS := discordgo.MessageSend{}
 
@@ -92,7 +93,7 @@ func procVersion(s *state.State, dm *discordgo.MessageCreate) error {
 	mE.Fields = make([]*discordgo.MessageEmbedField, 0)
 
 	for _, p := range s.Products {
-		if p.Latest.Time.After(cutoff) {
+		if p.Latest.Version.GT(cutoff) {
 			mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
 				Name:   fmt.Sprintf("%s %s", p.Class, p.Name),
 				Value:  fmt.Sprintf("%s", p.Latest.Version),
@@ -111,5 +112,100 @@ func procVersion(s *state.State, dm *discordgo.MessageCreate) error {
 	} else {
 		s.Dg.ChannelMessageSend(dm.ChannelID, "I haven't seen any new versions lately, sorry. Try again later.")
 	}
+	return nil
+}
+
+func regTimezones() (t Trigger) {
+	exp := "((20[0-9][0-9]-[0-1][0-9]-[0-3][0-9] [0-2]?[0-9]:[0-5][0-9]) ([A-Z]+))"
+	t.Regexp = regexp.MustCompile(exp)
+	t.Hook = procTimezones
+	t.Direct = false
+
+	return t
+}
+
+func prettyTimezone(tz string) string {
+	parts := strings.Split(tz, "/")
+	tz = strings.ReplaceAll(parts[1], "_", " ")
+	return tz
+}
+
+func smartLoc(tz string) (loc *time.Location) {
+	var name string
+
+	switch tz {
+	case "EDT", "EST":
+		name = "America/New_York"
+	case "CDT", "CST":
+		name = "America/Chicago"
+	case "MDT", "MST":
+		name = "America/Denver"
+	case "PDT", "PST":
+		name = "America/Los_Angeles"
+	case "BST", "GMT":
+		name = "Europe/London"
+	case "CET", "CEST":
+		name = "Europe/Paris"
+	case "AEST", "AEDT":
+		name = "Australia/Sydney"
+	default:
+		name = "UTC"
+	}
+
+	loc, _ = time.LoadLocation(name)
+	return loc
+}
+
+func procTimezones(dm *discordgo.MessageCreate) error {
+	tzList := []string{
+		"America/Los_Angeles",
+		"America/New_York",
+		"Europe/London",
+		"Australia/Sydney",
+	}
+
+	t := regTimezones()
+	res := t.Regexp.FindStringSubmatch(dm.Content)
+	//Dumper(res)
+
+	parseLoc := smartLoc(res[3])
+	r, err := time.ParseInLocation("2006-01-02 15:04", res[2], parseLoc)
+	if err != nil {
+		log.Printf("time parse error: %v", err)
+		return err
+	}
+
+	log.Printf("%v", r)
+
+	mS := discordgo.MessageSend{}
+	mE := discordgo.MessageEmbed{}
+
+	mF := discordgo.MessageEmbedFooter{}
+	mF.Text = r.Format("Converted from Mon 2-Jan-2006 15:04 MST")
+	mE.Footer = &mF
+
+	mE.Fields = make([]*discordgo.MessageEmbedField, 0)
+
+	for _, l := range tzList {
+		loc, _ := time.LoadLocation(l)
+
+		locName := fmt.Sprintf("%s", loc)
+		timezone := r.In(loc).Format("MST")
+		formatted := r.In(loc).Format("Mon 3:04PM")
+
+		timezone = fmt.Sprintf("%s (%s)", prettyTimezone(locName), timezone)
+
+		mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
+			Name:   timezone,
+			Value:  formatted,
+			Inline: true,
+		})
+		log.Printf("%s %s (%s)", formatted, timezone, loc)
+	}
+
+	mS.Embed = &mE
+
+	s.Dg.ChannelMessageSendComplex(dm.ChannelID, &mS)
+
 	return nil
 }
