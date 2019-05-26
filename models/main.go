@@ -17,11 +17,6 @@ type Subscription struct {
 	Target    string `xml:"target"`
 }
 
-type SubChannel struct {
-	Operation string
-	Sub       Subscription
-}
-
 type LatestVersion struct {
 	Version semver.Version `xml:"version"`
 	Time    time.Time      `xml:"time"`

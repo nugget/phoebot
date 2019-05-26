@@ -1,4 +1,4 @@
-package main
+package hooks
 
 import (
 	"fmt"
@@ -6,14 +6,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/state"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 )
 
-func regTimezones() (t Trigger) {
+func RegTimezones() (t Trigger) {
 	exp := "(?i)((20[0-9][0-9]-[0-1][0-9]-[0-3][0-9] [0-2]?[0-9]:[0-5][0-9]) ([A-Z]+))"
 	t.Regexp = regexp.MustCompile(exp)
-	t.Hook = procTimezones
+	t.Hook = ProcTimezones
 	t.Direct = false
 
 	return t
@@ -68,7 +71,7 @@ func smartLoc(tz string) (loc *time.Location) {
 	return loc
 }
 
-func procTimezones(dm *discordgo.MessageCreate) error {
+func ProcTimezones(s *state.State, dm *discordgo.MessageCreate) error {
 	tzList := []string{
 		"America/Los_Angeles",
 		"America/New_York",
@@ -78,9 +81,9 @@ func procTimezones(dm *discordgo.MessageCreate) error {
 		"Australia/Brisbane",
 	}
 
-	t := regTimezones()
+	t := RegTimezones()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
-	//Dumper(res)
+	phoelib.DebugSlice(res)
 	timeString := res[2] // This is the user-entered time string
 	tzAbbr := res[3]     // This is the user-entered timezone abbreviation
 

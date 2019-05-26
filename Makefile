@@ -6,11 +6,11 @@ gazelle:
 
 phoebot: gazelle
 	clear
-	bazel build phoebot
+	bazel build :phoebot
 
 run: gazelle phoebot
 	clear
-	bazel run phoebot
+	bazel run :phoebot
 
 deploy:
 	bazel run :deploy.apply

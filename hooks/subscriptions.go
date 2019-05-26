@@ -1,32 +1,34 @@
-package main
+package hooks
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/nugget/phoebot/lib/ipc"
+	"github.com/nugget/phoebot/lib/state"
 	"github.com/nugget/phoebot/models"
-	"github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
-func regSubscriptions() (t Trigger) {
+func RegSubscriptions() (t Trigger) {
 	t.Regexp = regexp.MustCompile("(?i)((un)?(sub)(scribe)?) ([^ ]+) ([^ ]+) ?(.*)")
-	t.Hook = procSubscriptions
+	t.Hook = ProcSubscriptions
 	t.Direct = true
 
 	return t
 }
 
-func procSubscriptions(dm *discordgo.MessageCreate) error {
-	t := regSubscriptions()
+func ProcSubscriptions(s *state.State, dm *discordgo.MessageCreate) error {
+	t := RegSubscriptions()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
 	if len(res) == 8 {
 		var err error
 
-		sc := models.SubChannel{}
+		sc := ipc.SubscriptionChannel{}
 
 		xUN := strings.ToLower(res[2])
 		xSUB := strings.ToLower(res[3])
@@ -50,21 +52,21 @@ func procSubscriptions(dm *discordgo.MessageCreate) error {
 				sc.Operation = "ADD"
 			}
 
-			subStream <- sc
+			ipc.SubStream <- sc
 		}
 	}
 	return nil
 }
 
-func regListSubscriptions() (t Trigger) {
+func RegListSubscriptions() (t Trigger) {
 	t.Regexp = regexp.MustCompile("(?i)list subs")
-	t.Hook = procListSubscriptions
+	t.Hook = ProcListSubscriptions
 	t.Direct = true
 
 	return t
 }
 
-func procListSubscriptions(dm *discordgo.MessageCreate) error {
+func ProcListSubscriptions(s *state.State, dm *discordgo.MessageCreate) error {
 	var localSubs []models.Subscription
 
 	for _, v := range s.Subscriptions {

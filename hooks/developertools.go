@@ -1,33 +1,36 @@
-package main
+package hooks
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/state"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 )
 
-func regLoglevel() (t Trigger) {
+func RegLoglevel() (t Trigger) {
 	t.Regexp = regexp.MustCompile("(?i)set loglevel to ([A-Z]+)")
-	t.Hook = procLoglevel
+	t.Hook = ProcLoglevel
 	t.Direct = true
 
 	return t
 }
 
-func procLoglevel(dm *discordgo.MessageCreate) error {
-	t := regLoglevel()
+func ProcLoglevel(s *state.State, dm *discordgo.MessageCreate) error {
+	t := RegLoglevel()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
-	Dumper(res)
+	phoelib.DebugSlice(res)
 
 	reqLevel := strings.ToLower(res[1])
 
 	oldLevel := logrus.GetLevel()
 
-	newLevel, err := LogLevel(reqLevel)
+	newLevel, err := phoelib.LogLevel(reqLevel)
 	if err != nil {
 		logrus.WithError(err).Info("Failed to set LogLevel")
 		s.Dg.ChannelMessageSend(dm.ChannelID, fmt.Sprintf("%s", err))

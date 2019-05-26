@@ -13,10 +13,14 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/nugget/phoebot/hooks"
+	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/nugget/phoebot/lib/ipc"
+	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/state"
 	"github.com/nugget/phoebot/models"
-	"github.com/nugget/phoebot/papermc"
-	"github.com/nugget/phoebot/serverpro"
-	"github.com/nugget/phoebot/state"
+	"github.com/nugget/phoebot/products/papermc"
+	"github.com/nugget/phoebot/products/serverpro"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -27,9 +31,8 @@ var (
 	s              state.State
 	STATEFILE      string
 	msgStream      chan models.DiscordMessage
-	subStream      chan models.SubChannel
 	announceStream chan models.Announcement
-	triggers       []Trigger
+	triggers       []hooks.Trigger
 )
 
 func shutdown() {
@@ -48,12 +51,12 @@ func setupConfig() *viper.Viper {
 
 func processSubStream(s *state.State) {
 	for {
-		d, stillOpen := <-subStream
+		d, stillOpen := <-ipc.SubStream
 
 		logrus.WithFields(logrus.Fields{
 			"data":      d,
 			"stillOpen": stillOpen,
-		}).Debug("subStream message received")
+		}).Debug("SubStream message received")
 
 		if d.Operation == "DROP" {
 			err := s.DropSubscription(d.Sub)
@@ -79,7 +82,7 @@ func processSubStream(s *state.State) {
 
 		err := s.SaveState(STATEFILE)
 		if err != nil {
-			logrus.WithError(err).Error("Unable to write state file from subStream")
+			logrus.WithError(err).Error("Unable to write state file from SubStream")
 		}
 
 		if !stillOpen {
@@ -128,14 +131,6 @@ func processMsgStream() {
 	}
 }
 
-func Dumper(res []string) {
-	logrus.WithField("elements", len(res)).Debug("Dumper contents of 'res' slice:")
-	for i, v := range res {
-		logrus.Debugf("  %d: '%s' (%d)", i, v, len(v))
-	}
-
-}
-
 func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	// This isn't required in this specific example but it's a good practice.
@@ -175,37 +170,32 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	for _, t := range triggers {
 		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
-				t.Hook(dm)
+				t.Hook(&s, dm)
 			}
 		}
 	}
 }
 
-func LogLevel(reqLevel string) (setLevel logrus.Level, err error) {
-	reqLevel = strings.ToLower(reqLevel)
+type hookFunction func(*discordgo.MessageCreate) error
 
-	switch reqLevel {
-	case "trace":
-		setLevel = logrus.TraceLevel
-	case "debug":
-		setLevel = logrus.DebugLevel
-	case "info":
-		setLevel = logrus.InfoLevel
-	case "warn":
-		setLevel = logrus.WarnLevel
-	case "error":
-		setLevel = logrus.ErrorLevel
-	default:
-		return setLevel, fmt.Errorf("Unrecognized log level '%s'", reqLevel)
-	}
+func LoadTriggers() error {
+	// This is the baseline feature you can use to pattern new features you
+	// want to add
+	triggers = append(triggers, hooks.RegTemplate())
+	triggers = append(triggers, hooks.RegLoglevel())
 
-	logrus.SetLevel(setLevel)
+	triggers = append(triggers, hooks.RegSubscriptions())
+	triggers = append(triggers, hooks.RegListSubscriptions())
+	triggers = append(triggers, hooks.RegVersion())
+	triggers = append(triggers, hooks.RegTimezones())
+	triggers = append(triggers, hooks.RegStatus())
 
-	return setLevel, nil
+	return nil
 }
 
 func main() {
 	config := setupConfig()
+	builddata.LogConversational()
 
 	STATEFILE = config.GetString("STATE_FILENAME")
 
@@ -214,7 +204,7 @@ func main() {
 	debugLevel := config.GetString("PHOEBOT_DEBUG")
 
 	if debugLevel != "" {
-		_, err := LogLevel(debugLevel)
+		_, err := phoelib.LogLevel(debugLevel)
 		if err != nil {
 			logrus.WithError(err).Error("Unable to set LogLevel")
 		}
@@ -265,17 +255,17 @@ func main() {
 		"sessionID": s.Dg.State.SessionID,
 	}).Info("Connected to Discord")
 
+	ipc.InitSubStream()
 	msgStream = make(chan models.DiscordMessage)
-	subStream = make(chan models.SubChannel)
 	announceStream = make(chan models.Announcement)
 
 	go processMsgStream()
 	go processSubStream(&s)
 	go processAnnounceStream(&s)
 
-	go s.Looper(announceStream, "server.pro", "Paper", interval, serverpro.LatestVersion)
-	go s.Looper(announceStream, "server.pro", "Vanilla", interval, serverpro.LatestVersion)
-	go s.Looper(announceStream, "PaperMC", "paper", interval, papermc.LatestVersion)
+	go s.ProductPoller(announceStream, "server.pro", "Paper", interval, serverpro.LatestVersion)
+	go s.ProductPoller(announceStream, "server.pro", "Vanilla", interval, serverpro.LatestVersion)
+	go s.ProductPoller(announceStream, "PaperMC", "paper", interval, papermc.LatestVersion)
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}
 

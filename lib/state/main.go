@@ -200,13 +200,13 @@ func (s *State) DedupeProducts() error {
 	return nil
 }
 
-func (s *State) Looper(stream chan models.Announcement, class string, name string, interval int, fn models.LatestVersionFunction) {
+func (s *State) ProductPoller(stream chan models.Announcement, class string, name string, interval int, fn models.LatestVersionFunction) {
 	slew := rand.Intn(10)
 	interval = interval + slew
 
 	p, err := s.GetProduct(class, name)
 	if err != nil {
-		logrus.WithError(err).Error("Looper unable to load product")
+		logrus.WithError(err).Error("Poller unable to load product")
 		return
 	}
 
@@ -214,7 +214,7 @@ func (s *State) Looper(stream chan models.Announcement, class string, name strin
 		"class":         p.Class,
 		"name":          p.Name,
 		"latestVersion": p.Latest.Version,
-	}).Info("New Looper waiting for version")
+	}).Info("New Poller waiting for version")
 
 	for {
 		maxVer, err := fn(p.Name)
