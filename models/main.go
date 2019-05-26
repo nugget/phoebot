@@ -1,11 +1,9 @@
 package models
 
 import (
-	"regexp"
 	"time"
 
 	"github.com/blang/semver"
-	"github.com/bwmarrin/discordgo"
 )
 
 type LatestVersionFunction func(string) (semver.Version, error)
@@ -17,11 +15,6 @@ type Subscription struct {
 	Class     string `xml:"class"`
 	Name      string `xml:"name"`
 	Target    string `xml:"target"`
-}
-
-type SubChannel struct {
-	Operation string
-	Sub       Subscription
 }
 
 type LatestVersion struct {
@@ -44,12 +37,4 @@ type Product struct {
 	Name     string                `xml:"type"`
 	Latest   LatestVersion         `xml:"lastCheck"`
 	Function LatestVersionFunction `xml:"-"`
-}
-
-type HookFunction func(*discordgo.MessageCreate) error
-
-type Trigger struct {
-	Regexp *regexp.Regexp
-	Hook   HookFunction
-	Direct bool
 }

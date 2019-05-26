@@ -5,14 +5,15 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nugget/phoebot/models"
+	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/nugget/phoebot/lib/state"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-func RegStatus() (t models.Trigger) {
+func RegStatus() (t Trigger) {
 	t.Regexp = regexp.MustCompile("status report")
-	t.Hook = procStatus
+	t.Hook = ProcStatus
 	t.Direct = true
 
 	return t
@@ -22,24 +23,24 @@ func uname() string {
 	u := strings.Builder{}
 
 	u.WriteString(fmt.Sprintf("Phoebot/%s (%s)\n",
-		main.VERSION,
-		main.BUILDDATE,
+		builddata.VERSION,
+		builddata.BUILDDATE,
 	))
 
 	u.WriteString(fmt.Sprintf("Built by %s@%s running %s\n",
-		main.BUILDUSER,
-		main.BUILDHOST,
-		main.BUILDENV,
+		builddata.BUILDUSER,
+		builddata.BUILDHOST,
+		builddata.BUILDENV,
 	))
 
 	u.WriteString(fmt.Sprintf("Branch `%s` commit `%s`\n",
-		main.GITBRANCH,
-		main.GITCOMMIT,
+		builddata.GITBRANCH,
+		builddata.GITCOMMIT,
 	))
 
-	if main.BUILDEMBEDLABEL != "" {
+	if builddata.BUILDEMBEDLABEL != "" {
 		u.WriteString(fmt.Sprintf("Label: %s\n",
-			main.BUILDEMBEDLABEL,
+			builddata.BUILDEMBEDLABEL,
 		))
 	}
 
@@ -48,7 +49,7 @@ func uname() string {
 	return u.String()
 }
 
-func ProcStatus(dm *discordgo.MessageCreate) error {
+func ProcStatus(s *state.State, dm *discordgo.MessageCreate) error {
 	s.Dg.ChannelMessageSend(dm.ChannelID, uname())
 	return nil
 }

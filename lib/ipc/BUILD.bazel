@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/nugget/phoebot/models",
+    importpath = "github.com/nugget/phoebot/lib/ipc",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/blang/semver:go_default_library"],
+    deps = ["//models:go_default_library"],
 )

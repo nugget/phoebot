@@ -14,6 +14,8 @@ import (
 	"syscall"
 
 	"github.com/nugget/phoebot/hooks"
+	"github.com/nugget/phoebot/lib/ipc"
+	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/state"
 	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/products/papermc"
@@ -25,12 +27,11 @@ import (
 )
 
 var (
-	PB             state.State
+	s              state.State
 	STATEFILE      string
 	msgStream      chan models.DiscordMessage
-	subStream      chan models.SubChannel
 	announceStream chan models.Announcement
-	triggers       []models.Trigger
+	triggers       []hooks.Trigger
 )
 
 func shutdown() {
@@ -49,22 +50,22 @@ func setupConfig() *viper.Viper {
 
 func processSubStream(s *state.State) {
 	for {
-		d, stillOpen := <-subStream
+		d, stillOpen := <-ipc.SubStream
 
 		logrus.WithFields(logrus.Fields{
 			"data":      d,
 			"stillOpen": stillOpen,
-		}).Debug("subStream message received")
+		}).Debug("SubStream message received")
 
 		if d.Operation == "DROP" {
-			err := PB.DropSubscription(d.Sub)
+			err := s.DropSubscription(d.Sub)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
 					"error": err,
 					"sub":   d.Sub,
 				}).Error("Unable to drop subscription")
 
-				PB.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
+				s.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
 			}
 		} else {
 			err := s.AddSubscription(d.Sub)
@@ -74,13 +75,13 @@ func processSubStream(s *state.State) {
 					"sub":   d.Sub,
 				}).Error("Unable to add subscription")
 
-				PB.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
+				s.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
 			}
 		}
 
-		err := PB.SaveState(STATEFILE)
+		err := s.SaveState(STATEFILE)
 		if err != nil {
-			logrus.WithError(err).Error("Unable to write state file from subStream")
+			logrus.WithError(err).Error("Unable to write state file from SubStream")
 		}
 
 		if !stillOpen {
@@ -104,7 +105,7 @@ func processAnnounceStream(s *state.State) {
 					if sub.Target != "" {
 						d.Message = fmt.Sprintf("%s: %s", sub.Target, d.Message)
 					}
-					PB.Dg.ChannelMessageSend(sub.ChannelID, d.Message)
+					s.Dg.ChannelMessageSend(sub.ChannelID, d.Message)
 				}
 			}
 		}
@@ -168,7 +169,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	for _, t := range triggers {
 		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
-				t.Hook(dm)
+				t.Hook(&s, dm)
 			}
 		}
 	}
@@ -201,7 +202,7 @@ func main() {
 	debugLevel := config.GetString("PHOEBOT_DEBUG")
 
 	if debugLevel != "" {
-		_, err := LogLevel(debugLevel)
+		_, err := phoelib.LogLevel(debugLevel)
 		if err != nil {
 			logrus.WithError(err).Error("Unable to set LogLevel")
 		}
@@ -223,46 +224,46 @@ func main() {
 
 	LoadTriggers()
 
-	PB.Dg, err = discordgo.New("Bot " + discordBotToken)
+	s.Dg, err = discordgo.New("Bot " + discordBotToken)
 	if err != nil {
 		logrus.WithError(err).Fatal("Unable to eonnect to Discord")
 	}
 
-	PB.Dg.AddHandler(messageCreate)
+	s.Dg.AddHandler(messageCreate)
 
-	PB.DedupeProducts()
+	s.DedupeProducts()
 
-	err = PB.LoadProducts(serverpro.Register, serverpro.GetTypes)
+	err = s.LoadProducts(serverpro.Register, serverpro.GetTypes)
 	if err != nil {
 		logrus.WithError(err).Warn("Error loading products from serverpro")
 	}
 
-	err = PB.LoadProducts(papermc.Register, papermc.GetTypes)
+	err = s.LoadProducts(papermc.Register, papermc.GetTypes)
 	if err != nil {
 		logrus.WithError(err).Warn("Error loading products from papermc")
 	}
 
-	err = PB.Dg.Open()
+	err = s.Dg.Open()
 	if err != nil {
 		logrus.WithError(err).Fatal("Error connecting to Discord")
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"user":      PB.Dg.State.User,
-		"sessionID": PB.Dg.State.SessionID,
+		"user":      s.Dg.State.User,
+		"sessionID": s.Dg.State.SessionID,
 	}).Info("Connected to Discord")
 
+	ipc.InitSubStream()
 	msgStream = make(chan models.DiscordMessage)
-	subStream = make(chan models.SubChannel)
 	announceStream = make(chan models.Announcement)
 
 	go processMsgStream()
 	go processSubStream(&s)
 	go processAnnounceStream(&s)
 
-	go PB.ProductPoller(announceStream, "server.pro", "Paper", interval, serverpro.LatestVersion)
-	go PB.ProductPoller(announceStream, "server.pro", "Vanilla", interval, serverpro.LatestVersion)
-	go PB.ProductPoller(announceStream, "PaperMC", "paper", interval, papermc.LatestVersion)
+	go s.ProductPoller(announceStream, "server.pro", "Paper", interval, serverpro.LatestVersion)
+	go s.ProductPoller(announceStream, "server.pro", "Vanilla", interval, serverpro.LatestVersion)
+	go s.ProductPoller(announceStream, "PaperMC", "paper", interval, papermc.LatestVersion)
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}
 
@@ -270,9 +271,9 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	PB.Dg.Close()
+	s.Dg.Close()
 
-	err = PB.SaveState(STATEFILE)
+	err = s.SaveState(STATEFILE)
 	if err != nil {
 		logrus.WithError(err).Error("Unable to write state file")
 	} else {

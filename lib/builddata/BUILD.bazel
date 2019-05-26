@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/nugget/phoebot/lib/builddata",
+    visibility = ["//visibility:public"],
+    x_defs = {
+        "builddata.VERSION": "{GIT_VERSION}",
+        "builddata.GITBRANCH": "{GIT_BRANCH}",
+        "builddata.GITCOMMIT": "{GIT_COMMIT}",
+        "builddata.GOVERSION": "{STABLE_BASEL_VERSION}",
+        "builddata.BUILDENV": "{STABLE_PLATFORM}",
+        "builddata.BUILDEPOCH_STR": "{BUILD_TIMESTAMP}",
+        "builddata.BUILDDATE": "{CURRENT_TIME}",
+        "builddata.BUILDHOST": "{BUILD_HOST}",
+        "builddata.BUILDUSER": "{BUILD_USER}",
+        "builddata.BUILDEMBEDLABEL": "{BUILD_EMBED_LABEL}",
+    },
+)

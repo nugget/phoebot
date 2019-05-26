@@ -20,26 +20,13 @@ gazelle(
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "builddata.go",
-        "main.go",
-    ],
+    srcs = ["main.go"],
     importpath = "github.com/nugget/phoebot",
     visibility = ["//visibility:private"],
-    x_defs = {
-        "main.VERSION": "{GIT_VERSION}",
-        "main.GITBRANCH": "{GIT_BRANCH}",
-        "main.GITCOMMIT": "{GIT_COMMIT}",
-        "main.GOVERSION": "{STABLE_BASEL_VERSION}",
-        "main.BUILDENV": "{STABLE_PLATFORM}",
-        "main.BUILDEPOCH_STR": "{BUILD_TIMESTAMP}",
-        "main.BUILDDATE": "{CURRENT_TIME}",
-        "main.BUILDHOST": "{BUILD_HOST}",
-        "main.BUILDUSER": "{BUILD_USER}",
-        "main.BUILDEMBEDLABEL": "{BUILD_EMBED_LABEL}",
-    },
     deps = [
         "//hooks:go_default_library",
+        "//lib/ipc:go_default_library",
+        "//lib/phoelib:go_default_library",
         "//lib/state:go_default_library",
         "//models:go_default_library",
         "//products/papermc:go_default_library",

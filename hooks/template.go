@@ -3,20 +3,20 @@ package hooks
 import (
 	"regexp"
 
-	"github.com/nugget/phoebot/models"
+	"github.com/nugget/phoebot/lib/state"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-func RegTemplate() (t models.Trigger) {
+func RegTemplate() (t Trigger) {
 	t.Regexp = regexp.MustCompile("xyzzy")
-	t.Hook = procTemplate
+	t.Hook = ProcTemplate
 	t.Direct = true
 
 	return t
 }
 
-func ProcTemplate(dm *discordgo.MessageCreate) error {
+func ProcTemplate(s *state.State, dm *discordgo.MessageCreate) error {
 	// Uncomment these lines if you need to pull out substrings from
 	// the original hook regular expression.
 	//
