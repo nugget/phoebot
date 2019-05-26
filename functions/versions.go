@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/nugget/phoebot/models"
+
 	"github.com/blang/semver"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 )
 
-func regVersion() (t Trigger) {
+func RegVersion() (t models.Trigger) {
 	t.Regexp = regexp.MustCompile("version report")
 	t.Hook = procVersion
 	t.Direct = true
@@ -17,7 +19,7 @@ func regVersion() (t Trigger) {
 	return t
 }
 
-func procVersion(dm *discordgo.MessageCreate) error {
+func ProcVersion(dm *discordgo.MessageCreate) error {
 	cutoff := semver.MustParse("0.0.0")
 	logrus.WithField("cutoff", cutoff).Debug("Ignoring products older than this")
 

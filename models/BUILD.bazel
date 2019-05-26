@@ -5,5 +5,8 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/nugget/phoebot/models",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/blang/semver:go_default_library"],
+    deps = [
+        "//vendor/github.com/blang/semver:go_default_library",
+        "//vendor/github.com/bwmarrin/discordgo:go_default_library",
+    ],
 )

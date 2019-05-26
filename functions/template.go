@@ -3,10 +3,12 @@ package main
 import (
 	"regexp"
 
+	"github.com/nugget/phoebot/models"
+
 	"github.com/bwmarrin/discordgo"
 )
 
-func regTemplate() (t Trigger) {
+func RegTemplate() (t models.Trigger) {
 	t.Regexp = regexp.MustCompile("xyzzy")
 	t.Hook = procTemplate
 	t.Direct = true
@@ -14,11 +16,11 @@ func regTemplate() (t Trigger) {
 	return t
 }
 
-func procTemplate(dm *discordgo.MessageCreate) error {
+func ProcTemplate(dm *discordgo.MessageCreate) error {
 	// Uncomment these lines if you need to pull out substrings from
 	// the original hook regular expression.
 	//
-	// t := regTemplate()
+	// t := RegTemplate()
 	//res := t.Regexp.FindStringSubmatch(dm.Content)
 	//
 

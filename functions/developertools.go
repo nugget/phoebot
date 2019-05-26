@@ -5,20 +5,22 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/nugget/phoebot/models"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 )
 
-func regLoglevel() (t Trigger) {
+func RegLoglevel() (t models.Trigger) {
 	t.Regexp = regexp.MustCompile("(?i)set loglevel to ([A-Z]+)")
-	t.Hook = procLoglevel
+	t.Hook = ProcLoglevel
 	t.Direct = true
 
 	return t
 }
 
-func procLoglevel(dm *discordgo.MessageCreate) error {
-	t := regLoglevel()
+func ProcLoglevel(dm *discordgo.MessageCreate) error {
+	t := RegLoglevel()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
 	Dumper(res)

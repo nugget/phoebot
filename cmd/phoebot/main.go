@@ -13,10 +13,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/nugget/phoebot/lib/state"
 	"github.com/nugget/phoebot/models"
-	"github.com/nugget/phoebot/papermc"
-	"github.com/nugget/phoebot/serverpro"
-	"github.com/nugget/phoebot/state"
+	"github.com/nugget/phoebot/products/papermc"
+	"github.com/nugget/phoebot/products/serverpro"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -29,7 +29,7 @@ var (
 	msgStream      chan models.DiscordMessage
 	subStream      chan models.SubChannel
 	announceStream chan models.Announcement
-	triggers       []Trigger
+	triggers       []models.Trigger
 )
 
 func shutdown() {

@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/nugget/phoebot/models"
-	"github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
-func regSubscriptions() (t Trigger) {
+func RegSubscriptions() (t Trigger) {
 	t.Regexp = regexp.MustCompile("(?i)((un)?(sub)(scribe)?) ([^ ]+) ([^ ]+) ?(.*)")
 	t.Hook = procSubscriptions
 	t.Direct = true
@@ -19,8 +19,8 @@ func regSubscriptions() (t Trigger) {
 	return t
 }
 
-func procSubscriptions(dm *discordgo.MessageCreate) error {
-	t := regSubscriptions()
+func ProcSubscriptions(dm *discordgo.MessageCreate) error {
+	t := RegSubscriptions()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
 	if len(res) == 8 {

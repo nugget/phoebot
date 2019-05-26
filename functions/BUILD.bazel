@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "developertools.go",
+        "pbf_timezones.go",
+        "status.go",
+        "subscriptions.go",
+        "template.go",
+        "versions.go",
+    ],
+    importpath = "github.com/nugget/phoebot/functions",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/state:go_default_library",
+        "//models:go_default_library",
+        "//vendor/github.com/blang/semver:go_default_library",
+        "//vendor/github.com/bwmarrin/discordgo:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "functions",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
