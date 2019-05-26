@@ -2,7 +2,7 @@
 
 BEGIN;
 
-    CREATE EXTENSION pgcrypto;
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
     CREATE TABLE config (
         added timestamp(0) NOT NULL DEFAULT current_timestamp,
@@ -15,29 +15,31 @@ BEGIN;
     GRANT SELECT, UPDATE ON config TO phoebot;
 
 
-    CREATE TABLE user (
+    CREATE TABLE player (
         added timestamp(0) NOT NULL DEFAULT current_timestamp,
         changed timestamp(0) NOT NULL DEFAULT current_timestamp,
-        userID varchar NOT NULL,
+        playerID varchar NOT NULL,
         minecraftUUID uuid,
+        minecraftName varchar,
+        email varchar,
         timezone varchar,
         ignored boolean NOT NULL DEFAULT FALSE,
-        PRIMARY KEY(userID)
+        PRIMARY KEY(playerID)
     );
 
-    GRANT SELECT, INSERT, UPDATE ON user TO phoebot;
+    GRANT SELECT, INSERT, UPDATE ON player TO phoebot;
 
 
     CREATE TABLE acl (
         added timestamp(0) NOT NULL DEFAULT current_timestamp,
         changed timestamp(0) NOT NULL DEFAULT current_timestamp,
         deleted timestamp(0),
-        userID varchar NOT NULL REFERENCES user.userID,
+        playerID varchar NOT NULL REFERENCES player (playerID),
         key varchar NOT NULL,
-        PRIMARY KEY(userID, key)
+        PRIMARY KEY(playerID, key)
     );
 
-    GRANT SELECT, INSERT, UPDATE ON user TO phoebot;
+    GRANT SELECT, INSERT, UPDATE ON acl TO phoebot;
 
 
     CREATE TABLE subscription (
@@ -49,6 +51,7 @@ BEGIN;
         class varchar NOT NULL,
         name varchar NOT NULL,
         target varchar,
+        playerID varchar NOT NULL REFERENCES player (playerID),
         PRIMARY KEY(subscriptionID)
     );
 
@@ -63,7 +66,7 @@ BEGIN;
         name varchar NOT NULL,
         version varchar NOT NULL,
         PRIMARY KEY(class, name)
-    )
+    );
 
     GRANT SELECT, INSERT, UPDATE ON product TO phoebot;
 

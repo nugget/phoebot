@@ -2,6 +2,10 @@
 
 BEGIN;
 
--- XXX Add DDLs here.
+    DROP TABLE config;
+    DROP TABLE player;
+    DROP TABLE acl;
+    DROP TABLE subscription;
+    DROP TABLE product;
 
 COMMIT;
