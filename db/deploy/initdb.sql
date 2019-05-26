@@ -11,7 +11,7 @@ BEGIN;
         value varchar,
         PRIMARY KEY(key)
     );
-
+    CREATE TRIGGER onupdate BEFORE UPDATE ON config FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
     GRANT SELECT, UPDATE ON config TO phoebot;
 
 
@@ -26,7 +26,7 @@ BEGIN;
         ignored boolean NOT NULL DEFAULT FALSE,
         PRIMARY KEY(playerID)
     );
-
+    CREATE TRIGGER player BEFORE UPDATE ON config FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
     GRANT SELECT, INSERT, UPDATE ON player TO phoebot;
 
 
@@ -38,7 +38,7 @@ BEGIN;
         key varchar NOT NULL,
         PRIMARY KEY(playerID, key)
     );
-
+    CREATE TRIGGER acl BEFORE UPDATE ON config FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
     GRANT SELECT, INSERT, UPDATE ON acl TO phoebot;
 
 
@@ -54,7 +54,7 @@ BEGIN;
         playerID varchar NOT NULL REFERENCES player (playerID),
         PRIMARY KEY(subscriptionID)
     );
-
+    CREATE TRIGGER subscription BEFORE UPDATE ON config FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
     GRANT SELECT, INSERT, UPDATE ON subscription TO phoebot;
 
 
@@ -67,6 +67,7 @@ BEGIN;
         version varchar NOT NULL,
         PRIMARY KEY(class, name)
     );
+    CREATE TRIGGER product BEFORE UPDATE ON config FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
 
     GRANT SELECT, INSERT, UPDATE ON product TO phoebot;
 
