@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/nugget/phoebot"
 	"github.com/nugget/phoebot/models"
 
 	"github.com/bwmarrin/discordgo"
@@ -23,16 +24,16 @@ func ProcLoglevel(dm *discordgo.MessageCreate) error {
 	t := RegLoglevel()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
-	Dumper(res)
+	phoebot.DebugSlice(res)
 
 	reqLevel := strings.ToLower(res[1])
 
 	oldLevel := logrus.GetLevel()
 
-	newLevel, err := LogLevel(reqLevel)
+	newLevel, err := phoebot.LogLevel(reqLevel)
 	if err != nil {
 		logrus.WithError(err).Info("Failed to set LogLevel")
-		s.Dg.ChannelMessageSend(dm.ChannelID, fmt.Sprintf("%s", err))
+		main.PB.Dg.ChannelMessageSend(dm.ChannelID, fmt.Sprintf("%s", err))
 		return err
 	}
 
@@ -44,7 +45,7 @@ func ProcLoglevel(dm *discordgo.MessageCreate) error {
 	}
 
 	message := fmt.Sprintf("Console logging level is '%s'", reqLevel)
-	s.Dg.ChannelMessageSend(dm.ChannelID, message)
+	main.PB.Dg.ChannelMessageSend(dm.ChannelID, message)
 
 	return nil
 }

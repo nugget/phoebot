@@ -82,7 +82,7 @@ func ProcTimezones(dm *discordgo.MessageCreate) error {
 
 	t := RegTimezones()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
-	//Dumper(res)
+	phoebot.DebugSlice(res)
 	timeString := res[2] // This is the user-entered time string
 	tzAbbr := res[3]     // This is the user-entered timezone abbreviation
 

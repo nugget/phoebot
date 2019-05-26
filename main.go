@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/state"
 	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/products/papermc"
@@ -24,7 +25,7 @@ import (
 )
 
 var (
-	s              state.State
+	PB             state.State
 	STATEFILE      string
 	msgStream      chan models.DiscordMessage
 	subStream      chan models.SubChannel
@@ -56,14 +57,14 @@ func processSubStream(s *state.State) {
 		}).Debug("subStream message received")
 
 		if d.Operation == "DROP" {
-			err := s.DropSubscription(d.Sub)
+			err := PB.DropSubscription(d.Sub)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
 					"error": err,
 					"sub":   d.Sub,
 				}).Error("Unable to drop subscription")
 
-				s.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
+				PB.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
 			}
 		} else {
 			err := s.AddSubscription(d.Sub)
@@ -73,11 +74,11 @@ func processSubStream(s *state.State) {
 					"sub":   d.Sub,
 				}).Error("Unable to add subscription")
 
-				s.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
+				PB.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
 			}
 		}
 
-		err := s.SaveState(STATEFILE)
+		err := PB.SaveState(STATEFILE)
 		if err != nil {
 			logrus.WithError(err).Error("Unable to write state file from subStream")
 		}
@@ -103,7 +104,7 @@ func processAnnounceStream(s *state.State) {
 					if sub.Target != "" {
 						d.Message = fmt.Sprintf("%s: %s", sub.Target, d.Message)
 					}
-					s.Dg.ChannelMessageSend(sub.ChannelID, d.Message)
+					PB.Dg.ChannelMessageSend(sub.ChannelID, d.Message)
 				}
 			}
 		}
@@ -126,14 +127,6 @@ func processMsgStream() {
 			return
 		}
 	}
-}
-
-func Dumper(res []string) {
-	logrus.WithField("elements", len(res)).Debug("Dumper contents of 'res' slice:")
-	for i, v := range res {
-		logrus.Debugf("  %d: '%s' (%d)", i, v, len(v))
-	}
-
 }
 
 func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
@@ -179,29 +172,6 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 			}
 		}
 	}
-}
-
-func LogLevel(reqLevel string) (setLevel logrus.Level, err error) {
-	reqLevel = strings.ToLower(reqLevel)
-
-	switch reqLevel {
-	case "trace":
-		setLevel = logrus.TraceLevel
-	case "debug":
-		setLevel = logrus.DebugLevel
-	case "info":
-		setLevel = logrus.InfoLevel
-	case "warn":
-		setLevel = logrus.WarnLevel
-	case "error":
-		setLevel = logrus.ErrorLevel
-	default:
-		return setLevel, fmt.Errorf("Unrecognized log level '%s'", reqLevel)
-	}
-
-	logrus.SetLevel(setLevel)
-
-	return setLevel, nil
 }
 
 type hookFunction func(*discordgo.MessageCreate) error
@@ -253,33 +223,33 @@ func main() {
 
 	LoadTriggers()
 
-	s.Dg, err = discordgo.New("Bot " + discordBotToken)
+	PB.Dg, err = discordgo.New("Bot " + discordBotToken)
 	if err != nil {
 		logrus.WithError(err).Fatal("Unable to eonnect to Discord")
 	}
 
-	s.Dg.AddHandler(messageCreate)
+	PB.Dg.AddHandler(messageCreate)
 
-	s.DedupeProducts()
+	PB.DedupeProducts()
 
-	err = s.LoadProducts(serverpro.Register, serverpro.GetTypes)
+	err = PB.LoadProducts(serverpro.Register, serverpro.GetTypes)
 	if err != nil {
 		logrus.WithError(err).Warn("Error loading products from serverpro")
 	}
 
-	err = s.LoadProducts(papermc.Register, papermc.GetTypes)
+	err = PB.LoadProducts(papermc.Register, papermc.GetTypes)
 	if err != nil {
 		logrus.WithError(err).Warn("Error loading products from papermc")
 	}
 
-	err = s.Dg.Open()
+	err = PB.Dg.Open()
 	if err != nil {
 		logrus.WithError(err).Fatal("Error connecting to Discord")
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"user":      s.Dg.State.User,
-		"sessionID": s.Dg.State.SessionID,
+		"user":      PB.Dg.State.User,
+		"sessionID": PB.Dg.State.SessionID,
 	}).Info("Connected to Discord")
 
 	msgStream = make(chan models.DiscordMessage)
@@ -290,9 +260,9 @@ func main() {
 	go processSubStream(&s)
 	go processAnnounceStream(&s)
 
-	go s.Looper(announceStream, "server.pro", "Paper", interval, serverpro.LatestVersion)
-	go s.Looper(announceStream, "server.pro", "Vanilla", interval, serverpro.LatestVersion)
-	go s.Looper(announceStream, "PaperMC", "paper", interval, papermc.LatestVersion)
+	go PB.ProductPoller(announceStream, "server.pro", "Paper", interval, serverpro.LatestVersion)
+	go PB.ProductPoller(announceStream, "server.pro", "Vanilla", interval, serverpro.LatestVersion)
+	go PB.ProductPoller(announceStream, "PaperMC", "paper", interval, papermc.LatestVersion)
 
 	// msgStream <- DiscordMessage{"Moo", "Cow"}
 
@@ -300,9 +270,9 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	s.Dg.Close()
+	PB.Dg.Close()
 
-	err = s.SaveState(STATEFILE)
+	err = PB.SaveState(STATEFILE)
 	if err != nil {
 		logrus.WithError(err).Error("Unable to write state file")
 	} else {

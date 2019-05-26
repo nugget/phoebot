@@ -23,7 +23,6 @@ go_library(
     srcs = [
         "builddata.go",
         "main.go",
-        "parse.go",
     ],
     importpath = "github.com/nugget/phoebot",
     visibility = ["//visibility:private"],
@@ -40,12 +39,12 @@ go_library(
         "main.BUILDEMBEDLABEL": "{BUILD_EMBED_LABEL}",
     },
     deps = [
+        "//hooks:go_default_library",
         "//lib/state:go_default_library",
         "//models:go_default_library",
         "//products/papermc:go_default_library",
         "//products/serverpro:go_default_library",
         "//vendor/github.com/bwmarrin/discordgo:go_default_library",
-        "//vendor/github.com/nugget/phoebot/functions:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
         "//vendor/github.com/spf13/viper:go_default_library",
     ],
