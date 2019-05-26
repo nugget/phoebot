@@ -1,4 +1,4 @@
-package phoebot
+package phoelib
 
 import (
 	"fmt"
