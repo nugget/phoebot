@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/nugget/phoebot/hooks"
+	"github.com/nugget/phoebot/lib/builddata"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/state"
@@ -194,6 +195,7 @@ func LoadTriggers() error {
 
 func main() {
 	config := setupConfig()
+	builddata.LogConversational()
 
 	STATEFILE = config.GetString("STATE_FILENAME")
 

@@ -25,6 +25,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//hooks:go_default_library",
+        "//lib/builddata:go_default_library",
         "//lib/ipc:go_default_library",
         "//lib/phoelib:go_default_library",
         "//lib/state:go_default_library",
