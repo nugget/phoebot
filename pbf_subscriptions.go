@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -52,5 +53,51 @@ func procSubscriptions(dm *discordgo.MessageCreate) error {
 			subStream <- sc
 		}
 	}
+	return nil
+}
+
+func regListSubscriptions() (t Trigger) {
+	t.Regexp = regexp.MustCompile("(?i)list subs")
+	t.Hook = procListSubscriptions
+	t.Direct = true
+
+	return t
+}
+
+func procListSubscriptions(dm *discordgo.MessageCreate) error {
+	var localSubs []models.Subscription
+
+	for _, v := range s.Subscriptions {
+		if v.ChannelID == dm.ChannelID {
+			localSubs = append(localSubs, v)
+		}
+	}
+
+	subCount := len(localSubs)
+	logrus.WithField("subCount", subCount).Info("Active subscription count")
+
+	if subCount == 0 {
+		s.Dg.ChannelMessageSend(dm.ChannelID, "I don't have any subscriptions for this channel")
+		return nil
+	}
+
+	u := strings.Builder{}
+
+	u.WriteString("This channel is set up to receive announcements for:\n")
+
+	for _, v := range localSubs {
+		subDesc := fmt.Sprintf(" * %s %s", v.Class, v.Name)
+
+		cleanTarget := strings.Replace(v.Target, "@", "", -1)
+
+		if cleanTarget != "" {
+			subDesc = fmt.Sprintf("%s (to %s)", subDesc, cleanTarget)
+		}
+
+		u.WriteString(fmt.Sprintf("%s\n", subDesc))
+	}
+
+	s.Dg.ChannelMessageSend(dm.ChannelID, u.String())
+
 	return nil
 }
