@@ -6,9 +6,9 @@ go_library(
     importpath = "github.com/nugget/phoebot/lib/builddata",
     visibility = ["//visibility:public"],
     x_defs = {
-        "VERSION": "{GIT_VERSION}",
-        "GITBRANCH": "{GIT_BRANCH}",
-        "GITCOMMIT": "{GIT_COMMIT}",
+        "VERSION": "{STABLE_GIT_VERSION}",
+        "GITBRANCH": "{STABLE_GIT_BRANCH}",
+        "GITCOMMIT": "{STABLE_GIT_COMMIT}",
         "GOVERSION": "{STABLE_BASEL_VERSION}",
         "BUILDENV": "{STABLE_PLATFORM}",
         "BUILDEPOCH_STR": "{BUILD_TIMESTAMP}",
