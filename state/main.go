@@ -67,9 +67,11 @@ func (s *State) SubscriptionExists(sub models.Subscription) bool {
 
 func (s *State) AddSubscription(sub models.Subscription) error {
 	if sub.Class == "" || sub.Name == "" {
-		return fmt.Errorf("Cannot add malformed subscription: %s/%s", sub.Class, sub.Name)
+		return fmt.Errorf("'%s' '%s' doesn't look like a real thing to me.", sub.Class, sub.Name)
 	} else {
-		if !s.SubscriptionExists(sub) {
+		if s.SubscriptionExists(sub) {
+			return fmt.Errorf("A subscription for %s/%s already exists for this channel", sub.Class, sub.Name)
+		} else {
 			s.Subscriptions = append(s.Subscriptions, sub)
 			message := fmt.Sprintf("You are now subscribed to receive updates to this channel for %s releases from %s", sub.Name, sub.Class)
 			s.Dg.ChannelMessageSend(sub.ChannelID, message)
@@ -112,23 +114,6 @@ func (s *State) DropSubscription(sub models.Subscription) error {
 	s.Subscriptions = newSubs
 
 	logrus.WithField("subCount", len(s.Subscriptions)).Debug("Active subscription count")
-
-	return nil
-}
-
-func (s *State) ListSubscriptions() error {
-	logrus.WithField("subCount", len(s.Subscriptions)).Info("Active subscription count")
-	for i, v := range s.Subscriptions {
-		channel, _ := s.Dg.State.Channel(v.ChannelID)
-
-		logrus.WithFields(logrus.Fields{
-			"channelID":   v.ChannelID,
-			"channelName": channel.Name,
-			"class":       v.Class,
-			"name":        v.Name,
-			"target":      v.Target,
-		}).Infof("Subscription %d", i)
-	}
 
 	return nil
 }

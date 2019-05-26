@@ -21,6 +21,7 @@ func LoadTriggers() error {
 	triggers = append(triggers, regLoglevel())
 
 	triggers = append(triggers, regSubscriptions())
+	triggers = append(triggers, regListSubscriptions())
 	triggers = append(triggers, regVersion())
 	triggers = append(triggers, regTimezones())
 	triggers = append(triggers, regStatus())

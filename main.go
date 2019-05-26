@@ -62,6 +62,8 @@ func processSubStream(s *state.State) {
 					"error": err,
 					"sub":   d.Sub,
 				}).Error("Unable to drop subscription")
+
+				s.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
 			}
 		} else {
 			err := s.AddSubscription(d.Sub)
@@ -70,6 +72,8 @@ func processSubStream(s *state.State) {
 					"error": err,
 					"sub":   d.Sub,
 				}).Error("Unable to add subscription")
+
+				s.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
 			}
 		}
 

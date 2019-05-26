@@ -43,6 +43,9 @@ optional recipient `@here`
 
 You can turn this off by issuing an `unsubscribe` command.
 
+You can see what subscriptions exist for a channel by using the `list
+subscriptions` command.
+
 We will be adding more sources and products over time, including things like
 popular data packs and add-ons.
 
