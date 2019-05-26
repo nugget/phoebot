@@ -30,7 +30,11 @@ subscribe <source> <product> [ optional recipient ]
 So, for example, in the `#chatter` window you could say:
 
 ```
-@Phoebot subscribe server.pro paper @here
+@Phoebot subscribe serverpro paper @here
+
+@Phoebot subscribe papermc paper
+
+@Pohebot subscribe serverpro vanilla
 ```
 
 This would add a subscription to that specific channel, and whenever a new
