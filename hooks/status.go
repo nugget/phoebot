@@ -1,11 +1,10 @@
-package main
+package hooks
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
 
-	"github.com/nugget/phoebot/lib/state"
 	"github.com/nugget/phoebot/models"
 
 	"github.com/bwmarrin/discordgo"
@@ -23,24 +22,24 @@ func uname() string {
 	u := strings.Builder{}
 
 	u.WriteString(fmt.Sprintf("Phoebot/%s (%s)\n",
-		state.VERSION,
-		state.BUILDDATE,
+		main.VERSION,
+		main.BUILDDATE,
 	))
 
 	u.WriteString(fmt.Sprintf("Built by %s@%s running %s\n",
-		state.BUILDUSER,
-		state.BUILDHOST,
-		state.BUILDENV,
+		main.BUILDUSER,
+		main.BUILDHOST,
+		main.BUILDENV,
 	))
 
 	u.WriteString(fmt.Sprintf("Branch `%s` commit `%s`\n",
-		state.GITBRANCH,
-		state.GITCOMMIT,
+		main.GITBRANCH,
+		main.GITCOMMIT,
 	))
 
-	if state.BUILDEMBEDLABEL != "" {
+	if main.BUILDEMBEDLABEL != "" {
 		u.WriteString(fmt.Sprintf("Label: %s\n",
-			state.BUILDEMBEDLABEL,
+			main.BUILDEMBEDLABEL,
 		))
 	}
 

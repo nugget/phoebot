@@ -204,6 +204,23 @@ func LogLevel(reqLevel string) (setLevel logrus.Level, err error) {
 	return setLevel, nil
 }
 
+type hookFunction func(*discordgo.MessageCreate) error
+
+func LoadTriggers() error {
+	// This is the baseline feature you can use to pattern new features you
+	// want to add
+	triggers = append(triggers, hooks.RegTemplate())
+	triggers = append(triggers, hooks.RegLoglevel())
+
+	triggers = append(triggers, hooks.RegSubscriptions())
+	triggers = append(triggers, hooks.RegListSubscriptions())
+	triggers = append(triggers, hooks.RegVersion())
+	triggers = append(triggers, hooks.RegTimezones())
+	triggers = append(triggers, hooks.RegStatus())
+
+	return nil
+}
+
 func main() {
 	config := setupConfig()
 

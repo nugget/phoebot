@@ -1,4 +1,4 @@
-package state
+package main
 
 // These values are populated by Bazel during the build process.  There is
 // no longer a required `go generate` step to populate these values.  If you
