@@ -3,11 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/nugget/phoebot/lib/state",
+    importpath = "github.com/nugget/phoebot/lib/subscriptions",
     visibility = ["//visibility:public"],
     deps = [
         "//models:go_default_library",
-        "//vendor/github.com/bwmarrin/discordgo:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )

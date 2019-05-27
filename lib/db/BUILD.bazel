@@ -8,6 +8,5 @@ go_library(
     deps = [
         "//lib/builddata:go_default_library",
         "//vendor/github.com/lib/pq:go_default_library",
-        "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )

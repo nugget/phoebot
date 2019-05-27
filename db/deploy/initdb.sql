@@ -51,7 +51,6 @@ BEGIN;
         class varchar NOT NULL,
         name varchar NOT NULL,
         target varchar,
-        playerID varchar NOT NULL REFERENCES player (playerID),
         PRIMARY KEY(subscriptionID)
     );
     CREATE TRIGGER subscription BEFORE UPDATE ON config FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
