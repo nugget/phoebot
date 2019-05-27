@@ -6,6 +6,7 @@ import (
 
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
+	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/models"
 
 	"github.com/sirupsen/logrus"
@@ -28,6 +29,7 @@ func GetMatching(class, name string) (sList []models.Subscription, err error) {
 			  WHERE deleted IS NULL AND
 			        class ILIKE $1 AND name ILIKE $2`
 
+	phoelib.LogSQL(query, class, name)
 	rows, err := db.DB.Query(query, class, name)
 	if err != nil {
 		return sList, err

@@ -229,16 +229,6 @@ func main() {
 
 	discord.Session.AddHandler(messageCreate)
 
-	err = products.LoadProducts(serverpro.Register, serverpro.GetTypes)
-	if err != nil {
-		logrus.WithError(err).Warn("Error loading products from serverpro")
-	}
-
-	err = products.LoadProducts(papermc.Register, papermc.GetTypes)
-	if err != nil {
-		logrus.WithError(err).Warn("Error loading products from papermc")
-	}
-
 	err = discord.Session.Open()
 	if err != nil {
 		logrus.WithError(err).Fatal("Error connecting to Discord")

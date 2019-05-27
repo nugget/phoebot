@@ -7,6 +7,8 @@ import (
 
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
+	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
 
 	"github.com/bwmarrin/discordgo"
@@ -25,6 +27,8 @@ func ProcSubscriptions(dm *discordgo.MessageCreate) error {
 	t := RegSubscriptions()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
+	phoelib.DebugSlice(res)
+
 	if len(res) == 8 {
 		var err error
 
@@ -36,27 +40,25 @@ func ProcSubscriptions(dm *discordgo.MessageCreate) error {
 		class := res[5]
 		name := res[6]
 
-		pList, err := subscriptions.GetMatching(class, name)
+		p, err := products.GetProduct(class, name)
 		if err != nil {
-			logrus.WithError(err).Warn("Unable to get matching subscriptions")
+			logrus.WithError(err).Info("Unable to get matching product")
 			discord.Session.ChannelMessageSend(dm.ChannelID, "I've never heard of that one, sorry.")
 			return nil
 		}
 
-		for _, p := range pList {
-			sc.Sub.ChannelID = dm.ChannelID
-			sc.Sub.Class = p.Class
-			sc.Sub.Name = p.Name
-			sc.Sub.Target = res[7]
+		sc.Sub.ChannelID = dm.ChannelID
+		sc.Sub.Class = p.Class
+		sc.Sub.Name = p.Name
+		sc.Sub.Target = res[7]
 
-			if xUN == "un" {
-				sc.Operation = "DROP"
-			} else if xSUB == "sub" {
-				sc.Operation = "ADD"
-			}
-
-			ipc.SubStream <- sc
+		if xUN == "un" {
+			sc.Operation = "DROP"
+		} else if xSUB == "sub" {
+			sc.Operation = "ADD"
 		}
+
+		ipc.SubStream <- sc
 	}
 	return nil
 }
