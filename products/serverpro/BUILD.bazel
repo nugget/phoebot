@@ -6,6 +6,8 @@ go_library(
     importpath = "github.com/nugget/phoebot/products/serverpro",
     visibility = ["//visibility:public"],
     deps = [
+        "//lib/ipc:go_default_library",
+        "//lib/products:go_default_library",
         "//models:go_default_library",
         "//vendor/github.com/blang/semver:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",

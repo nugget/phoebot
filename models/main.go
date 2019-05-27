@@ -27,11 +27,6 @@ type DiscordMessage struct {
 	Message   string
 }
 
-type Announcement struct {
-	Product Product
-	Message string
-}
-
 type Product struct {
 	Class    string
 	Name     string

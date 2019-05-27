@@ -45,5 +45,5 @@ func LogSQL(query string, args ...string) {
 	logrus.WithFields(logrus.Fields{
 		"query": query,
 		"args":  args,
-	}).Debug("Executing SQL Query")
+	}).Trace("Executing SQL Query")
 }

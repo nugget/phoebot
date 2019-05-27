@@ -9,9 +9,13 @@ package serverpro
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/nugget/phoebot/lib/ipc"
+	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/models"
 
 	"github.com/blang/semver"
@@ -81,7 +85,7 @@ func GetTypes() (types []string, err error) {
 }
 
 func LatestVersion(serverType string) (semver.Version, error) {
-	latestVersion := semver.MustParse("0.0.1")
+	latestVersion := semver.MustParse("0.0.0")
 
 	body, err := getXML()
 	if err != nil {
@@ -91,8 +95,18 @@ func LatestVersion(serverType string) (semver.Version, error) {
 	server := gjson.Get(body, fmt.Sprintf("mc.%s", serverType))
 
 	server.ForEach(func(key, value gjson.Result) bool {
-		v, err := semver.ParseTolerant(key.String())
+		keyString := strings.Split(key.String(), " ")[0]
+		logrus.WithField("keyString", keyString).Trace("evaluating version")
+
+		v, err := semver.ParseTolerant(keyString)
 		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"serverType": serverType,
+				"err":        err,
+				"key":        key.String(),
+				"keyString":  keyString,
+			}).Debug("ParseTolerant failed")
+
 			return false
 		}
 
@@ -103,5 +117,79 @@ func LatestVersion(serverType string) (semver.Version, error) {
 		return true
 	})
 
+	logrus.WithField("latestVersion", latestVersion).Trace("LatestVersion exiting")
 	return latestVersion, nil
+}
+
+func UpdateAllVersions() error {
+	body, err := getXML()
+	if err != nil {
+		return err
+	}
+
+	plist := gjson.Get(body, "mc")
+
+	plist.ForEach(func(key, value gjson.Result) bool {
+		oldVersion, err := products.GetProduct(CLASS, key.String())
+		logrus.WithFields(logrus.Fields{
+			"oldVersion": oldVersion,
+			"error":      err,
+		}).Trace("UAV Foreach OldVersion")
+
+		p := models.Product{}
+
+		p.Class = CLASS
+		p.Name = key.String()
+		p.Latest.Time = time.Now()
+
+		logrus.WithField("p", p).Trace("Interval breadcrumb 0")
+
+		p.Latest.Version, err = LatestVersion(p.Name)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"err":   err,
+				"key":   key,
+				"value": value,
+			}).Error("UAV LatestVersion failed")
+			return false
+		}
+
+		logrus.WithField("p", p).Trace("Interval breadcrumb 1")
+
+		if p.Latest.Version.GT(oldVersion.Latest.Version) {
+			logrus.WithField("p", p).Trace("Sending announcement")
+			ipc.AnnounceStream <- p
+		}
+
+		logrus.WithField("p", p).Trace("Interval breadcrumb 2")
+		err = products.PutProduct(p)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"err": err,
+				"key": key,
+			}).Error("UAV PutProduct failed")
+
+			return false
+		}
+
+		return true
+	})
+
+	return nil
+}
+
+func Poller(interval int) {
+	slew := rand.Intn(10)
+	interval = interval + slew
+
+	for {
+		logrus.Debug(fmt.Sprintf("Running %s Poller", CLASS))
+
+		err := UpdateAllVersions()
+		if err != nil {
+			logrus.WithError(err).Error("serverpro.UpdateAllVersions failed")
+		}
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
+
 }

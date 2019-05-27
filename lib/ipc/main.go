@@ -2,6 +2,7 @@ package ipc
 
 import (
 	"github.com/nugget/phoebot/models"
+	"github.com/sirupsen/logrus"
 )
 
 type SubscriptionChannel struct {
@@ -11,10 +12,17 @@ type SubscriptionChannel struct {
 }
 
 var (
-	SubStream chan SubscriptionChannel
+	SubStream      chan SubscriptionChannel
+	AnnounceStream chan models.Product
+	MsgStream      chan models.DiscordMessage
 )
 
-func InitSubStream() error {
+func InitStreams() error {
+	logrus.Debug("Initializing ipc streams")
+
 	SubStream = make(chan SubscriptionChannel)
+	MsgStream = make(chan models.DiscordMessage)
+	AnnounceStream = make(chan models.Product)
+
 	return nil
 }

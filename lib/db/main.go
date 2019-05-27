@@ -3,9 +3,11 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
 
 	"github.com/lib/pq"
 	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -17,6 +19,17 @@ func Connect(URIstring string) error {
 	if err != nil {
 		return err
 	}
+
+	u, err := url.Parse(URIstring)
+	if err != nil {
+		return err
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"host":     u.Host,
+		"user":     u.User.Username(),
+		"database": u.Path,
+	}).Info("Connecting to database")
 
 	appName := fmt.Sprintf("Phoebot %s", builddata.VERSION)
 

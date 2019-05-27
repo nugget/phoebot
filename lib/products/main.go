@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/models"
 
@@ -65,8 +66,6 @@ func GetProduct(class, name string) (p models.Product, err error) {
 			return p, err
 		}
 
-		logrus.WithField("rec", r).Debug("GetProduct Matched")
-
 		p, err = ProductRecToStruct(r)
 		return p, err
 	}
@@ -81,6 +80,7 @@ func GetImportant() (pList []models.Product, err error) {
 			  WHERE deleted IS NULL`
 
 	rows, err := db.DB.Query(query)
+
 	if err != nil {
 		return pList, err
 	}
@@ -124,8 +124,6 @@ func PutProduct(n models.Product) error {
 		query = `INSERT INTO product (class, name, version) SELECT $1,$2,$3`
 	}
 
-	logrus.WithField("query", query).Debug("PutProduct")
-
 	phoelib.LogSQL(query, n.Class, n.Name, versionString)
 	_, err := db.DB.Exec(query, n.Class, n.Name, versionString)
 	if err != nil {
@@ -136,12 +134,12 @@ func PutProduct(n models.Product) error {
 		"class":   n.Class,
 		"name":    n.Name,
 		"version": versionString,
-	}).Info("PutProduct")
+	}).Debug("PutProduct")
 
 	return nil
 }
 
-func Poller(stream chan models.Announcement, class string, name string, interval int, fn models.LatestVersionFunction) {
+func Poller(class string, name string, interval int, fn models.LatestVersionFunction) {
 	slew := rand.Intn(10)
 	interval = interval + slew
 
@@ -179,8 +177,7 @@ func Poller(stream chan models.Announcement, class string, name string, interval
 					"newVersion":    maxVer,
 				}).Info("New version detected!")
 
-				message := fmt.Sprintf("Version %v of %s on %s is available now", maxVer, p.Name, p.Class)
-				stream <- models.Announcement{p, message}
+				ipc.AnnounceStream <- p
 			} else {
 				logrus.WithFields(logrus.Fields{
 					"class":         p.Class,
@@ -193,7 +190,7 @@ func Poller(stream chan models.Announcement, class string, name string, interval
 				// even if the version has not changed
 				//
 				// message := fmt.Sprintf("Version %v of %s on %s is still the best", maxVer, p.Name, p.Class)
-				// stream <- models.Announcement{p, message}
+				// ipc.AnnounceStream <- models.Announcement{p, message}
 			}
 
 			p.Latest.Version = maxVer

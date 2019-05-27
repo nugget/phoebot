@@ -20,7 +20,6 @@ import (
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
-	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/products/papermc"
 	"github.com/nugget/phoebot/products/serverpro"
 
@@ -30,10 +29,8 @@ import (
 )
 
 var (
-	STATEFILE      string
-	msgStream      chan models.DiscordMessage
-	announceStream chan models.Announcement
-	triggers       []hooks.Trigger
+	STATEFILE string
+	triggers  []hooks.Trigger
 )
 
 func shutdown() {
@@ -88,24 +85,26 @@ func processSubStream() {
 
 func processAnnounceStream() {
 	for {
-		d, stillOpen := <-announceStream
+		p, stillOpen := <-ipc.AnnounceStream
 
 		logrus.WithFields(logrus.Fields{
-			"data":      d,
+			"p":         p,
 			"stillOpen": stillOpen,
 		}).Debug("announceStream message received")
 
-		matchingSubs, err := subscriptions.GetMatching(d.Product.Class, d.Product.Name)
+		matchingSubs, err := subscriptions.GetMatching(p.Class, p.Name)
 		if err != nil {
 			logrus.WithError(err).Error("Unable to find matching subscriptions")
 			return
 		}
 
 		for _, sub := range matchingSubs {
+			message := fmt.Sprintf("Version %v of %s on %s is available now", p.Latest.Version, p.Name, p.Class)
+
 			if sub.Target != "" {
-				d.Message = fmt.Sprintf("%s: %s", sub.Target, d.Message)
+				message = fmt.Sprintf("%s: %s", sub.Target, message)
 			}
-			discord.Session.ChannelMessageSend(sub.ChannelID, d.Message)
+			discord.Session.ChannelMessageSend(sub.ChannelID, message)
 		}
 		if !stillOpen {
 			return
@@ -115,7 +114,7 @@ func processAnnounceStream() {
 
 func processMsgStream() {
 	for {
-		d, stillOpen := <-msgStream
+		d, stillOpen := <-ipc.MsgStream
 
 		logrus.WithFields(logrus.Fields{
 			"data":      d,
@@ -245,6 +244,7 @@ func main() {
 	}
 
 	LoadTriggers()
+	ipc.InitStreams()
 
 	discord.Session, err = discordgo.New("Bot " + discordBotToken)
 	if err != nil {
@@ -263,19 +263,14 @@ func main() {
 		"sessionID": discord.Session.State.SessionID,
 	}).Info("Connected to Discord")
 
-	ipc.InitSubStream()
-	msgStream = make(chan models.DiscordMessage)
-	announceStream = make(chan models.Announcement)
-
 	go processMsgStream()
 	go processSubStream()
 	go processAnnounceStream()
 
-	go products.Poller(announceStream, "server.pro", "Paper", interval, serverpro.LatestVersion)
-	go products.Poller(announceStream, "server.pro", "Vanilla", interval, serverpro.LatestVersion)
-	go products.Poller(announceStream, "PaperMC", "paper", interval, papermc.LatestVersion)
+	go serverpro.Poller(interval)
+	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
 
-	// msgStream <- DiscordMessage{"Moo", "Cow"}
+	// ipc.MsgStream <- DiscordMessage{"Moo", "Cow"}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
