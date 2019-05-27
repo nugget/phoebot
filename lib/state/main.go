@@ -1,9 +1,7 @@
 package state
 
 import (
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"strings"
 	"time"
@@ -18,30 +16,6 @@ type State struct {
 	Products      []models.Product      `xml:"product"`
 	Subscriptions []models.Subscription `xml:"subscription"`
 	Dg            *discordgo.Session    `xml:"-"`
-}
-
-func (s *State) SaveState(fileName string) error {
-	file, err := xml.MarshalIndent(s, "", " ")
-	if err != nil {
-		return err
-	}
-
-	//fmt.Printf("-- \n%s\n-- \n", string(file))
-
-	err = ioutil.WriteFile(fileName, file, 0644)
-	return err
-}
-
-func (s *State) LoadState(fileName string) (err error) {
-	file, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-	err = xml.Unmarshal(file, &s)
-
-	//fmt.Printf("-- \n%s\n-- \n", string(file))
-
-	return err
 }
 
 func SubscriptionsMatch(a, b models.Subscription) bool {

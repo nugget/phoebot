@@ -1,0 +1,6 @@
+%syntax-version=1.0.0
+%project=phoebot
+%uri=https://github.com/nugget/phoebot
+
+function/onupdate 2019-05-26T21:23:34Z David McNett <nugget@nigeru.nuggethaus.net> # onupdate function
+initdb 2019-05-26T21:25:44Z David McNett <nugget@nigeru.nuggethaus.net> # Initial schema for Phoebot

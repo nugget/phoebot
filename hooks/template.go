@@ -3,7 +3,7 @@ package hooks
 import (
 	"regexp"
 
-	"github.com/nugget/phoebot/lib/state"
+	"github.com/nugget/phoebot/lib/discord"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -16,7 +16,7 @@ func RegTemplate() (t Trigger) {
 	return t
 }
 
-func ProcTemplate(s *state.State, dm *discordgo.MessageCreate) error {
+func ProcTemplate(dm *discordgo.MessageCreate) error {
 	// Uncomment these lines if you need to pull out substrings from
 	// the original hook regular expression.
 	//
@@ -24,7 +24,7 @@ func ProcTemplate(s *state.State, dm *discordgo.MessageCreate) error {
 	//res := t.Regexp.FindStringSubmatch(dm.Content)
 	//
 
-	s.Dg.ChannelMessageSend(dm.ChannelID, "A hollow voice says 'plugh'")
+	discord.Session.ChannelMessageSend(dm.ChannelID, "A hollow voice says 'plugh'")
 
 	return nil
 }

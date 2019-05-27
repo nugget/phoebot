@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/phoelib"
-	"github.com/nugget/phoebot/lib/state"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -71,7 +71,7 @@ func smartLoc(tz string) (loc *time.Location) {
 	return loc
 }
 
-func ProcTimezones(s *state.State, dm *discordgo.MessageCreate) error {
+func ProcTimezones(dm *discordgo.MessageCreate) error {
 	tzList := []string{
 		"America/Los_Angeles",
 		"America/New_York",
@@ -139,7 +139,7 @@ func ProcTimezones(s *state.State, dm *discordgo.MessageCreate) error {
 
 	mS.Embed = &mE
 
-	s.Dg.ChannelMessageSendComplex(dm.ChannelID, &mS)
+	discord.Session.ChannelMessageSendComplex(dm.ChannelID, &mS)
 
 	return nil
 }

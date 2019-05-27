@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/nugget/phoebot/lib/db",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/builddata:go_default_library",
+        "//vendor/github.com/lib/pq:go_default_library",
+    ],
+)

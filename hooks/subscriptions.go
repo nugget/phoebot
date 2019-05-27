@@ -5,9 +5,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
-	"github.com/nugget/phoebot/lib/state"
-	"github.com/nugget/phoebot/models"
+	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/products"
+	"github.com/nugget/phoebot/lib/subscriptions"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -21,9 +23,11 @@ func RegSubscriptions() (t Trigger) {
 	return t
 }
 
-func ProcSubscriptions(s *state.State, dm *discordgo.MessageCreate) error {
+func ProcSubscriptions(dm *discordgo.MessageCreate) error {
 	t := RegSubscriptions()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
+
+	phoelib.DebugSlice(res)
 
 	if len(res) == 8 {
 		var err error
@@ -36,24 +40,25 @@ func ProcSubscriptions(s *state.State, dm *discordgo.MessageCreate) error {
 		class := res[5]
 		name := res[6]
 
-		p, err := s.GetProduct(class, name)
+		p, err := products.GetProduct(class, name)
 		if err != nil {
-			logrus.WithError(err).Warn("Unable to get product")
-			s.Dg.ChannelMessageSend(dm.ChannelID, "I've never heard of that one, sorry.")
-		} else {
-			sc.Sub.ChannelID = dm.ChannelID
-			sc.Sub.Class = p.Class
-			sc.Sub.Name = p.Name
-			sc.Sub.Target = res[7]
-
-			if xUN == "un" {
-				sc.Operation = "DROP"
-			} else if xSUB == "sub" {
-				sc.Operation = "ADD"
-			}
-
-			ipc.SubStream <- sc
+			logrus.WithError(err).Info("Unable to get matching product")
+			discord.Session.ChannelMessageSend(dm.ChannelID, "I've never heard of that one, sorry.")
+			return nil
 		}
+
+		sc.Sub.ChannelID = dm.ChannelID
+		sc.Sub.Class = p.Class
+		sc.Sub.Name = p.Name
+		sc.Sub.Target = res[7]
+
+		if xUN == "un" {
+			sc.Operation = "DROP"
+		} else if xSUB == "sub" {
+			sc.Operation = "ADD"
+		}
+
+		ipc.SubStream <- sc
 	}
 	return nil
 }
@@ -66,20 +71,17 @@ func RegListSubscriptions() (t Trigger) {
 	return t
 }
 
-func ProcListSubscriptions(s *state.State, dm *discordgo.MessageCreate) error {
-	var localSubs []models.Subscription
-
-	for _, v := range s.Subscriptions {
-		if v.ChannelID == dm.ChannelID {
-			localSubs = append(localSubs, v)
-		}
+func ProcListSubscriptions(dm *discordgo.MessageCreate) error {
+	localSubs, err := subscriptions.GetByChannel(dm.ChannelID)
+	if err != nil {
+		return err
 	}
 
 	subCount := len(localSubs)
 	logrus.WithField("subCount", subCount).Info("Active subscription count")
 
 	if subCount == 0 {
-		s.Dg.ChannelMessageSend(dm.ChannelID, "I don't have any subscriptions for this channel")
+		discord.Session.ChannelMessageSend(dm.ChannelID, "I don't have any subscriptions for this channel")
 		return nil
 	}
 
@@ -99,7 +101,7 @@ func ProcListSubscriptions(s *state.State, dm *discordgo.MessageCreate) error {
 		u.WriteString(fmt.Sprintf("%s\n", subDesc))
 	}
 
-	s.Dg.ChannelMessageSend(dm.ChannelID, u.String())
+	discord.Session.ChannelMessageSend(dm.ChannelID, u.String())
 
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 
 type SubscriptionChannel struct {
 	Operation string
+	UserID    string
 	Sub       models.Subscription
 }
 
