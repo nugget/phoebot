@@ -55,9 +55,8 @@ func getXML() (string, error) {
 		cacheTime = time.Now()
 
 		logrus.WithFields(logrus.Fields{
-			"URI":       URI,
-			"bytes":     len(xmlCache),
-			"cacheTime": cacheTime,
+			"URI":   URI,
+			"bytes": len(xmlCache),
 		}).Info("Fetched server.pro gametypes")
 	}
 
@@ -121,7 +120,7 @@ func LatestVersion(serverType string) (semver.Version, error) {
 	return latestVersion, nil
 }
 
-func UpdateAllVersions() error {
+func UpdateAllProducts() error {
 	body, err := getXML()
 	if err != nil {
 		return err
@@ -129,7 +128,13 @@ func UpdateAllVersions() error {
 
 	plist := gjson.Get(body, "mc")
 
+	recordCount := 0
+	updateCount := 0
+	newVerCount := 0
+
 	plist.ForEach(func(key, value gjson.Result) bool {
+		recordCount++
+
 		oldVersion, err := products.GetProduct(CLASS, key.String())
 		logrus.WithFields(logrus.Fields{
 			"oldVersion": oldVersion,
@@ -142,8 +147,6 @@ func UpdateAllVersions() error {
 		p.Name = key.String()
 		p.Latest.Time = time.Now()
 
-		logrus.WithField("p", p).Trace("Interval breadcrumb 0")
-
 		p.Latest.Version, err = LatestVersion(p.Name)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
@@ -154,16 +157,16 @@ func UpdateAllVersions() error {
 			return false
 		}
 
-		logrus.WithField("p", p).Trace("Interval breadcrumb 1")
-
 		if p.Latest.Version.GT(oldVersion.Latest.Version) {
+			newVerCount++
 			logrus.WithField("p", p).Trace("Sending announcement")
 			ipc.AnnounceStream <- p
 		}
 
-		logrus.WithField("p", p).Trace("Interval breadcrumb 2")
 		err = products.PutProduct(p)
-		if err != nil {
+		if err == nil {
+			updateCount++
+		} else {
 			logrus.WithFields(logrus.Fields{
 				"err": err,
 				"key": key,
@@ -175,6 +178,12 @@ func UpdateAllVersions() error {
 		return true
 	})
 
+	logrus.WithFields(logrus.Fields{
+		"recordCount": recordCount,
+		"updateCount": updateCount,
+		"newVerCount": newVerCount,
+	}).Info(fmt.Sprintf("%s UpdateAllProducts", CLASS))
+
 	return nil
 }
 
@@ -183,11 +192,11 @@ func Poller(interval int) {
 	interval = interval + slew
 
 	for {
-		logrus.Debug(fmt.Sprintf("Running %s Poller", CLASS))
+		logrus.WithField("interval", interval).Debug(fmt.Sprintf("Looping %s Poller", CLASS))
 
-		err := UpdateAllVersions()
+		err := UpdateAllProducts()
 		if err != nil {
-			logrus.WithError(err).Error("serverpro.UpdateAllVersions failed")
+			logrus.WithError(err).Error(fmt.Sprintf("%s UpdateAllProducts failed", CLASS))
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}

@@ -98,6 +98,12 @@ func processAnnounceStream() {
 			return
 		}
 
+		logrus.WithFields(logrus.Fields{
+			"class":   p.Class,
+			"name":    p.Name,
+			"version": p.Latest.Version,
+		}).Warn("Announcing new version!")
+
 		for _, sub := range matchingSubs {
 			message := fmt.Sprintf("Version %v of %s on %s is available now", p.Latest.Version, p.Name, p.Class)
 
