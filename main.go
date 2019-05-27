@@ -18,6 +18,7 @@ import (
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
 	"github.com/nugget/phoebot/products/papermc"
@@ -134,15 +135,17 @@ func processMsgStream() {
 }
 
 func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
+	discord.RecordLog(dm)
+
 	// Ignore all messages created by the bot itself
 	// This isn't required in this specific example but it's a good practice.
 	if dm.Author.ID == ds.State.User.ID {
 		return
 	}
 
-	channel, err := ds.State.Channel(dm.ChannelID)
+	channel, err := discord.GetChannel(dm.ChannelID)
 	if err != nil {
-		logrus.WithError(err).Error("Unavle to load channel info")
+		logrus.WithError(err).Error("Unable to load channel info")
 		channel.Name = "unknown"
 	}
 
@@ -161,6 +164,8 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	}
 
 	logMsg := fmt.Sprintf("<%s> %s", dm.Author.Username, dm.Content)
+
+	player.UpdateFromDiscord(dm.Author)
 
 	logrus.WithFields(logrus.Fields{
 		"direct":    direct,
