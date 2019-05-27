@@ -36,5 +36,20 @@ func Connect(URIstring string) error {
 	connString = fmt.Sprintf("%s application_name='%s'", connString, appName)
 
 	DB, err = sql.Open("postgres", connString)
-	return err
+	if err != nil {
+		return err
+	}
+
+	query := `SELECT version()`
+	row := DB.QueryRow(query)
+
+	version := "unknown"
+	err = row.Scan(&version)
+	if err != nil {
+		return err
+	}
+
+	logrus.WithField("version", version).Debug("Database version")
+
+	return nil
 }

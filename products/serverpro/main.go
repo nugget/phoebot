@@ -39,7 +39,7 @@ func getXML() (string, error) {
 			"URI":       URI,
 			"bytes":     len(xmlCache),
 			"cacheTime": cacheTime,
-		}).Debug("Using cached server.pro gametypes")
+		}).Trace("Using cached server.pro gametypes")
 	} else {
 		r, err := http.Get(URI)
 		if err != nil {
@@ -58,7 +58,7 @@ func getXML() (string, error) {
 			"URI":       URI,
 			"bytes":     len(xmlCache),
 			"cacheTime": cacheTime,
-		}).Debug("Fetched server.pro gametypes")
+		}).Info("Fetched server.pro gametypes")
 	}
 
 	return xmlCache, nil
