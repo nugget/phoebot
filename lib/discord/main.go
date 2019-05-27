@@ -30,13 +30,15 @@ func UpdateChannel(c *discordgo.Channel) error {
 			     DO UPDATE SET name = $3, topic = $5
 			        WHERE channel.name <> $3 OR channel.topic <> $5`
 
+	channelName := c.Name
+
 	switch c.Type {
 	case 0:
 		// This is a regular channel
-		c.Name = fmt.Sprintf("#%s", c.Name)
+		channelName = fmt.Sprintf("#%s", c.Name)
 	case 1:
 		// This is PM channel
-		c.Name = fmt.Sprintf("@%s", c.Recipients[0])
+		channelName = fmt.Sprintf("@%s", c.Recipients[0])
 	default:
 		logrus.WithFields(logrus.Fields{
 			"type":    c.Type,
@@ -46,8 +48,8 @@ func UpdateChannel(c *discordgo.Channel) error {
 		}).Info("Unknown channel type")
 	}
 
-	phoelib.LogSQL(query, c.ID, c.GuildID, c.Name, string(c.Type), c.Topic)
-	_, err := db.DB.Exec(query, c.ID, c.GuildID, c.Name, c.Type, c.Topic)
+	phoelib.LogSQL(query, c.ID, c.GuildID, channelName, string(c.Type), c.Topic)
+	_, err := db.DB.Exec(query, c.ID, c.GuildID, channelName, c.Type, c.Topic)
 	return err
 }
 
