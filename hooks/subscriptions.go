@@ -72,8 +72,13 @@ func RegListSubscriptions() (t Trigger) {
 }
 
 func ProcListSubscriptions(dm *discordgo.MessageCreate) error {
+	logrus.WithFields(logrus.Fields{
+		"channel": dm.ChannelID,
+	}).Info("Listing subscriptions")
+
 	localSubs, err := subscriptions.GetByChannel(dm.ChannelID)
 	if err != nil {
+		logrus.WithError(err).Error("GetByChannel failed")
 		return err
 	}
 

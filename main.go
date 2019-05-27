@@ -164,11 +164,35 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		"channelID": dm.ChannelID,
 	}).Debug(logMsg)
 
+	logrus.WithFields(logrus.Fields{
+		"count":   len(triggers),
+		"content": dm.Content,
+	}).Trace("Evaluating triggers")
+
 	for _, t := range triggers {
+
 		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
+				logrus.WithFields(logrus.Fields{
+					"direct":   direct,
+					"t.direct": t.Direct,
+					"regexp":   t.Regexp,
+				}).Trace("Trigger matched, running hook")
+
 				t.Hook(dm)
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"direct":   direct,
+					"t.direct": t.Direct,
+					"regexp":   t.Regexp,
+				}).Trace("Trigger did not match")
 			}
+		} else {
+			logrus.WithFields(logrus.Fields{
+				"direct":   direct,
+				"t.direct": t.Direct,
+				"regexp":   t.Regexp,
+			}).Trace("Ignored direct trigger in public")
 		}
 	}
 }
