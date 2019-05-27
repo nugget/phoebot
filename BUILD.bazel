@@ -26,6 +26,7 @@ go_library(
     deps = [
         "//hooks:go_default_library",
         "//lib/builddata:go_default_library",
+        "//lib/db:go_default_library",
         "//lib/ipc:go_default_library",
         "//lib/phoelib:go_default_library",
         "//lib/state:go_default_library",

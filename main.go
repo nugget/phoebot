@@ -15,6 +15,7 @@ import (
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/state"
@@ -78,11 +79,6 @@ func processSubStream(s *state.State) {
 
 				s.Dg.ChannelMessageSend(d.Sub.ChannelID, fmt.Sprintf("%v", err))
 			}
-		}
-
-		err := s.SaveState(STATEFILE)
-		if err != nil {
-			logrus.WithError(err).Error("Unable to write state file from SubStream")
 		}
 
 		if !stillOpen {
@@ -197,11 +193,19 @@ func main() {
 	config := setupConfig()
 	builddata.LogConversational()
 
+	for _, f := range []string{"DISCORD_BOT_TOKEN", "DATABASE_URI"} {
+		tV := config.GetString(f)
+		if tV == "" {
+			logrus.WithField("variable", f).Fatal("Missing environment variable")
+		}
+	}
+
 	STATEFILE = config.GetString("STATE_FILENAME")
 
 	interval := config.GetInt("MC_CHECK_INTERVAL")
 	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
 	debugLevel := config.GetString("PHOEBOT_DEBUG")
+	dbURI := config.GetString("DATABASE_URI")
 
 	if debugLevel != "" {
 		_, err := phoelib.LogLevel(debugLevel)
@@ -210,18 +214,9 @@ func main() {
 		}
 	}
 
-	for _, f := range []string{"DISCORD_BOT_TOKEN"} {
-		tV := config.GetString(f)
-		if tV == "" {
-			logrus.WithField("variable", f).Fatal("Missing environment variable")
-		}
-	}
-
-	err := s.LoadState(STATEFILE)
+	err := db.Connect(dbURI)
 	if err != nil {
-		logrus.WithError(err).Warn("Unable to read state file")
-	} else {
-		logrus.WithField("filename", STATEFILE).Infof("Loaded saved state")
+		logrus.WithError(err).Fatal("Unable to connect to database")
 	}
 
 	LoadTriggers()
@@ -274,13 +269,6 @@ func main() {
 	<-sc
 
 	s.Dg.Close()
-
-	err = s.SaveState(STATEFILE)
-	if err != nil {
-		logrus.WithError(err).Error("Unable to write state file")
-	} else {
-		logrus.WithField("filename", STATEFILE).Info("Saved state to disk")
-	}
 
 	shutdown()
 }
