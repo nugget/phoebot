@@ -5,5 +5,8 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/nugget/phoebot/lib/ipc",
     visibility = ["//visibility:public"],
-    deps = ["//models:go_default_library"],
+    deps = [
+        "//models:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+    ],
 )
