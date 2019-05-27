@@ -119,13 +119,14 @@ func PutProduct(n models.Product) error {
 
 	p, _ := GetProduct(n.Class, n.Name)
 	if p.Name != "" {
-		query = `UPDATE product SET version = $3 WHERE name ILIKE $1 AND class ILIKE $2`
+		query = `UPDATE product SET version = $3 WHERE class ILIKE $1 AND name ILIKE $2`
 	} else {
 		query = `INSERT INTO product (class, name, version) SELECT $1,$2,$3`
 	}
 
 	logrus.WithField("query", query).Debug("PutProduct")
 
+	phoelib.LogSQL(query, n.Class, n.Name, versionString)
 	_, err := db.DB.Exec(query, n.Class, n.Name, versionString)
 	if err != nil {
 		return err
