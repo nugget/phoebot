@@ -56,7 +56,7 @@ func GetMatching(class, name string) (sList []models.Subscription, err error) {
 
 func GetByChannel(channelid string) (sList []models.Subscription, err error) {
 	query := `SELECT channelid, class, name, target FROM subscription
-			  WHERE deleted IS NULL AND channelid ILIKE $1`
+			  WHERE deleted IS NULL AND channelid = $1 ORDER BY class, name`
 
 	rows, err := db.DB.Query(query, channelid)
 	if err != nil {
@@ -91,7 +91,7 @@ func SubscriptionExists(sub models.Subscription) (bool, error) {
               FROM subscription
 			  WHERE 
 			    deleted IS NULL AND
-			    channelID = $1 AND class = $2 AND name = $3`
+			    channelID = $1 AND class ILIKE $2 AND name ILIKE $3`
 
 	rows, err := db.DB.Query(query, sub.ChannelID, sub.Class, sub.Name)
 	if err != nil {
@@ -130,7 +130,7 @@ func AddSubscription(sub models.Subscription) error {
 			return err
 		}
 		if exists {
-			return fmt.Errorf("A subscription for %s/%s already exists for this channel", sub.Class, sub.Name)
+			return fmt.Errorf("A subscription for %s %s already exists for this channel", sub.Class, sub.Name)
 		} else {
 			query := `INSERT INTO subscription (channelid, class, name, target) SELECT $1, $2, $3, $4`
 
@@ -156,7 +156,7 @@ func AddSubscription(sub models.Subscription) error {
 
 func DropSubscription(sub models.Subscription) error {
 	query := `UPDATE subscription SET deleted = current_timestamp
-	          WHERE deleted IS NULL AND channelid = $1 AND class = $2 AND name = $3
+	          WHERE deleted IS NULL AND channelid = $1 AND class ILIKE $2 AND name ILIKE $3
 			  RETURNING *`
 
 	rows, err := db.DB.Query(query, sub.ChannelID, sub.Class, sub.Name)
