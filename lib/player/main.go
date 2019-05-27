@@ -15,7 +15,7 @@ func UpdateFromDiscord(u *discordgo.User) error {
 			  SELECT $1, $2, $3
 			  ON CONFLICT (playerid) 
 			     DO UPDATE SET username = $2, locale = $3
-			        WHERE username <> $2 OR locale <> $3`
+			        WHERE player.username <> $2 OR player.locale <> $3`
 
 	phoelib.LogSQL(query, u.ID, u.Username, u.Locale)
 	_, err := db.DB.Exec(query, u.ID, u.Username, u.Locale)

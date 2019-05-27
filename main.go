@@ -165,7 +165,10 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 
 	logMsg := fmt.Sprintf("<%s> %s", dm.Author.Username, dm.Content)
 
-	player.UpdateFromDiscord(dm.Author)
+	err = player.UpdateFromDiscord(dm.Author)
+	if err != nil {
+		logrus.WithError(err).Error("player.UpdateFromDiscord failed")
+	}
 
 	logrus.WithFields(logrus.Fields{
 		"direct":    direct,
