@@ -23,6 +23,63 @@ func SubscriptionsMatch(a, b models.Subscription) bool {
 	return false
 }
 
+func GetMatching(class, name string) (sList []models.Subscription, err error) {
+	query := `SELECT channelid, class, name, target FROM subscription
+			  WHERE deleted IS NULL AND
+			        class ILIKE $1 AND name ILIKE $2`
+
+	rows, err := db.DB.Query(query, class, name)
+	if err != nil {
+		return sList, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		sub := models.Subscription{}
+		err := rows.Scan(
+			&sub.ChannelID,
+			&sub.Class,
+			&sub.Name,
+			&sub.Target,
+		)
+		if err != nil {
+			return sList, err
+		}
+
+		sList = append(sList, sub)
+	}
+
+	return sList, err
+}
+
+func GetByChannel(channelid string) (sList []models.Subscription, err error) {
+	query := `SELECT channelid, class, name, target FROM subscription
+			  WHERE deleted IS NULL AND channelid ILIKE $1`
+
+	rows, err := db.DB.Query(query, channelid)
+	if err != nil {
+		return sList, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		sub := models.Subscription{}
+		err := rows.Scan(
+			&sub.ChannelID,
+			&sub.Class,
+			&sub.Name,
+			&sub.Target,
+		)
+		if err != nil {
+			return sList, err
+		}
+
+		sList = append(sList, sub)
+	}
+
+	return sList, err
+}
+
 func SubscriptionExists(sub models.Subscription) (bool, error) {
 	logrus.WithFields(logrus.Fields{
 		"sub": sub,
@@ -66,7 +123,7 @@ func AddSubscription(sub models.Subscription) error {
 	if sub.Class == "" || sub.Name == "" {
 		return fmt.Errorf("'%s' '%s' doesn't look like a real thing to me.", sub.Class, sub.Name)
 	} else {
-		exists, err := s.SubscriptionExists(sub)
+		exists, err := SubscriptionExists(sub)
 		if err != nil {
 			return err
 		}
@@ -90,37 +147,32 @@ func AddSubscription(sub models.Subscription) error {
 				"target":    sub.Target,
 			}).Info("Added new subscription")
 		}
-
-		logrus.WithField("subCount", len(s.Subscriptions)).Debug("Active subscription count")
 	}
 
 	return nil
 }
 
 func DropSubscription(sub models.Subscription) error {
-	var newSubs []models.Subscription
+	query := `UPDATE subscription SET deleted = current_timestamp
+	          WHERE deleted IS NULL AND channelid = $1 AND class = $2 AND name = $3
+			  RETURNING *`
 
-	for _, v := range s.Subscriptions {
-		if !SubscriptionsMatch(sub, v) {
-			newSubs = append(newSubs, v)
-		}
+	rows, err := db.DB.Query(query, sub.ChannelID, sub.Class, sub.Name)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	count := 0
+	for rows.Next() {
+		logrus.WithField("row", rows).Debug("Dropped subscription")
+		count++
 	}
 
-	if len(s.Subscriptions) != len(newSubs) {
-		logrus.WithFields(logrus.Fields{
-			"name":      sub.Name,
-			"class":     sub.Class,
-			"channelID": sub.ChannelID,
-			"target":    sub.Target,
-		}).Info("Deopped subscription")
-
+	if count > 0 {
 		message := fmt.Sprintf("You are no longer subscribed to receive updates to this channel for %s releases from %s", sub.Name, sub.Class)
 		discord.Session.ChannelMessageSend(sub.ChannelID, message)
 	}
-
-	s.Subscriptions = newSubs
-
-	logrus.WithField("subCount", len(s.Subscriptions)).Debug("Active subscription count")
 
 	return nil
 }

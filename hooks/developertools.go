@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/phoelib"
-	"github.com/nugget/phoebot/lib/state"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -20,7 +20,7 @@ func RegLoglevel() (t Trigger) {
 	return t
 }
 
-func ProcLoglevel(s *state.State, dm *discordgo.MessageCreate) error {
+func ProcLoglevel(dm *discordgo.MessageCreate) error {
 	t := RegLoglevel()
 	res := t.Regexp.FindStringSubmatch(dm.Content)
 
@@ -33,7 +33,7 @@ func ProcLoglevel(s *state.State, dm *discordgo.MessageCreate) error {
 	newLevel, err := phoelib.LogLevel(reqLevel)
 	if err != nil {
 		logrus.WithError(err).Info("Failed to set LogLevel")
-		s.Dg.ChannelMessageSend(dm.ChannelID, fmt.Sprintf("%s", err))
+		discord.Session.ChannelMessageSend(dm.ChannelID, fmt.Sprintf("%s", err))
 		return err
 	}
 
@@ -45,7 +45,7 @@ func ProcLoglevel(s *state.State, dm *discordgo.MessageCreate) error {
 	}
 
 	message := fmt.Sprintf("Console logging level is '%s'", reqLevel)
-	s.Dg.ChannelMessageSend(dm.ChannelID, message)
+	discord.Session.ChannelMessageSend(dm.ChannelID, message)
 
 	return nil
 }

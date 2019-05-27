@@ -11,15 +11,15 @@ type RegisterFunction func() (string, LatestVersionFunction)
 type GetTypesFunction func() ([]string, error)
 
 type Subscription struct {
-	ChannelID string `xml:"channelID"`
-	Class     string `xml:"class"`
-	Name      string `xml:"name"`
-	Target    string `xml:"target"`
+	ChannelID string
+	Class     string
+	Name      string
+	Target    string
 }
 
 type LatestVersion struct {
-	Version semver.Version `xml:"version"`
-	Time    time.Time      `xml:"time"`
+	Version semver.Version
+	Time    time.Time
 }
 
 type DiscordMessage struct {
@@ -33,8 +33,8 @@ type Announcement struct {
 }
 
 type Product struct {
-	Class    string                `xml:"class"`
-	Name     string                `xml:"type"`
-	Latest   LatestVersion         `xml:"lastCheck"`
-	Function LatestVersionFunction `xml:"-"`
+	Class    string
+	Name     string
+	Latest   LatestVersion
+	Function LatestVersionFunction
 }

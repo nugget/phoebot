@@ -1,105 +1,156 @@
 package products
 
 import (
+	"database/sql"
 	"fmt"
 	"math/rand"
-	"strings"
 	"time"
 
+	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/models"
 
+	"github.com/blang/semver"
 	"github.com/sirupsen/logrus"
 )
 
-func GetProduct(class, name string) (models.Product, error) {
-	for _, p := range s.Products {
-		if strings.ToLower(p.Class) == strings.ToLower(class) {
-			if strings.ToLower(p.Name) == strings.ToLower(name) {
-				return p, nil
-			}
+type ProductRec struct {
+	Class   string
+	Name    string
+	Version string
+	Changed time.Time
+}
+
+func (r *ProductRec) Scan(rows *sql.Rows) error {
+	err := rows.Scan(
+		&r.Class,
+		&r.Name,
+		&r.Version,
+		&r.Changed,
+	)
+
+	return err
+}
+
+func ProductRecToStruct(buf ProductRec) (p models.Product, err error) {
+	p.Name = buf.Name
+	p.Class = buf.Class
+	p.Latest.Version, err = semver.Parse(buf.Version)
+	if err != nil {
+		return p, err
+	}
+	p.Latest.Time = buf.Changed
+
+	return p, nil
+}
+
+func GetProduct(class, name string) (p models.Product, err error) {
+	query := `SELECT class, name, version, changed FROM product
+			  WHERE deleted IS NULL AND
+			        class ILIKE $1 AND name ILIKE $2`
+
+	phoelib.LogSQL(query, class, name)
+	rows, err := db.DB.Query(query, class, name)
+	if err != nil {
+		return p, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		r := ProductRec{}
+
+		err := r.Scan(rows)
+		if err != nil {
+			fmt.Printf("Yeah this is where I broke.\n")
+			return p, err
+		}
+
+		logrus.WithField("rec", r).Debug("GetProduct Matched")
+
+		p, err = ProductRecToStruct(r)
+		return p, err
+	}
+
+	return p, fmt.Errorf("Product not found")
+}
+
+func GetImportant() (pList []models.Product, err error) {
+	cutoff := semver.MustParse("0.0.0")
+
+	query := `SELECT class, name, version, changed FROM product
+			  WHERE deleted IS NULL`
+
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return pList, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		r := ProductRec{}
+
+		err := r.Scan(rows)
+		if err != nil {
+			return pList, err
+		}
+
+		p, err := ProductRecToStruct(r)
+		if err != nil {
+			return pList, err
+		}
+
+		if p.Latest.Version.GT(cutoff) {
+			pList = append(pList, p)
 		}
 	}
 
-	return models.Product{}, fmt.Errorf("Product not found")
+	return pList, nil
+
 }
 
 func PutProduct(n models.Product) error {
+	var query string
+
 	if n.Class == "" || n.Name == "" {
 		return fmt.Errorf("Can't load malformed product: %+v", n)
 	}
 
-	newProducts := []models.Product{}
+	versionString := fmt.Sprintf("%s", n.Latest.Version)
 
-	added := false
-	for _, p := range s.Products {
-
-		if p.Class == "" || p.Name == "" {
-			logrus.WithFields(logrus.Fields{
-				"class": p.Class,
-				"name":  p.Name,
-			}).Info("Skipping malformed product")
-		} else if p.Class == n.Class && p.Name == n.Name {
-			if n.Function == nil {
-				n.Function = p.Function
-			}
-			if n.Latest.Time.After(p.Latest.Time) {
-				newProducts = append(newProducts, n)
-			} else {
-				newProducts = append(newProducts, p)
-			}
-			added = true
-		} else {
-			newProducts = append(newProducts, p)
-		}
+	p, _ := GetProduct(n.Class, n.Name)
+	if p.Name != "" {
+		query = `UPDATE product SET version = $3 WHERE name ILIKE $1 AND class ILIKE $2`
+	} else {
+		query = `INSERT INTO product (class, name, version) SELECT $1,$2,$3`
 	}
 
-	if !added {
-		newProducts = append(newProducts, n)
+	logrus.WithField("query", query).Debug("PutProduct")
+
+	_, err := db.DB.Exec(query, n.Class, n.Name, versionString)
+	if err != nil {
+		return err
 	}
 
-	s.Products = newProducts
+	logrus.WithFields(logrus.Fields{
+		"class":   n.Class,
+		"name":    n.Name,
+		"version": versionString,
+	}).Info("PutProduct")
 
 	return nil
 }
 
-func DedupeProducts() error {
-	newProducts := []models.Product{}
-	exists := make(map[string]bool)
-
-	for i, p := range s.Products {
-		key := fmt.Sprintf("%v-%v", p.Class, p.Name)
-		if !exists[key] {
-			if p.Class == "" || p.Name == "" {
-				logrus.WithFields(logrus.Fields{
-					"class": p.Class,
-					"name":  p.Name,
-					"i":     i,
-				}).Info("Skipping malformed product (Dedupe)")
-			} else {
-				newProducts = append(newProducts, p)
-			}
-		}
-		exists[key] = true
-	}
-
-	if len(s.Products) != len(newProducts) {
-		logrus.WithFields(logrus.Fields{
-			"startCount": len(s.Products),
-			"endCount":   len(newProducts),
-		}).Info("Deduped product list")
-	}
-	s.Products = newProducts
-
-	return nil
-}
-
-func ProductPoller(stream chan models.Announcement, class string, name string, interval int, fn models.LatestVersionFunction) {
+func Poller(stream chan models.Announcement, class string, name string, interval int, fn models.LatestVersionFunction) {
 	slew := rand.Intn(10)
 	interval = interval + slew
 
-	p, err := s.GetProduct(class, name)
+	p, err := GetProduct(class, name)
 	if err != nil {
-		logrus.WithError(err).Error("Poller unable to load product")
+		logrus.WithFields(logrus.Fields{
+			"error": err,
+			"class": class,
+			"name":  name,
+		}).Error("Poller unable to load product")
 		return
 	}
 
@@ -147,7 +198,7 @@ func ProductPoller(stream chan models.Announcement, class string, name string, i
 			p.Latest.Version = maxVer
 			p.Latest.Time = time.Now()
 
-			err := s.PutProduct(p)
+			err := PutProduct(p)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
 					"class":         p.Class,
@@ -178,7 +229,7 @@ func LoadProducts(regFunc models.RegisterFunction, typesFunc models.GetTypesFunc
 			p.Class = class
 			p.Function = fn
 
-			err := s.PutProduct(p)
+			err := PutProduct(p)
 			if err != nil {
 				logrus.WithError(err).Warn("LoadProducts unable to PutProduct")
 			} else {
@@ -190,7 +241,6 @@ func LoadProducts(regFunc models.RegisterFunction, typesFunc models.GetTypesFunc
 	logrus.WithFields(logrus.Fields{
 		"class": class,
 		"count": count,
-		"total": len(s.Products),
 	}).Info("Loaded productlist")
 
 	return nil

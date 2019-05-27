@@ -37,3 +37,13 @@ func LogLevel(reqLevel string) (setLevel logrus.Level, err error) {
 
 	return setLevel, nil
 }
+
+func LogSQL(query string, args ...string) {
+	query = strings.ReplaceAll(query, "\n", " ")
+	query = strings.ReplaceAll(query, "\t", " ")
+
+	logrus.WithFields(logrus.Fields{
+		"query": query,
+		"args":  args,
+	}).Debug("Executing SQL Query")
+}

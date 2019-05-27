@@ -4,7 +4,7 @@ import (
 	"regexp"
 
 	"github.com/nugget/phoebot/lib/builddata"
-	"github.com/nugget/phoebot/lib/state"
+	"github.com/nugget/phoebot/lib/discord"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -17,7 +17,7 @@ func RegStatus() (t Trigger) {
 	return t
 }
 
-func ProcStatus(s *state.State, dm *discordgo.MessageCreate) error {
-	s.Dg.ChannelMessageSend(dm.ChannelID, builddata.Uname())
+func ProcStatus(dm *discordgo.MessageCreate) error {
+	discord.Session.ChannelMessageSend(dm.ChannelID, builddata.Uname())
 	return nil
 }

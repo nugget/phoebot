@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/nugget/phoebot/lib/state"
+	"github.com/nugget/phoebot/lib/discord"
+	"github.com/nugget/phoebot/lib/products"
 
 	"github.com/blang/semver"
 	"github.com/bwmarrin/discordgo"
@@ -19,7 +20,7 @@ func RegVersion() (t Trigger) {
 	return t
 }
 
-func ProcVersion(s *state.State, dm *discordgo.MessageCreate) error {
+func ProcVersion(dm *discordgo.MessageCreate) error {
 	cutoff := semver.MustParse("0.0.0")
 	logrus.WithField("cutoff", cutoff).Debug("Ignoring products older than this")
 
@@ -30,30 +31,26 @@ func ProcVersion(s *state.State, dm *discordgo.MessageCreate) error {
 
 	mE.Fields = make([]*discordgo.MessageEmbedField, 0)
 
-	for _, p := range s.Products {
-		if p.Latest.Version.GT(cutoff) {
-			mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
-				Name:   fmt.Sprintf("%s %s", p.Class, p.Name),
-				Value:  fmt.Sprintf("%s", p.Latest.Version),
-				Inline: true,
-			})
-		} else {
-			logrus.WithFields(logrus.Fields{
-				"class":   p.Class,
-				"name":    p.Name,
-				"version": p.Latest.Version,
-				"time":    p.Latest.Time,
-			}).Debug("Skipped product")
-		}
+	productList, err := products.GetImportant()
+	if err != nil {
+		logrus.WithError(err).Error("ProcVersion GetImportant Failed")
+		return err
+	}
 
+	for _, p := range productList {
+		mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
+			Name:   fmt.Sprintf("%s %s", p.Class, p.Name),
+			Value:  fmt.Sprintf("%s", p.Latest.Version),
+			Inline: true,
+		})
 	}
 
 	mS.Embed = &mE
 
 	if len(mE.Fields) > 0 {
-		s.Dg.ChannelMessageSendComplex(dm.ChannelID, &mS)
+		discord.Session.ChannelMessageSendComplex(dm.ChannelID, &mS)
 	} else {
-		s.Dg.ChannelMessageSend(dm.ChannelID, "I haven't seen any new versions lately, sorry. Try again later.")
+		discord.Session.ChannelMessageSend(dm.ChannelID, "I haven't seen any new versions lately, sorry. Try again later.")
 	}
 	return nil
 }
