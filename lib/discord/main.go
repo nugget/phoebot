@@ -15,11 +15,23 @@ var (
 )
 
 func RecordLog(m *discordgo.MessageCreate) error {
-	query := `INSERT INTO discordlog (messageid, channelid, guildid, playerid, messagetype, content)
-			  SELECT $1, $2, $3, $4, $5, $6`
+	if m.GuildID == "" || m.ChannelID == "" || m.Type > 0 {
+		logrus.WithFields(logrus.Fields{
+			"playerID":  m.Author.Id,
+			"guildID":   m.GuildID,
+			"channelID": m.ChannelID,
+			"type":      m.Type,
+		}).Debug("Not saving private message")
+		return nil
+	}
 
-	phoelib.LogSQL(query, m.ID, m.ChannelID, m.GuildID, m.Author.ID, string(m.Type), m.Content)
-	_, err := db.DB.Exec(query, m.ID, m.ChannelID, m.GuildID, m.Author.ID, m.Type, m.Content)
+	query := `INSERT INTO lastseen (playerID, guildID, channelID, content)
+			  SELECT $1, $2, $3, $4
+			  ON CONFLICT (playerID, guildID)
+			    DO UPDATE SET channelID = $3, content = $4`
+
+	phoelib.LogSQL(query, m.Author.ID, m.GuildID, m.ChannelID, m.Content)
+	_, err := db.DB.Exec(query, m.Author.ID, m.GuildID, m.ChannelID, m.Content)
 	return err
 }
 
