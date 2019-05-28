@@ -6,3 +6,4 @@ function/onupdate 2019-05-26T21:23:34Z David McNett <nugget@nigeru.nuggethaus.ne
 initdb 2019-05-26T21:25:44Z David McNett <nugget@nigeru.nuggethaus.net> # Initial schema for Phoebot
 playerdetails 2019-05-27T18:05:33Z David McNett <nugget@nigeru.nuggethaus.net> # Extras for player table
 discordlogs 2019-05-27T18:37:30Z David McNett <nugget@nigeru.nuggethaus.net> # Tables to track discord activity
+mojangreleases 2019-05-28T01:44:03Z David McNett <nugget@nigeru.nuggethaus.net> # Table to track mojang releases

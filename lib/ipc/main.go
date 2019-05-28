@@ -14,6 +14,7 @@ type SubscriptionChannel struct {
 var (
 	SubStream      chan SubscriptionChannel
 	AnnounceStream chan models.Product
+	MojangStream   chan models.Article
 	MsgStream      chan models.DiscordMessage
 )
 
@@ -23,6 +24,7 @@ func InitStreams() error {
 	SubStream = make(chan SubscriptionChannel)
 	MsgStream = make(chan models.DiscordMessage)
 	AnnounceStream = make(chan models.Product)
+	MojangStream = make(chan models.Article)
 
 	return nil
 }

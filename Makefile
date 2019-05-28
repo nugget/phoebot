@@ -12,5 +12,9 @@ run: gazelle phoebot
 	clear
 	bazel run :phoebot
 
+mojang: gazelle
+	clear
+	bazel run //cmd/mojangtest
+
 deploy:
 	bazel run :deploy.apply

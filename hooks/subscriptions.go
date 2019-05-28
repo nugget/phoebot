@@ -10,6 +10,7 @@ import (
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
+	"github.com/nugget/phoebot/models"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -29,6 +30,8 @@ func ProcSubscriptions(dm *discordgo.MessageCreate) error {
 
 	phoelib.DebugSlice(res)
 
+	p := models.Product{}
+
 	if len(res) == 8 {
 		var err error
 
@@ -40,11 +43,26 @@ func ProcSubscriptions(dm *discordgo.MessageCreate) error {
 		class := res[5]
 		name := res[6]
 
-		p, err := products.GetProduct(class, name)
-		if err != nil {
-			logrus.WithError(err).Info("Unable to get matching product")
-			discord.Session.ChannelMessageSend(dm.ChannelID, "I've never heard of that one, sorry.")
-			return nil
+		if strings.ToLower(class) == "mojang" {
+			class = strings.ToLower(class)
+			name := strings.ToLower(name)
+
+			if name != "release" && name != "snapshot" {
+				discord.Session.ChannelMessageSend(dm.ChannelID, "I can only track `snapshot` and `release` for mojang announcements")
+				return nil
+			}
+
+			p.Class = class
+			p.Name = name
+
+		} else {
+
+			p, err = products.GetProduct(class, name)
+			if err != nil {
+				logrus.WithError(err).Info("Unable to get matching product")
+				discord.Session.ChannelMessageSend(dm.ChannelID, "I've never heard of that one, sorry.")
+				return nil
+			}
 		}
 
 		sc.Sub.ChannelID = dm.ChannelID
