@@ -3,6 +3,7 @@ package mojang
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -10,7 +11,9 @@ import (
 	"time"
 
 	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/models"
 
 	"github.com/blang/semver"
 	"github.com/sirupsen/logrus"
@@ -21,15 +24,6 @@ const CLASS = "mojang"
 const URI = "https://www.minecraft.net"
 const PATH = "/content/minecraft-net/_jcr_content.articles.grid"
 const QUERY = "tileselection=auto&tagsPath=minecraft:article/news&propResPath=/conf/minecraft/settings/wcm/policies/minecraft/components/content/grid/policy_grid&count=2000&pageSize=20&tag=ALL&lang=/content/minecraft-net/language-masters/en-us"
-
-type Article struct {
-	Title       string
-	URL         string
-	PublishDate time.Time
-	Release     bool
-	Product     string
-	Version     string
-}
 
 func GetTypes() ([]string, error) {
 	return []string{"release", "snapshot"}, nil
@@ -52,20 +46,20 @@ func GetHTTPBody(url string) (string, error) {
 }
 
 func ParseReleaseArticle(title, url string) (bool, string, string, error) {
-	body, err := GetHTTPBody(URI + url)
+	body, err := GetHTTPBody(url)
 	if err != nil {
 		return false, "", "", err
 	}
 
 	if !strings.Contains(body, "Minecraft server jar") {
-		logrus.WithField("url", url).Debug("Article does not contain server.jar")
+		logrus.WithField("url", url).Trace("Article does not contain server.jar")
 		return false, "news", "", nil
 	}
 
 	rV := regexp.MustCompile("([0-9].*)")
 	if rV.MatchString(title) {
 		res := rV.FindStringSubmatch(title)
-		phoelib.DebugSlice(res)
+		//phoelib.DebugSlice(res)
 
 		versionString := TransformVersion(res[1])
 
@@ -95,7 +89,7 @@ func TransformVersion(orig string) (new string) {
 	return new
 }
 
-func ArticleExistsInDB(a Article) (bool, error) {
+func ArticleExistsInDB(a models.Article) (bool, error) {
 	query := `SELECT articleID FROM mojangnews
 	           WHERE title ILIKE $1 AND url = $2 AND publishdate = $3`
 
@@ -120,29 +114,55 @@ func ArticleExistsInDB(a Article) (bool, error) {
 	return false, nil
 }
 
-func UpdateArticle(a Article) error {
+func UpdateArticle(a models.Article) error {
 	exists, err := ArticleExistsInDB(a)
 	if err != nil {
 		return err
 	}
 
-	if !exists {
-		query := `INSERT INTO mojangnews (title, url, publishdate, release, product, version)
+	if exists {
+		logrus.WithFields(logrus.Fields{
+			"title":   a.Title,
+			"url":     a.URL,
+			"product": a.Product,
+			"release": a.Release,
+			"version": a.Version,
+		}).Trace("old mojang news article ignored")
+		return nil
+	}
+
+	query := `INSERT INTO mojangnews (title, url, publishdate, release, product, version)
 			  SELECT $1, $2, $3, $4, $5, $6
 			  ON CONFLICT (title, url, publishdate) DO NOTHING`
 
-		phoelib.LogSQL(query)
-		_, err := db.DB.Exec(query, a.Title, a.URL, a.PublishDate, a.Release, a.Product, a.Version)
-		if err != nil {
-			return err
+	phoelib.LogSQL(query)
+	_, err = db.DB.Exec(query, a.Title, a.URL, a.PublishDate, a.Release, a.Product, a.Version)
+	if err != nil {
+		return err
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"title":   a.Title,
+		"url":     a.URL,
+		"product": a.Product,
+		"release": a.Release,
+		"version": a.Version,
+	}).Info("New mojang news article spotted")
+
+	if a.Release {
+		if ipc.MojangStream == nil {
+			logrus.WithError(fmt.Errorf("ipc.MojangStream not initialized")).Error("Unable to send announcement")
+		} else {
+			logrus.WithField("a", a).Trace("Sending announcement")
+			ipc.MojangStream <- a
 		}
 	}
 
 	return nil
 }
 
-func ArticleFromJSON(json string) (a Article, err error) {
-	a.URL = gjson.Get(json, "article_url").String()
+func ArticleFromJSON(json string) (a models.Article, err error) {
+	a.URL = URI + gjson.Get(json, "article_url").String()
 	a.Title = gjson.Get(json, "default_tile.title").String()
 
 	publishedString := gjson.Get(json, "publish_date").String()
@@ -196,7 +216,23 @@ func SeekReleases() error {
 		return true
 	})
 
-	logrus.WithField("count", count).Info("Parsed article list from mojang")
+	logrus.WithField("count", count).Info("Reviewed article list from mojang")
 
 	return nil
+}
+
+func Poller(interval int) {
+	slew := rand.Intn(10)
+	interval = interval + slew
+
+	for {
+		logrus.WithField("interval", interval).Debug(fmt.Sprintf("Looping %s Poller", CLASS))
+
+		err := SeekReleases()
+		if err != nil {
+			logrus.WithError(err).Error(fmt.Sprintf("%s SeekReleases failed", CLASS))
+		}
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
+
 }

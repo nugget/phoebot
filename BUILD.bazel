@@ -33,6 +33,7 @@ go_library(
         "//lib/player:go_default_library",
         "//lib/products:go_default_library",
         "//lib/subscriptions:go_default_library",
+        "//products/mojang:go_default_library",
         "//products/papermc:go_default_library",
         "//products/serverpro:go_default_library",
         "//vendor/github.com/bwmarrin/discordgo:go_default_library",

@@ -21,6 +21,7 @@ import (
 	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
+	"github.com/nugget/phoebot/products/mojang"
 	"github.com/nugget/phoebot/products/papermc"
 	"github.com/nugget/phoebot/products/serverpro"
 
@@ -91,7 +92,7 @@ func processAnnounceStream() {
 		logrus.WithFields(logrus.Fields{
 			"p":         p,
 			"stillOpen": stillOpen,
-		}).Debug("announceStream message received")
+		}).Debug("AnnounceStream message received")
 
 		matchingSubs, err := subscriptions.GetMatching(p.Class, p.Name)
 		if err != nil {
@@ -107,6 +108,44 @@ func processAnnounceStream() {
 
 		for _, sub := range matchingSubs {
 			message := fmt.Sprintf("Version %v of %s on %s is available now", p.Latest.Version, p.Name, p.Class)
+
+			if sub.Target != "" {
+				message = fmt.Sprintf("%s: %s", sub.Target, message)
+			}
+			discord.Session.ChannelMessageSend(sub.ChannelID, message)
+		}
+		if !stillOpen {
+			return
+		}
+	}
+}
+
+func processMojangStream() {
+	for {
+		a, stillOpen := <-ipc.MojangStream
+
+		logrus.WithFields(logrus.Fields{
+			"a":         a,
+			"stillOpen": stillOpen,
+		}).Debug("MojangStream message received")
+
+		matchingSubs, err := subscriptions.GetMatching("mojang", a.Product)
+		if err != nil {
+			logrus.WithError(err).Error("Unable to find matching subscriptions")
+			return
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"title":   a.Title,
+			"date":    a.PublishDate,
+			"product": a.Product,
+			"Version": a.Version,
+			"release": a.Release,
+			"url":     a.URL,
+		}).Warn("Announcing new mojang article!")
+
+		for _, sub := range matchingSubs {
+			message := fmt.Sprintf("New Minecraft %s announced at %s", a.Version, a.URL)
 
 			if sub.Target != "" {
 				message = fmt.Sprintf("%s: %s", sub.Target, message)
@@ -280,9 +319,11 @@ func main() {
 	go processMsgStream()
 	go processSubStream()
 	go processAnnounceStream()
+	go processMojangStream()
 
 	go serverpro.Poller(interval)
 	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
+	go mojang.Poller(interval)
 
 	// ipc.MsgStream <- DiscordMessage{"Moo", "Cow"}
 

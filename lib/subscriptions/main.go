@@ -139,7 +139,7 @@ func AddSubscription(sub models.Subscription) error {
 				return err
 			}
 
-			message := fmt.Sprintf("You are now subscribed to receive updates to this channel for %s releases from %s", sub.Name, sub.Class)
+			message := fmt.Sprintf("You are now subscribed to receive updates to this channel for %s versions from %s", sub.Name, sub.Class)
 			discord.Session.ChannelMessageSend(sub.ChannelID, message)
 
 			logrus.WithFields(logrus.Fields{
@@ -172,7 +172,7 @@ func DropSubscription(sub models.Subscription) error {
 	}
 
 	if count > 0 {
-		message := fmt.Sprintf("You are no longer subscribed to receive updates to this channel for %s releases from %s", sub.Name, sub.Class)
+		message := fmt.Sprintf("You are no longer subscribed to receive updates to this channel for %s versions from %s", sub.Name, sub.Class)
 		discord.Session.ChannelMessageSend(sub.ChannelID, message)
 	}
 

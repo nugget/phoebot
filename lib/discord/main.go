@@ -17,7 +17,7 @@ var (
 func RecordLog(m *discordgo.MessageCreate) error {
 	if m.GuildID == "" || m.ChannelID == "" || m.Type > 0 {
 		logrus.WithFields(logrus.Fields{
-			"playerID":  m.Author.Id,
+			"playerID":  m.Author.ID,
 			"guildID":   m.GuildID,
 			"channelID": m.ChannelID,
 			"type":      m.Type,

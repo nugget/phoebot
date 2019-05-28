@@ -33,3 +33,12 @@ type Product struct {
 	Latest   LatestVersion
 	Function LatestVersionFunction
 }
+
+type Article struct {
+	Title       string
+	URL         string
+	PublishDate time.Time
+	Release     bool
+	Product     string
+	Version     string
+}
