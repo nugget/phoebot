@@ -5,5 +5,9 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/nugget/phoebot/lib/phoelib",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/sirupsen/logrus:go_default_library"],
+    deps = [
+        "//lib/db:go_default_library",
+        "//vendor/github.com/bwmarrin/discordgo:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+    ],
 )

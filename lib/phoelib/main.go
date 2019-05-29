@@ -4,7 +4,19 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/nugget/phoebot/lib/db"
+
+	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
+)
+
+type Ignore struct {
+	Category string
+	Target   string
+}
+
+var (
+	Ignores []Ignore
 )
 
 func DebugSlice(res []string) {
@@ -46,4 +58,59 @@ func LogSQL(query string, args ...string) {
 		"query": query,
 		"args":  args,
 	}).Trace("Executing SQL Query")
+}
+
+func LoadIgnores() error {
+	var newIgnores []Ignore
+
+	query := `SELECT category, target FROM ignore WHERE deleted IS NULL AND enabled IS TRUE`
+
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		i := Ignore{}
+
+		err := rows.Scan(&i.Category, &i.Target)
+		if err != nil {
+			return err
+		}
+
+		i.Category = strings.ToLower(i.Category)
+
+		newIgnores = append(newIgnores, i)
+	}
+
+	logrus.WithField("count", len(newIgnores)).Debug("Loaded ignores list from database.")
+
+	Ignores = newIgnores
+
+	return nil
+}
+
+func IgnoreMessage(dm *discordgo.MessageCreate) bool {
+	for _, i := range Ignores {
+		switch i.Category {
+		case "guildid":
+			if i.Target == dm.GuildID {
+				return true
+			}
+		case "playerid":
+			if i.Target == dm.Author.ID {
+				return true
+			}
+		case "channelid":
+			if i.Target == dm.ChannelID {
+				return true
+			}
+		default:
+			logrus.WithField("category", i.Category).Warn("Unrecognized ignore category")
+		}
+
+	}
+
+	return false
 }
