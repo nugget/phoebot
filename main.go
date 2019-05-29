@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
@@ -204,6 +205,11 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 
 	logMsg := fmt.Sprintf("<%s> %s", dm.Author.Username, dm.Content)
 
+	if phoelib.IgnoreMessage(dm) {
+		//logrus.WithField("logMsg", logMsg).Trace("Ignored Discord message")
+		return
+	}
+
 	err = player.UpdateFromDiscord(dm.Author)
 	if err != nil {
 		logrus.WithError(err).Error("player.UpdateFromDiscord failed")
@@ -266,6 +272,19 @@ func LoadTriggers() error {
 	return nil
 }
 
+func housekeeping(interval int) error {
+	for {
+		err := phoelib.LoadIgnores()
+		if err != nil {
+			logrus.WithError(err).Error("LoadIgnores failed")
+		}
+
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
+
+	return nil
+}
+
 func main() {
 	config := setupConfig()
 	builddata.LogConversational()
@@ -324,6 +343,8 @@ func main() {
 	go serverpro.Poller(interval)
 	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
 	go mojang.Poller(interval)
+
+	go housekeeping(600)
 
 	// ipc.MsgStream <- DiscordMessage{"Moo", "Cow"}
 
