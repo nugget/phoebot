@@ -178,3 +178,28 @@ func DropSubscription(sub models.Subscription) error {
 
 	return nil
 }
+
+func DropAllChannelSubscriptions(channelID string) error {
+	query := `UPDATE subscription SET deleted = current_timestamp
+	          WHERE deleted IS NULL AND channelid = $1 RETURNING *`
+
+	rows, err := db.DB.Query(query, channelID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	count := 0
+	for rows.Next() {
+		logrus.WithField("row", rows).Debug("Dropped subscription")
+		count++
+	}
+
+	message := fmt.Sprintf("Say what? There aren't any subscriptions here")
+	if count > 0 {
+		message = fmt.Sprintf("You got it, boss!")
+	}
+	discord.Session.ChannelMessageSend(channelID, message)
+
+	return nil
+}

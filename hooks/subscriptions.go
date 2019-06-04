@@ -81,6 +81,43 @@ func ProcSubscriptions(dm *discordgo.MessageCreate) error {
 	return nil
 }
 
+func RegUnsubAll() (t Trigger) {
+	t.Regexp = regexp.MustCompile("(?i)(unsub)(scribe)? all")
+	t.Hook = ProcUnsubAll
+	t.Direct = true
+
+	return t
+}
+
+func ProcUnsubAll(dm *discordgo.MessageCreate) error {
+	if !phoelib.PlayerHasACL(dm.Author.ID, "admin") {
+		logrus.WithFields(logrus.Fields{
+			"channelID": dm.ChannelID,
+			"player":    dm.Author.Username,
+			"playerID":  dm.Author.ID,
+		}).Warn("Unauthorized ProcUnsubAll")
+
+		discord.Session.ChannelMessageSend(dm.ChannelID, "You're not allowed to do that!")
+		return nil
+	}
+
+	err := subscriptions.DropAllChannelSubscriptions(dm.ChannelID)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"error":     err,
+			"channelID": dm.ChannelID,
+		}).Error("Unable to drop all subscriptions")
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"channelID": dm.ChannelID,
+		"player":    dm.Author.Username,
+		"playerID":  dm.Author.ID,
+	}).Info("ProcUnsubAll Successful")
+
+	return err
+}
+
 func RegListSubscriptions() (t Trigger) {
 	t.Regexp = regexp.MustCompile("(?i)list subs")
 	t.Hook = ProcListSubscriptions
