@@ -167,6 +167,9 @@ func ArticleFromJSON(json string) (a models.Article, err error) {
 
 	publishedString := gjson.Get(json, "publish_date").String()
 	a.PublishDate, err = time.Parse("02 Jan 2006 15:04:05 MST", publishedString)
+	if err != nil {
+		a.PublishDate, err = time.Parse("02 January 2006 15:04:05 MST", publishedString)
+	}
 
 	return a, err
 }
