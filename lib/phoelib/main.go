@@ -114,3 +114,25 @@ func IgnoreMessage(dm *discordgo.MessageCreate) bool {
 
 	return false
 }
+
+func PlayerHasACL(playerID, acl string) bool {
+	query := `SELECT key FROM acl WHERE playerid = $1 AND key ILIKE $2 AND deleted IS NULL`
+
+	LogSQL(query, playerID, acl)
+	rows, err := db.DB.Query(query, playerID, acl)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"error":    err,
+			"playerID": playerID,
+			"acl":      acl,
+		}).Error("SQL Error in PlayerHasACL")
+		return false
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		return true
+	}
+
+	return false
+}
