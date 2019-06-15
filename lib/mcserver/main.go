@@ -69,7 +69,7 @@ func Login(hostname string, port int, email, password string) error {
 }
 
 func Reconnect() {
-	interval := 10
+	interval := 30
 	retries := 1
 
 	for {
@@ -83,7 +83,10 @@ func Reconnect() {
 
 			return
 		}
-		logrus.WithError(err).Debug("Heartbeat Loop")
+		logrus.WithFields(logrus.Fields{
+			"error":   err,
+			"retries": retries,
+		}).Info("mcserver Reconnect Loop")
 		retries++
 
 		time.Sleep(time.Duration(interval) * time.Second)
@@ -166,6 +169,7 @@ func Handler() error {
 	logrus.Debug("Minecraft Handler Launched")
 	err := Client.HandleGame()
 	logrus.WithError(err).Error("Minecraft Handler Exited")
+	go Reconnect()
 	return err
 }
 
@@ -213,7 +217,7 @@ func OnDisconnect(c chat.Message) error {
 		"message": CleanString(c),
 	})).Info("Minecraft disconnect")
 
-	Reconnect()
+	go Reconnect()
 
 	return nil
 }
