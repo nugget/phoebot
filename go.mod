@@ -3,6 +3,7 @@ module github.com/nugget/phoebot
 go 1.12
 
 require (
+	github.com/Tnze/go-mc v0.0.0-20190615075510-777525e03d15
 	github.com/araddon/dateparse v0.0.0-20190510211750-d2ba70357e92 // indirect
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.19.0

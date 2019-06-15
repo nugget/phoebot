@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "blocks.go",
+        "en_us.go",
+        "items.go",
+        "packetIDs.go",
+        "soundIDs.go",
+    ],
+    importmap = "github.com/nugget/phoebot/vendor/github.com/Tnze/go-mc/data",
+    importpath = "github.com/Tnze/go-mc/data",
+    visibility = ["//visibility:public"],
+)

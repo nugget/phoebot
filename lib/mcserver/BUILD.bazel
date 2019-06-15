@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/nugget/phoebot/lib/mcserver",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/Tnze/go-mc/authenticate:go_default_library",
+        "//vendor/github.com/Tnze/go-mc/bot:go_default_library",
+        "//vendor/github.com/Tnze/go-mc/chat:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+    ],
+)

@@ -18,6 +18,7 @@ import (
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
+	"github.com/nugget/phoebot/lib/mcserver"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/products"
@@ -32,8 +33,7 @@ import (
 )
 
 var (
-	STATEFILE string
-	triggers  []hooks.Trigger
+	triggers []hooks.Trigger
 )
 
 func shutdown() {
@@ -297,8 +297,6 @@ func main() {
 		}
 	}
 
-	STATEFILE = config.GetString("STATE_FILENAME")
-
 	interval := config.GetInt("MC_CHECK_INTERVAL")
 	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
 	debugLevel := config.GetString("PHOEBOT_DEBUG")
@@ -348,6 +346,24 @@ func main() {
 	go housekeeping(600)
 
 	// ipc.MsgStream <- DiscordMessage{"Moo", "Cow"}
+	//
+	err = mcserver.Login(
+		config.GetString("MINECRAFT_SERVER"),
+		config.GetInt("MINECRAFT_PORT"),
+		config.GetString("MOJANG_EMAIL"),
+		config.GetString("MOJANG_PASSWORD"),
+	)
+	if err != nil {
+		logrus.WithError(err).Error("Error connecting to Minecraft")
+	} else {
+		mcserver.Client.Events.GameStart = mcserver.OnGameStart
+		mcserver.Client.Events.ChatMsg = mcserver.OnChatMsg
+		mcserver.Client.Events.Disconnect = mcserver.OnDisconnect
+		mcserver.Client.Events.PluginMessage = mcserver.OnPluginMessage
+		mcserver.Client.Events.Die = mcserver.OnDieMessage
+
+		go mcserver.Handler()
+	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
