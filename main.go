@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -18,22 +19,24 @@ import (
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
+	"github.com/nugget/phoebot/lib/mcserver"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
+	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/products/mojang"
 	"github.com/nugget/phoebot/products/papermc"
 	"github.com/nugget/phoebot/products/serverpro"
 
+	"github.com/Tnze/go-mc/chat"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 var (
-	STATEFILE string
-	triggers  []hooks.Trigger
+	triggers []hooks.Trigger
 )
 
 func shutdown() {
@@ -286,6 +289,138 @@ func housekeeping(interval int) error {
 	return nil
 }
 
+func OnChatMsg(c chat.Message, pos byte) error {
+	coloredMessage := c.String()
+	cleanMessage := mcserver.CleanString(c)
+
+	re := regexp.MustCompile(`\x1B\[[0-?]*[ -/]*[@-~]`)
+	if re.MatchString(coloredMessage) {
+		cleanMessage = re.ReplaceAllString(coloredMessage, "")
+	}
+
+	for i, e := range c.Extra {
+		logrus.WithFields(logrus.Fields{
+			"i":             i,
+			"text":          e.Text,
+			"bold":          e.Bold,
+			"italic":        e.Italic,
+			"underlined":    e.UnderLined,
+			"strikethrough": e.StrikeThrough,
+			"obfuscated":    e.Obfuscated,
+			"color":         e.Color,
+		}).Trace("onChatMsg Debug Extra")
+	}
+
+	for i, w := range c.With {
+		logrus.WithFields(logrus.Fields{
+			"i": i,
+			"w": string(w),
+		}).Trace("onChatMsg Debug With")
+	}
+
+	f := mcserver.LogFields(logrus.Fields{
+		"pos":       pos,
+		"event":     "OnChatMsg",
+		"translate": c.Translate,
+		"class":     mcserver.ChatMsgClass(c),
+	})
+
+	var (
+		matchingSubs []models.Subscription
+		err          error
+		style        string
+	)
+
+	switch mcserver.ChatMsgClass(c) {
+	case "whisper":
+		logrus.WithFields(f).Info(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
+	case "chat":
+		logrus.WithFields(f).Debug(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
+	case "death":
+		logrus.WithFields(f).Info(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
+		style = "**"
+	case "join":
+		go StatsUpdate()
+		logrus.WithFields(f).Info(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
+	case "announcement":
+		logrus.WithFields(f).Warn(cleanMessage)
+	case "ignore":
+		logrus.WithFields(f).Warn(cleanMessage)
+	default:
+		logrus.WithFields(f).Info(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
+	}
+	if err != nil {
+		logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
+	} else {
+		for _, sub := range matchingSubs {
+			message := cleanMessage
+
+			if sub.Target != "" {
+				message = fmt.Sprintf("%s: %s", sub.Target, message)
+			}
+			logrus.WithFields(logrus.Fields{
+				"channel": sub.ChannelID,
+				"message": message,
+			}).Debug("ChannelMessageSend")
+
+			discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
+		}
+	}
+
+	return nil
+}
+
+func StatsUpdate() error {
+	ps, err := mcserver.GetPingStats()
+	if err != nil {
+		logrus.WithError(err).Error("PingAndList Failure")
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"delay":      ps.Delay,
+			"online":     ps.PlayersOnline,
+			"max":        ps.PlayersMax,
+			"version":    ps.Version,
+			"serverName": ps.Description,
+		}).Debug("PingAndList")
+
+		newTopic := fmt.Sprintf("%s (%d/%d players online)", ps.Description, ps.PlayersOnline, ps.PlayersMax)
+
+		matchingSubs, err := subscriptions.GetMatching("mcserver", "topic")
+		if err != nil {
+			logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
+		} else {
+			for _, sub := range matchingSubs {
+				// discord.Session.ChannelMessageSend(sub.ChannelID, newTopic)
+
+				cE := discordgo.ChannelEdit{}
+				cE.Topic = newTopic
+
+				_, err := discord.Session.ChannelEditComplex(sub.ChannelID, &cE)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{
+						"error":     err,
+						"channelID": sub.ChannelID,
+						"topic":     newTopic,
+					}).Error("ChannelEditComplex Failure")
+				} else {
+					logrus.WithFields(logrus.Fields{
+						"channelID": sub.ChannelID,
+						"topic":     newTopic,
+					}).Info("Set Channel Topic")
+				}
+			}
+
+		}
+	}
+
+	return nil
+}
+
 func main() {
 	config := setupConfig()
 	builddata.LogConversational()
@@ -296,8 +431,6 @@ func main() {
 			logrus.WithField("variable", f).Fatal("Missing environment variable")
 		}
 	}
-
-	STATEFILE = config.GetString("STATE_FILENAME")
 
 	interval := config.GetInt("MC_CHECK_INTERVAL")
 	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
@@ -348,6 +481,25 @@ func main() {
 	go housekeeping(600)
 
 	// ipc.MsgStream <- DiscordMessage{"Moo", "Cow"}
+	//
+	err = mcserver.Login(
+		config.GetString("MINECRAFT_SERVER"),
+		config.GetInt("MINECRAFT_PORT"),
+		config.GetString("MOJANG_EMAIL"),
+		config.GetString("MOJANG_PASSWORD"),
+	)
+	if err != nil {
+		logrus.WithError(err).Error("Error connecting to Minecraft")
+	} else {
+		mcserver.Client.Events.GameStart = mcserver.OnGameStart
+		mcserver.Client.Events.ChatMsg = OnChatMsg
+		mcserver.Client.Events.Disconnect = mcserver.OnDisconnect
+		mcserver.Client.Events.PluginMessage = mcserver.OnPluginMessage
+		mcserver.Client.Events.Die = mcserver.OnDieMessage
+
+		go mcserver.Handler()
+		go StatsUpdate()
+	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "chunk.go",
+        "motion.go",
+        "world.go",
+    ],
+    importmap = "github.com/nugget/phoebot/vendor/github.com/Tnze/go-mc/bot/world",
+    importpath = "github.com/Tnze/go-mc/bot/world",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/Tnze/go-mc/bot/world/entity:go_default_library",
+        "//vendor/github.com/Tnze/go-mc/data:go_default_library",
+        "//vendor/github.com/Tnze/go-mc/net/packet:go_default_library",
+    ],
+)

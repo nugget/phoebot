@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "marshal.go",
+        "nbt.go",
+        "read.go",
+        "typeinfo.go",
+    ],
+    importmap = "github.com/nugget/phoebot/vendor/github.com/Tnze/go-mc/nbt",
+    importpath = "github.com/Tnze/go-mc/nbt",
+    visibility = ["//visibility:public"],
+)

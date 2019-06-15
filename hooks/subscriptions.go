@@ -55,6 +55,18 @@ func ProcSubscriptions(dm *discordgo.MessageCreate) error {
 			p.Class = class
 			p.Name = name
 
+		} else if strings.ToLower(class) == "mcserver" {
+			class = strings.ToLower(class)
+			name := strings.ToLower(name)
+
+			if name != "chats" && name != "events" && name != "deaths" && name != "joins" {
+				discord.Session.ChannelMessageSend(dm.ChannelID, "I can only track `events`, `deaths`, `joins`, and `chats` for the minecraft server")
+				return nil
+			}
+
+			p.Class = class
+			p.Name = name
+
 		} else {
 
 			p, err = products.GetProduct(class, name)
