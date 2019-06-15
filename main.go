@@ -480,6 +480,7 @@ func main() {
 		mcserver.Client.Events.Die = mcserver.OnDieMessage
 
 		go mcserver.Handler()
+		go StatsUpdate()
 	}
 
 	sc := make(chan os.Signal, 1)
