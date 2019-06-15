@@ -125,8 +125,16 @@ func ChatMsgClass(m chat.Message) string {
 		return "chat"
 	}
 
+	if strings.HasPrefix(m.Translate, "gamemode") {
+		return "ignore"
+	}
+
 	if strings.HasPrefix(m.Translate, "chat.type.emote") {
 		return "chat"
+	}
+
+	if strings.HasPrefix(m.Translate, "chat.type.announcement") {
+		return "announcement"
 	}
 
 	if strings.HasPrefix(m.Translate, "death.") {
@@ -152,22 +160,6 @@ func ChatMsgClass(m chat.Message) string {
 	}
 
 	return "other"
-}
-
-func IsChat(m chat.Message) bool {
-	return ChatMsgClass(m) == "chat"
-}
-
-func IsDeath(m chat.Message) bool {
-	return ChatMsgClass(m) == "death"
-}
-
-func IsJoin(m chat.Message) bool {
-	return ChatMsgClass(m) == "join"
-}
-
-func IsWhisper(m chat.Message) bool {
-	return ChatMsgClass(m) == "whisper"
 }
 
 func Handler() error {

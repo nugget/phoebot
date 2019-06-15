@@ -323,20 +323,25 @@ func OnChatMsg(c chat.Message, pos byte) error {
 		err          error
 	)
 
-	if mcserver.IsWhisper(c) {
+	switch mcserver.ChatMsgClass(c) {
+	case "whisper":
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
-	} else if mcserver.IsChat(c) {
+	case "chat":
 		logrus.WithFields(f).Debug(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
-	} else if mcserver.IsDeath(c) {
+	case "death":
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
-	} else if mcserver.IsJoin(c) {
+	case "join":
 		go StatsUpdate()
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
-	} else {
+	case "announcement":
+		logrus.WithFields(f).Warn(cleanMessage)
+	case "ignore":
+		logrus.WithFields(f).Warn(cleanMessage)
+	default:
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
 	}
@@ -349,8 +354,12 @@ func OnChatMsg(c chat.Message, pos byte) error {
 			if sub.Target != "" {
 				message = fmt.Sprintf("%s: %s", sub.Target, message)
 			}
-			discord.Session.ChannelMessageSend(sub.ChannelID, message)
+			logrus.WithFields(logrus.Fields{
+				"channel": sub.ChannelID,
+				"message": message,
+			}).Debug("ChannelMessageSend")
 
+			discord.Session.ChannelMessageSend(sub.ChannelID, message)
 		}
 	}
 
