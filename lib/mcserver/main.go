@@ -111,7 +111,11 @@ func ChatMsgClass(m chat.Message) string {
 		return "whisper"
 	}
 
-	if strings.HasPrefix(m.Translate, "chat.") {
+	if strings.HasPrefix(m.Translate, "chat.type.text") {
+		return "chat"
+	}
+
+	if strings.HasPrefix(m.Translate, "chat.type.emote") {
 		return "chat"
 	}
 
