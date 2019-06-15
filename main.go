@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -289,7 +290,13 @@ func housekeeping(interval int) error {
 }
 
 func OnChatMsg(c chat.Message, pos byte) error {
+	coloredMessage := c.String()
 	cleanMessage := mcserver.CleanString(c)
+
+	re := regexp.MustCompile(`\x1B\[[0-?]*[ -/]*[@-~]`)
+	if re.MatchString(coloredMessage) {
+		cleanMessage = re.ReplaceAllString(coloredMessage, "")
+	}
 
 	for i, e := range c.Extra {
 		logrus.WithFields(logrus.Fields{
@@ -321,6 +328,7 @@ func OnChatMsg(c chat.Message, pos byte) error {
 	var (
 		matchingSubs []models.Subscription
 		err          error
+		style        string
 	)
 
 	switch mcserver.ChatMsgClass(c) {
@@ -333,6 +341,7 @@ func OnChatMsg(c chat.Message, pos byte) error {
 	case "death":
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
+		style = "**"
 	case "join":
 		go StatsUpdate()
 		logrus.WithFields(f).Info(cleanMessage)
@@ -359,7 +368,7 @@ func OnChatMsg(c chat.Message, pos byte) error {
 				"message": message,
 			}).Debug("ChannelMessageSend")
 
-			discord.Session.ChannelMessageSend(sub.ChannelID, message)
+			discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
 		}
 	}
 
