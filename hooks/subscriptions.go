@@ -59,8 +59,8 @@ func ProcSubscriptions(dm *discordgo.MessageCreate) error {
 			class = strings.ToLower(class)
 			name := strings.ToLower(name)
 
-			if name != "chatlog" && name != "events" {
-				discord.Session.ChannelMessageSend(dm.ChannelID, "I can only track `events` and `chatlog` for the minecraft server")
+			if name != "chats" && name != "events" && name != "deaths" && name != "joins" {
+				discord.Session.ChannelMessageSend(dm.ChannelID, "I can only track `events`, `deaths`, `joins`, and `chats` for the minecraft server")
 				return nil
 			}
 

@@ -289,12 +289,33 @@ func housekeeping(interval int) error {
 }
 
 func OnChatMsg(c chat.Message, pos byte) error {
-	fancyMessage := fmt.Sprintf("%v", c.String())
 	cleanMessage := mcserver.CleanString(c)
 
+	for i, e := range c.Extra {
+		logrus.WithFields(logrus.Fields{
+			"i":             i,
+			"text":          e.Text,
+			"bold":          e.Bold,
+			"italic":        e.Italic,
+			"underlined":    e.UnderLined,
+			"strikethrough": e.StrikeThrough,
+			"obfuscated":    e.Obfuscated,
+			"color":         e.Color,
+		}).Trace("onChatMsg Debug Extra")
+	}
+
+	for i, w := range c.With {
+		logrus.WithFields(logrus.Fields{
+			"i": i,
+			"w": w,
+		}).Trace("onChatMsg Debug With")
+	}
+
 	f := mcserver.LogFields(logrus.Fields{
-		"pos":   pos,
-		"event": "chat",
+		"pos":       pos,
+		"event":     "OnChatMsg",
+		"translate": c.Translate,
+		"class":     mcserver.ChatMsgClass(c),
 	})
 
 	var (
@@ -302,9 +323,15 @@ func OnChatMsg(c chat.Message, pos byte) error {
 		err          error
 	)
 
-	if fancyMessage == cleanMessage {
+	if mcserver.IsChat(c) {
 		logrus.WithFields(f).Debug(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "chatlog")
+	} else if mcserver.IsDeath(c) {
+		logrus.WithFields(f).Info(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
+	} else if mcserver.IsJoin(c) {
+		logrus.WithFields(f).Info(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
 	} else {
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "events")

@@ -9,6 +9,7 @@ go_library(
         "//vendor/github.com/Tnze/go-mc/authenticate:go_default_library",
         "//vendor/github.com/Tnze/go-mc/bot:go_default_library",
         "//vendor/github.com/Tnze/go-mc/chat:go_default_library",
+        "//vendor/github.com/Tnze/go-mc/data:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )

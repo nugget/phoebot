@@ -2,11 +2,13 @@ package mcserver
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Tnze/go-mc/authenticate"
 	"github.com/Tnze/go-mc/bot"
 	"github.com/Tnze/go-mc/chat"
+	"github.com/Tnze/go-mc/data"
 	"github.com/sirupsen/logrus"
 )
 
@@ -78,12 +80,72 @@ func Reconnect() {
 	}
 }
 
-func CleanString(c chat.Message) (buf string) {
-	for _, p := range c.Extra {
-		buf += p.Text
+func CleanString(m chat.Message) string {
+	var msg strings.Builder
+
+	msg.WriteString(m.Text)
+
+	//handle translate
+	if m.Translate != "" {
+		args := make([]interface{}, len(m.With))
+		for i, v := range m.With {
+			var arg chat.Message
+			arg.UnmarshalJSON(v) //ignore error
+			args[i] = arg
+		}
+
+		fmt.Fprintf(&msg, data.EnUs[m.Translate], args...)
 	}
 
-	return buf
+	if m.Extra != nil {
+		for i := range m.Extra {
+			msg.WriteString(CleanString(chat.Message(m.Extra[i])))
+		}
+	}
+
+	return msg.String()
+}
+
+func ChatMsgClass(m chat.Message) string {
+	if strings.HasPrefix(m.Translate, "chat.") {
+		return "chat"
+	}
+
+	if strings.HasPrefix(m.Translate, "death.") {
+		return "death"
+	}
+
+	text := CleanString(m)
+
+	if strings.HasPrefix(text, "<") {
+		return "chat"
+	}
+
+	if strings.HasPrefix(text, "* ") {
+		return "chat"
+	}
+
+	if strings.Contains(text, "joined the game") {
+		return "join"
+	}
+
+	if strings.Contains(text, "left the game") {
+		return "join"
+	}
+
+	return "other"
+}
+
+func IsChat(m chat.Message) bool {
+	return ChatMsgClass(m) == "chat"
+}
+
+func IsDeath(m chat.Message) bool {
+	return ChatMsgClass(m) == "death"
+}
+
+func IsJoin(m chat.Message) bool {
+	return ChatMsgClass(m) == "join"
 }
 
 func Handler() error {
@@ -99,25 +161,14 @@ func OnGameStart() error {
 }
 
 func OnChatMsg(c chat.Message, pos byte) error {
-	// fancyMessage includes all the ANSI color codes
-	fancyMessage := fmt.Sprintf("%v", c.String())
-	// cleanMessage is just a 7 bit clean ASCII message
 	cleanMessage := CleanString(c)
-
-	//fmt.Printf("fancy: %+v\n", fancyMessage)
-	//fmt.Printf("clean: %+v\n", cleanMessage)
-	//fmt.Printf("1: %v\n2: %v\n", []byte(fancyMessage), []byte(cleanMessage))
 
 	f := LogFields(logrus.Fields{
 		"pos":   pos,
 		"event": "chat",
 	})
 
-	if fancyMessage == cleanMessage {
-		logrus.WithFields(f).Debug(cleanMessage)
-	} else {
-		logrus.WithFields(f).Info(cleanMessage)
-	}
+	logrus.WithFields(f).Info(cleanMessage)
 
 	return nil
 }
