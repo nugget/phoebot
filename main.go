@@ -307,7 +307,7 @@ func OnChatMsg(c chat.Message, pos byte) error {
 	for i, w := range c.With {
 		logrus.WithFields(logrus.Fields{
 			"i": i,
-			"w": w,
+			"w": string(w),
 		}).Trace("onChatMsg Debug With")
 	}
 
@@ -323,9 +323,12 @@ func OnChatMsg(c chat.Message, pos byte) error {
 		err          error
 	)
 
-	if mcserver.IsChat(c) {
+	if mcserver.IsWhisper(c) {
+		logrus.WithFields(f).Info(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
+	} else if mcserver.IsChat(c) {
 		logrus.WithFields(f).Debug(cleanMessage)
-		matchingSubs, err = subscriptions.GetMatching("mcserver", "chatlog")
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
 	} else if mcserver.IsDeath(c) {
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")

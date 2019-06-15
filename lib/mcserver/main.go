@@ -107,6 +107,10 @@ func CleanString(m chat.Message) string {
 }
 
 func ChatMsgClass(m chat.Message) string {
+	if m.Translate == "commands.message.display.incoming" {
+		return "whisper"
+	}
+
 	if strings.HasPrefix(m.Translate, "chat.") {
 		return "chat"
 	}
@@ -146,6 +150,10 @@ func IsDeath(m chat.Message) bool {
 
 func IsJoin(m chat.Message) bool {
 	return ChatMsgClass(m) == "join"
+}
+
+func IsWhisper(m chat.Message) bool {
+	return ChatMsgClass(m) == "whisper"
 }
 
 func Handler() error {
