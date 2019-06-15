@@ -2,6 +2,7 @@ package mcserver
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Tnze/go-mc/authenticate"
 	"github.com/Tnze/go-mc/bot"
@@ -10,10 +11,12 @@ import (
 )
 
 var (
-	Client *bot.Client
+	Client     *bot.Client
+	remoteHost string
+	remotePort int
 )
 
-func logFields(f logrus.Fields) logrus.Fields {
+func LogFields(f logrus.Fields) logrus.Fields {
 	if f == nil {
 		f = logrus.Fields{}
 	}
@@ -47,7 +50,32 @@ func Login(hostname string, port int, email, password string) error {
 		return err
 	}
 
+	remoteHost = hostname
+	remotePort = port
+
 	return nil
+}
+
+func Reconnect() {
+	interval := 10
+	retries := 1
+
+	for {
+		err := Client.JoinServer(remoteHost, remotePort)
+		if err == nil {
+			logrus.WithFields(LogFields(logrus.Fields{
+				"retries": retries,
+			})).Info("Minecraft reconnected")
+
+			go Handler()
+
+			return
+		}
+		logrus.WithError(err).Debug("Heartbeat Loop")
+		retries++
+
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
 }
 
 func CleanString(c chat.Message) (buf string) {
@@ -59,47 +87,61 @@ func CleanString(c chat.Message) (buf string) {
 }
 
 func Handler() error {
+	logrus.Debug("Minecraft Handler Launched")
 	err := Client.HandleGame()
+	logrus.WithError(err).Error("Minecraft Handler Exited")
 	return err
 }
 
 func OnGameStart() error {
-	logrus.WithFields(logFields(nil)).Info("OnGameStart")
+	logrus.WithFields(LogFields(nil)).Info("Minecraft start")
 	return nil //if err isn't nil, HandleGame() will return it.
 }
 
 func OnChatMsg(c chat.Message, pos byte) error {
-	fmt.Printf("c: %+v\n", c)
-	fmt.Printf("String: %+v\n", c.String())
-	fmt.Printf("CleanString: %+v\n", CleanString(c))
-	fmt.Printf("Text: %+v\n", c.Text)
-	fmt.Printf("With: %+v\n", c.With)
-	fmt.Printf("Extra: %+v\n", c.Extra)
+	// fancyMessage includes all the ANSI color codes
+	fancyMessage := fmt.Sprintf("%v", c.String())
+	// cleanMessage is just a 7 bit clean ASCII message
+	cleanMessage := CleanString(c)
 
-	logrus.WithFields(logFields(logrus.Fields{
-		"message": c,
-		"pos":     pos,
-		"string":  c.String(),
-	})).Info("OnChatMsg")
+	//fmt.Printf("fancy: %+v\n", fancyMessage)
+	//fmt.Printf("clean: %+v\n", cleanMessage)
+	//fmt.Printf("1: %v\n2: %v\n", []byte(fancyMessage), []byte(cleanMessage))
+
+	f := LogFields(logrus.Fields{
+		"pos":   pos,
+		"event": "chat",
+	})
+
+	if fancyMessage == cleanMessage {
+		logrus.WithFields(f).Debug(cleanMessage)
+	} else {
+		logrus.WithFields(f).Info(cleanMessage)
+	}
+
 	return nil
 }
 
 func OnDisconnect(c chat.Message) error {
-	logrus.WithFields(logFields(logrus.Fields{
-		"message": c,
-	})).Info("OnDisconnect")
+	logrus.WithFields(LogFields(logrus.Fields{
+		"message": CleanString(c),
+	})).Info("Minecraft disconnect")
+
+	Reconnect()
+
 	return nil
 }
 
 func OnPluginMessage(channel string, data []byte) error {
-	logrus.WithFields(logFields(logrus.Fields{
+	logrus.WithFields(LogFields(logrus.Fields{
 		"channel": channel,
 		"data":    data,
-	})).Info("OnPluginMessage")
+		"string":  string(data),
+	})).Info("Minecraft Plugin Message")
 	return nil
 }
 
 func OnDieMessage() error {
-	logrus.WithFields(logFields(nil)).Info("DieMessage")
+	logrus.WithFields(LogFields(nil)).Info("Minecraft death")
 	return nil
 }

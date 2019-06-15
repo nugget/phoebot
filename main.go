@@ -23,10 +23,12 @@ import (
 	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
+	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/products/mojang"
 	"github.com/nugget/phoebot/products/papermc"
 	"github.com/nugget/phoebot/products/serverpro"
 
+	"github.com/Tnze/go-mc/chat"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -286,6 +288,44 @@ func housekeeping(interval int) error {
 	return nil
 }
 
+func OnChatMsg(c chat.Message, pos byte) error {
+	fancyMessage := fmt.Sprintf("%v", c.String())
+	cleanMessage := mcserver.CleanString(c)
+
+	f := mcserver.LogFields(logrus.Fields{
+		"pos":   pos,
+		"event": "chat",
+	})
+
+	var (
+		matchingSubs []models.Subscription
+		err          error
+	)
+
+	if fancyMessage == cleanMessage {
+		logrus.WithFields(f).Debug(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "chatlog")
+	} else {
+		logrus.WithFields(f).Info(cleanMessage)
+		matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
+	}
+	if err != nil {
+		logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
+	} else {
+		for _, sub := range matchingSubs {
+			message := cleanMessage
+
+			if sub.Target != "" {
+				message = fmt.Sprintf("%s: %s", sub.Target, message)
+			}
+			discord.Session.ChannelMessageSend(sub.ChannelID, message)
+
+		}
+	}
+
+	return nil
+}
+
 func main() {
 	config := setupConfig()
 	builddata.LogConversational()
@@ -357,7 +397,7 @@ func main() {
 		logrus.WithError(err).Error("Error connecting to Minecraft")
 	} else {
 		mcserver.Client.Events.GameStart = mcserver.OnGameStart
-		mcserver.Client.Events.ChatMsg = mcserver.OnChatMsg
+		mcserver.Client.Events.ChatMsg = OnChatMsg
 		mcserver.Client.Events.Disconnect = mcserver.OnDisconnect
 		mcserver.Client.Events.PluginMessage = mcserver.OnPluginMessage
 		mcserver.Client.Events.Die = mcserver.OnDieMessage
