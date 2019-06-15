@@ -162,6 +162,10 @@ func ChatMsgClass(m chat.Message) string {
 		return "join"
 	}
 
+	if strings.Contains(text, "went to bed") {
+		return "ignore"
+	}
+
 	return "other"
 }
 
