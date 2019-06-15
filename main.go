@@ -333,6 +333,7 @@ func OnChatMsg(c chat.Message, pos byte) error {
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
 	} else if mcserver.IsJoin(c) {
+		go StatsUpdate()
 		logrus.WithFields(f).Info(cleanMessage)
 		matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
 	} else {
@@ -349,6 +350,52 @@ func OnChatMsg(c chat.Message, pos byte) error {
 				message = fmt.Sprintf("%s: %s", sub.Target, message)
 			}
 			discord.Session.ChannelMessageSend(sub.ChannelID, message)
+
+		}
+	}
+
+	return nil
+}
+
+func StatsUpdate() error {
+	ps, err := mcserver.GetPingStats()
+	if err != nil {
+		logrus.WithError(err).Error("PingAndList Failure")
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"delay":      ps.Delay,
+			"online":     ps.PlayersOnline,
+			"max":        ps.PlayersMax,
+			"version":    ps.Version,
+			"serverName": ps.Description,
+		}).Debug("PingAndList")
+
+		newTopic := fmt.Sprintf("%s (%d/%d players online)", ps.Description, ps.PlayersOnline, ps.PlayersMax)
+
+		matchingSubs, err := subscriptions.GetMatching("mcserver", "topic")
+		if err != nil {
+			logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
+		} else {
+			for _, sub := range matchingSubs {
+				// discord.Session.ChannelMessageSend(sub.ChannelID, newTopic)
+
+				cE := discordgo.ChannelEdit{}
+				cE.Topic = newTopic
+
+				_, err := discord.Session.ChannelEditComplex(sub.ChannelID, &cE)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{
+						"error":     err,
+						"channelID": sub.ChannelID,
+						"topic":     newTopic,
+					}).Error("ChannelEditComplex Failure")
+				} else {
+					logrus.WithFields(logrus.Fields{
+						"channelID": sub.ChannelID,
+						"topic":     newTopic,
+					}).Info("Set Channel Topic")
+				}
+			}
 
 		}
 	}

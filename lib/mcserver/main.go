@@ -10,6 +10,7 @@ import (
 	"github.com/Tnze/go-mc/chat"
 	"github.com/Tnze/go-mc/data"
 	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 var (
@@ -17,6 +18,15 @@ var (
 	remoteHost string
 	remotePort int
 )
+
+type PingStats struct {
+	Delay         time.Duration
+	PlayersOnline int64
+	PlayersMax    int64
+	Description   string
+	Version       string
+	Protocol      int64
+}
 
 func LogFields(f logrus.Fields) logrus.Fields {
 	if f == nil {
@@ -165,6 +175,27 @@ func Handler() error {
 	err := Client.HandleGame()
 	logrus.WithError(err).Error("Minecraft Handler Exited")
 	return err
+}
+
+func GetPingStats() (ps PingStats, err error) {
+	var resp []byte
+
+	resp, ps.Delay, err = bot.PingAndList(remoteHost, remotePort)
+	if err != nil {
+		return ps, err
+	}
+
+	json := string(resp)
+
+	ps.PlayersOnline = gjson.Get(json, "players.online").Int()
+	ps.PlayersMax = gjson.Get(json, "players.max").Int()
+	ps.Description = gjson.Get(json, "description.text").String()
+	ps.Version = gjson.Get(json, "version.name").String()
+	ps.Protocol = gjson.Get(json, "verison.protocol").Int()
+
+	ps.PlayersOnline--
+
+	return ps, nil
 }
 
 func OnGameStart() error {
