@@ -171,10 +171,38 @@ func ChatMsgClass(m chat.Message) string {
 
 func Handler() error {
 	logrus.Debug("Minecraft Handler Launched")
+	go Heartbeat()
 	err := Client.HandleGame()
 	logrus.WithError(err).Error("Minecraft Handler Exited")
 	go Reconnect()
 	return err
+}
+
+func Heartbeat() {
+	for {
+		time.Sleep(time.Duration(60) * time.Second)
+
+		if len(Client.Wd.Chunks) == 0 {
+			logrus.Warn("No chunks, running reconnect")
+			go Reconnect()
+		} else {
+			inventory := Client.MainInventory()
+
+			//fmt.Printf("Client: %+v\n", Client)
+			//fmt.Printf("PlayInfo: %+v\n", Client.PlayInfo)
+			//fmt.Printf("Chunks: %d\n", len(Client.Wd.Chunks))
+			//fmt.Printf("inv: %+v\n", inventory)
+
+			logrus.WithFields(logrus.Fields{
+				"slot0":      inventory[0],
+				"chunks":     len(Client.Wd.Chunks),
+				"gamemode":   Client.PlayInfo.Gamemode,
+				"dimension":  Client.PlayInfo.Dimension,
+				"difficulty": Client.PlayInfo.Difficulty,
+			}).Debug("Heartbeat Loop")
+
+		}
+	}
 }
 
 func GetPingStats() (ps PingStats, err error) {
@@ -236,6 +264,10 @@ func OnPluginMessage(channel string, data []byte) error {
 }
 
 func OnDieMessage() error {
-	logrus.WithFields(LogFields(nil)).Info("Minecraft death")
+	logrus.WithFields(LogFields(nil)).Info("Minecraft death, respawning")
+	err := Client.Respawn()
+	if err != nil {
+		logrus.WithError(err).Error("Respawn failed")
+	}
 	return nil
 }
