@@ -22,8 +22,12 @@ import (
 	"github.com/nugget/phoebot/lib/mcserver"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
+	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
 	"github.com/nugget/phoebot/models"
+	"github.com/nugget/phoebot/products/mojang"
+	"github.com/nugget/phoebot/products/papermc"
+	"github.com/nugget/phoebot/products/serverpro"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
