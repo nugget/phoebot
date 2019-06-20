@@ -6,6 +6,7 @@ go_library(
     importpath = "github.com/nugget/phoebot/lib/mcserver",
     visibility = ["//visibility:public"],
     deps = [
+        "//lib/ipc:go_default_library",
         "//vendor/github.com/Tnze/go-mc/authenticate:go_default_library",
         "//vendor/github.com/Tnze/go-mc/bot:go_default_library",
         "//vendor/github.com/Tnze/go-mc/chat:go_default_library",
