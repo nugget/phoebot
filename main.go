@@ -479,11 +479,9 @@ func main() {
 	go processAnnounceStream()
 	go processMojangStream()
 
-	if interval > 10 {
-	}
-	// go serverpro.Poller(interval)
-	// go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
-	// go mojang.Poller(interval)
+	go serverpro.Poller(interval)
+	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
+	go mojang.Poller(interval)
 
 	go housekeeping(600)
 
