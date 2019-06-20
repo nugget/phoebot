@@ -60,15 +60,18 @@ func (s *Server) HandleGame() error {
 }
 
 func (s *Server) Connect() (err error) {
+	if s.Connected {
+		return nil
+	}
+
 	logrus.WithFields(logrus.Fields{
 		"token":       s.authData.AccessToken,
 		"connectTime": s.ConnectTime,
 		"connected":   s.Connected,
-	}).Trace("mcserver Connect()")
+	}).Debug("mcserver Connect()")
 
-	if s.Connected {
-		return nil
-	}
+	// Super-old token
+	// s.authData.AccessToken = "6432e3d646a348aca3e46aca488ba333"
 
 	if s.authData.AccessToken == "" {
 		s.authData, err = authenticate.Authenticate(s.Email, s.password)
@@ -87,6 +90,12 @@ func (s *Server) Connect() (err error) {
 	err = s.Client.JoinServer(s.Hostname, s.Port)
 	if err != nil {
 		s.Connected = false
+
+		if strings.Contains(err.Error(), "auth fail") {
+			logrus.WithError(err).Error("Authentication Failure, clearing access token")
+			s.authData.AccessToken = ""
+		}
+
 		return err
 	}
 
