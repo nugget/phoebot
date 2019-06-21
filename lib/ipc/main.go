@@ -2,6 +2,8 @@ package ipc
 
 import (
 	"github.com/nugget/phoebot/models"
+
+	"github.com/Tnze/go-mc/chat"
 	"github.com/sirupsen/logrus"
 )
 
@@ -12,10 +14,11 @@ type SubscriptionChannel struct {
 }
 
 var (
-	SubStream      chan SubscriptionChannel
-	AnnounceStream chan models.Product
-	MojangStream   chan models.Article
-	MsgStream      chan models.DiscordMessage
+	SubStream        chan SubscriptionChannel
+	AnnounceStream   chan models.Product
+	MojangStream     chan models.Article
+	MsgStream        chan models.DiscordMessage
+	ServerChatStream chan chat.Message
 )
 
 func InitStreams() error {
@@ -25,6 +28,8 @@ func InitStreams() error {
 	MsgStream = make(chan models.DiscordMessage)
 	AnnounceStream = make(chan models.Product)
 	MojangStream = make(chan models.Article)
+
+	ServerChatStream = make(chan chat.Message)
 
 	return nil
 }

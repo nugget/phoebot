@@ -91,9 +91,9 @@ func TransformVersion(orig string) (new string) {
 
 func ArticleExistsInDB(a models.Article) (bool, error) {
 	query := `SELECT articleID FROM mojangnews
-	           WHERE title ILIKE $1 AND url = $2 AND publishdate = $3`
+	           WHERE title ILIKE $1 AND url = $2 AND version = $3`
 
-	rows, err := db.DB.Query(query, a.Title, a.URL, a.PublishDate)
+	rows, err := db.DB.Query(query, a.Title, a.URL, a.Version)
 	if err != nil {
 		return false, err
 	}

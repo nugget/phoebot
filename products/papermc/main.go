@@ -1,6 +1,7 @@
 package papermc
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -38,6 +39,10 @@ func LatestVersion(name string) (semver.Version, error) {
 	r, err := http.Get(URI + name)
 	if err != nil {
 		return latestVersion, err
+	}
+
+	if r.StatusCode != 200 {
+		return latestVersion, fmt.Errorf("Unexpected result from PaperMC version: %v (%v)", r.Status, r.StatusCode)
 	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)

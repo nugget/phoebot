@@ -29,7 +29,6 @@ import (
 	"github.com/nugget/phoebot/products/papermc"
 	"github.com/nugget/phoebot/products/serverpro"
 
-	"github.com/Tnze/go-mc/chat"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -289,94 +288,104 @@ func housekeeping(interval int) error {
 	return nil
 }
 
-func OnChatMsg(c chat.Message, pos byte) error {
-	coloredMessage := c.String()
-	cleanMessage := mcserver.CleanString(c)
+func processChatStream(s mcserver.Server) {
+	for {
+		c, stillOpen := <-ipc.ServerChatStream
 
-	re := regexp.MustCompile(`\x1B\[[0-?]*[ -/]*[@-~]`)
-	if re.MatchString(coloredMessage) {
-		cleanMessage = re.ReplaceAllString(coloredMessage, "")
-	}
-
-	for i, e := range c.Extra {
 		logrus.WithFields(logrus.Fields{
-			"i":             i,
-			"text":          e.Text,
-			"bold":          e.Bold,
-			"italic":        e.Italic,
-			"underlined":    e.UnderLined,
-			"strikethrough": e.StrikeThrough,
-			"obfuscated":    e.Obfuscated,
-			"color":         e.Color,
-		}).Trace("onChatMsg Debug Extra")
-	}
+			"message":   c,
+			"stillOpen": stillOpen,
+		}).Trace("serverChatStream message received")
 
-	for i, w := range c.With {
-		logrus.WithFields(logrus.Fields{
-			"i": i,
-			"w": string(w),
-		}).Trace("onChatMsg Debug With")
-	}
+		coloredMessage := c.String()
+		cleanMessage := mcserver.CleanString(c)
 
-	f := mcserver.LogFields(logrus.Fields{
-		"pos":       pos,
-		"event":     "OnChatMsg",
-		"translate": c.Translate,
-		"class":     mcserver.ChatMsgClass(c),
-	})
+		re := regexp.MustCompile(`\x1B\[[0-?]*[ -/]*[@-~]`)
+		if re.MatchString(coloredMessage) {
+			cleanMessage = re.ReplaceAllString(coloredMessage, "")
+		}
 
-	var (
-		matchingSubs []models.Subscription
-		err          error
-		style        string
-	)
-
-	switch mcserver.ChatMsgClass(c) {
-	case "whisper":
-		logrus.WithFields(f).Info(cleanMessage)
-		matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
-	case "chat":
-		logrus.WithFields(f).Debug(cleanMessage)
-		matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
-	case "death":
-		logrus.WithFields(f).Info(cleanMessage)
-		matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
-		style = "**"
-	case "join":
-		go StatsUpdate()
-		logrus.WithFields(f).Info(cleanMessage)
-		matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
-	case "announcement":
-		logrus.WithFields(f).Warn(cleanMessage)
-	case "ignore":
-		logrus.WithFields(f).Warn(cleanMessage)
-	default:
-		logrus.WithFields(f).Info(cleanMessage)
-		matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
-	}
-	if err != nil {
-		logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
-	} else {
-		for _, sub := range matchingSubs {
-			message := cleanMessage
-
-			if sub.Target != "" {
-				message = fmt.Sprintf("%s: %s", sub.Target, message)
-			}
+		for i, e := range c.Extra {
 			logrus.WithFields(logrus.Fields{
-				"channel": sub.ChannelID,
-				"message": message,
-			}).Debug("ChannelMessageSend")
+				"i":             i,
+				"text":          e.Text,
+				"bold":          e.Bold,
+				"italic":        e.Italic,
+				"underlined":    e.UnderLined,
+				"strikethrough": e.StrikeThrough,
+				"obfuscated":    e.Obfuscated,
+				"color":         e.Color,
+			}).Trace("onChatMsg Debug Extra")
+		}
 
-			discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
+		for i, w := range c.With {
+			logrus.WithFields(logrus.Fields{
+				"i": i,
+				"w": string(w),
+			}).Trace("onChatMsg Debug With")
+		}
+
+		f := s.LogFields(logrus.Fields{
+			"event":     "processChatStream",
+			"translate": c.Translate,
+			"class":     mcserver.ChatMsgClass(c),
+		})
+
+		var (
+			matchingSubs []models.Subscription
+			err          error
+			style        string
+		)
+
+		switch mcserver.ChatMsgClass(c) {
+		case "whisper":
+			logrus.WithFields(f).Info(cleanMessage)
+			matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
+		case "chat":
+			logrus.WithFields(f).Debug(cleanMessage)
+			matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
+		case "death":
+			logrus.WithFields(f).Info(cleanMessage)
+			matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
+			style = "**"
+		case "join":
+			go StatsUpdate(s)
+			logrus.WithFields(f).Info(cleanMessage)
+			matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
+		case "announcement":
+			logrus.WithFields(f).Warn(cleanMessage)
+		case "ignore":
+			logrus.WithFields(f).Warn(cleanMessage)
+		default:
+			logrus.WithFields(f).Info(cleanMessage)
+			matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
+		}
+		if err != nil {
+			logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
+		} else {
+			for _, sub := range matchingSubs {
+				message := cleanMessage
+
+				if sub.Target != "" {
+					message = fmt.Sprintf("%s: %s", sub.Target, message)
+				}
+				logrus.WithFields(logrus.Fields{
+					"channel": sub.ChannelID,
+					"message": message,
+				}).Debug("ChannelMessageSend")
+
+				discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
+			}
+		}
+
+		if !stillOpen {
+			return
 		}
 	}
-
-	return nil
 }
 
-func StatsUpdate() error {
-	ps, err := mcserver.GetPingStats()
+func StatsUpdate(s mcserver.Server) error {
+	ps, err := s.Status()
 	if err != nil {
 		logrus.WithError(err).Error("PingAndList Failure")
 	} else {
@@ -480,26 +489,24 @@ func main() {
 
 	go housekeeping(600)
 
-	// ipc.MsgStream <- DiscordMessage{"Moo", "Cow"}
-	//
-	err = mcserver.Login(
+	mc, err := mcserver.New()
+	if err != nil {
+		logrus.WithError(err).Fatal("Fatal mcserver error")
+	}
+
+	err = mc.Authenticate(
 		config.GetString("MINECRAFT_SERVER"),
 		config.GetInt("MINECRAFT_PORT"),
 		config.GetString("MOJANG_EMAIL"),
 		config.GetString("MOJANG_PASSWORD"),
 	)
 	if err != nil {
-		logrus.WithError(err).Error("Error connecting to Minecraft")
-	} else {
-		mcserver.Client.Events.GameStart = mcserver.OnGameStart
-		mcserver.Client.Events.ChatMsg = OnChatMsg
-		mcserver.Client.Events.Disconnect = mcserver.OnDisconnect
-		mcserver.Client.Events.PluginMessage = mcserver.OnPluginMessage
-		mcserver.Client.Events.Die = mcserver.OnDieMessage
-
-		go mcserver.Handler()
-		go StatsUpdate()
+		logrus.WithError(err).Error("Error with mcserver Authenticate")
 	}
+
+	go processChatStream(mc)
+	go StatsUpdate(mc)
+	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
