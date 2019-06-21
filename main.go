@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"regexp"
 	"syscall"
 	"time"
 
@@ -297,13 +296,7 @@ func processChatStream(s mcserver.Server) {
 			"stillOpen": stillOpen,
 		}).Trace("serverChatStream message received")
 
-		coloredMessage := c.String()
-		cleanMessage := mcserver.CleanString(c)
-
-		re := regexp.MustCompile(`\x1B\[[0-?]*[ -/]*[@-~]`)
-		if re.MatchString(coloredMessage) {
-			cleanMessage = re.ReplaceAllString(coloredMessage, "")
-		}
+		noColorsMessage := c.ClearString()
 
 		for i, e := range c.Extra {
 			logrus.WithFields(logrus.Fields{
@@ -339,32 +332,32 @@ func processChatStream(s mcserver.Server) {
 
 		switch mcserver.ChatMsgClass(c) {
 		case "whisper":
-			logrus.WithFields(f).Info(cleanMessage)
+			logrus.WithFields(f).Info(noColorsMessage)
 			matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
 		case "chat":
-			logrus.WithFields(f).Debug(cleanMessage)
+			logrus.WithFields(f).Debug(noColorsMessage)
 			matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
 		case "death":
-			logrus.WithFields(f).Info(cleanMessage)
+			logrus.WithFields(f).Info(noColorsMessage)
 			matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
 			style = "**"
 		case "join":
 			go StatsUpdate(s)
-			logrus.WithFields(f).Info(cleanMessage)
+			logrus.WithFields(f).Info(noColorsMessage)
 			matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
 		case "announcement":
-			logrus.WithFields(f).Warn(cleanMessage)
+			logrus.WithFields(f).Warn(noColorsMessage)
 		case "ignore":
-			logrus.WithFields(f).Warn(cleanMessage)
+			logrus.WithFields(f).Warn(noColorsMessage)
 		default:
-			logrus.WithFields(f).Info(cleanMessage)
+			logrus.WithFields(f).Info(noColorsMessage)
 			matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
 		}
 		if err != nil {
 			logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
 		} else {
 			for _, sub := range matchingSubs {
-				message := cleanMessage
+				message := noColorsMessage
 
 				if sub.Target != "" {
 					message = fmt.Sprintf("%s: %s", sub.Target, message)

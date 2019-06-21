@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/Tnze/go-mc/data"
@@ -48,26 +49,77 @@ func (m *Message) Decode(r pk.DecodeReader) error {
 	return json.NewDecoder(io.LimitReader(r, int64(Len))).Decode(m)
 }
 
-var colors = map[string]int{
-	"black":        30,
-	"dark_blue":    34,
-	"dark_green":   32,
-	"dark_aqua":    36,
-	"dark_red":     31,
-	"dark_purple":  35,
-	"gold":         33,
-	"gray":         37,
-	"dark_gray":    90,
-	"blue":         94,
-	"green":        92,
-	"aqua":         96,
-	"red":          91,
-	"light_purple": 95,
-	"yellow":       93,
-	"white":        97,
+var fmtCode = map[byte]string{
+	'0': "30",
+	'1': "34",
+	'2': "32",
+	'3': "36",
+	'4': "31",
+	'5': "35",
+	'6': "33",
+	'7': "37",
+	'8': "90",
+	'9': "94",
+	'a': "92",
+	'b': "96",
+	'c': "91",
+	'd': "95",
+	'e': "93",
+	'f': "97",
+
+	// 'k':"",	//random
+	'l': "1",
+	'm': "9",
+	'n': "4",
+	'o': "3",
+	'r': "0",
+}
+var colors = map[string]string{
+	"black":        "30",
+	"dark_blue":    "34",
+	"dark_green":   "32",
+	"dark_aqua":    "36",
+	"dark_red":     "31",
+	"dark_purple":  "35",
+	"gold":         "33",
+	"gray":         "37",
+	"dark_gray":    "90",
+	"blue":         "94",
+	"green":        "92",
+	"aqua":         "96",
+	"red":          "91",
+	"light_purple": "95",
+	"yellow":       "93",
+	"white":        "97",
 }
 
-// String return the message with escape sequence for ansi color.
+// ClearString return the message without escape sequence for ansi color.
+func (m Message) ClearString() string {
+	var msg strings.Builder
+	text, _ := transf(m.Text, false)
+	msg.WriteString(text)
+
+	//handle translate
+	if m.Translate != "" {
+		args := make([]interface{}, len(m.With))
+		for i, v := range m.With {
+			var arg Message
+			arg.UnmarshalJSON(v) //ignore error
+			args[i] = arg.ClearString()
+		}
+
+		fmt.Fprintf(&msg, data.EnUs[m.Translate], args...)
+	}
+
+	if m.Extra != nil {
+		for i := range m.Extra {
+			msg.WriteString(Message(m.Extra[i]).ClearString())
+		}
+	}
+	return msg.String()
+}
+
+// String return the message string with escape sequence for ansi color.
 // On windows, you may want print this string using
 // github.com/mattn/go-colorable.
 func (m Message) String() string {
@@ -85,12 +137,14 @@ func (m Message) String() string {
 		format.WriteString("9;")
 	}
 	if m.Color != "" {
-		fmt.Fprintf(&format, "%d;", colors[m.Color])
+		format.WriteString(colors[m.Color] + ";")
 	}
 	if format.Len() > 0 {
 		msg.WriteString("\033[" + format.String()[:format.Len()-1] + "m")
 	}
-	msg.WriteString(m.Text)
+
+	text, ok := transf(m.Text, true)
+	msg.WriteString(text)
 
 	//handle translate
 	if m.Translate != "" {
@@ -110,8 +164,28 @@ func (m Message) String() string {
 		}
 	}
 
-	if format.Len() > 0 {
+	if format.Len() > 0 || ok {
 		msg.WriteString("\033[0m")
 	}
 	return msg.String()
+}
+
+var fmtPat = regexp.MustCompile("(?i)§[0-9A-FK-OR]")
+
+func transf(str string, ansi bool) (dst string, change bool) {
+	dst = fmtPat.ReplaceAllStringFunc(
+		str,
+		func(str string) string {
+			f, ok := fmtCode[str[2]]
+			if ok {
+				if ansi {
+					change = true
+					return "\033[" + f + "m" // enable, add ANSI code
+				}
+				return "" //disable, remove the § code
+			}
+			return str //not a § code
+		},
+	)
+	return
 }

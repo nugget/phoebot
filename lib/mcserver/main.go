@@ -10,7 +10,6 @@ import (
 	"github.com/Tnze/go-mc/authenticate"
 	"github.com/Tnze/go-mc/bot"
 	"github.com/Tnze/go-mc/chat"
-	"github.com/Tnze/go-mc/data"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
@@ -234,8 +233,6 @@ func (s *Server) OnGameStart() error {
 }
 
 func (s *Server) OnChatMsg(c chat.Message, pos byte) error {
-	cleanMessage := CleanString(c)
-
 	f := s.LogFields(logrus.Fields{
 		"pos":   pos,
 		"event": "chat",
@@ -244,7 +241,7 @@ func (s *Server) OnChatMsg(c chat.Message, pos byte) error {
 	if ipc.ServerChatStream != nil {
 		ipc.ServerChatStream <- c
 	} else {
-		logrus.WithFields(f).Info(cleanMessage)
+		logrus.WithFields(f).Info(c.ClearString())
 	}
 
 	return nil
@@ -252,7 +249,7 @@ func (s *Server) OnChatMsg(c chat.Message, pos byte) error {
 
 func (s *Server) OnDisconnect(c chat.Message) error {
 	logrus.WithFields(s.LogFields(logrus.Fields{
-		"message": CleanString(c),
+		"message": c.ClearString(),
 	})).Info("Minecraft disconnect")
 
 	s.Connected = false
@@ -276,32 +273,6 @@ func (s *Server) OnDieMessage() error {
 		logrus.WithError(err).Error("Respawn failed")
 	}
 	return nil
-}
-
-func CleanString(m chat.Message) string {
-	var msg strings.Builder
-
-	msg.WriteString(m.Text)
-
-	//handle translate
-	if m.Translate != "" {
-		args := make([]interface{}, len(m.With))
-		for i, v := range m.With {
-			var arg chat.Message
-			arg.UnmarshalJSON(v) //ignore error
-			args[i] = arg
-		}
-
-		fmt.Fprintf(&msg, data.EnUs[m.Translate], args...)
-	}
-
-	if m.Extra != nil {
-		for i := range m.Extra {
-			msg.WriteString(CleanString(chat.Message(m.Extra[i])))
-		}
-	}
-
-	return msg.String()
 }
 
 func ChatMsgClass(m chat.Message) string {
@@ -329,7 +300,7 @@ func ChatMsgClass(m chat.Message) string {
 		return "death"
 	}
 
-	text := CleanString(m)
+	text := m.ClearString()
 
 	if strings.HasPrefix(text, "<") {
 		return "chat"
