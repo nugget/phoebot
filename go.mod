@@ -6,7 +6,6 @@ require (
 	github.com/Tnze/go-mc v1.0.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.19.0
-	github.com/kr/pty v1.1.5 // indirect
 	github.com/lib/pq v1.1.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/viper v1.4.0
