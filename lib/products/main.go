@@ -177,6 +177,9 @@ func Poller(class string, name string, interval int, fn models.LatestVersionFunc
 					"newVersion":    maxVer,
 				}).Info("New version detected!")
 
+				p.Latest.Version = maxVer
+				p.Latest.Time = time.Now()
+
 				ipc.AnnounceStream <- p
 			} else {
 				logrus.WithFields(logrus.Fields{
@@ -192,9 +195,6 @@ func Poller(class string, name string, interval int, fn models.LatestVersionFunc
 				// message := fmt.Sprintf("Version %v of %s on %s is still the best", maxVer, p.Name, p.Class)
 				// ipc.AnnounceStream <- models.Announcement{p, message}
 			}
-
-			p.Latest.Version = maxVer
-			p.Latest.Time = time.Now()
 
 			err := PutProduct(p)
 			if err != nil {
