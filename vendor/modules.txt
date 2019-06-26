@@ -1,4 +1,4 @@
-# github.com/Tnze/go-mc v1.0.1
+# github.com/Tnze/go-mc v1.0.2-0.20190625060103-9df0ae90648d
 github.com/Tnze/go-mc/chat
 github.com/Tnze/go-mc/authenticate
 github.com/Tnze/go-mc/bot

@@ -5,7 +5,7 @@ go 1.12
 require (
 	cloud.google.com/go v0.40.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.5 // indirect
-	github.com/Tnze/go-mc v1.0.1
+	github.com/Tnze/go-mc v1.0.2-0.20190625060103-9df0ae90648d
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.19.0
 	github.com/coreos/bbolt v1.3.3 // indirect
