@@ -228,16 +228,43 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	}).Trace("Evaluating triggers")
 
 	for _, t := range triggers {
-
 		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
-				logrus.WithFields(logrus.Fields{
-					"direct":   direct,
-					"t.direct": t.Direct,
-					"regexp":   t.Regexp,
-				}).Trace("Trigger matched, running hook")
+				if t.ACL != "" && !phoelib.PlayerHasACL(dm.Author.ID, t.ACL) {
+					logrus.WithFields(logrus.Fields{
+						"player":   dm.Author.Username,
+						"playerID": dm.Author.ID,
+						"channel":  channel.Name,
+						"direct":   direct,
+						"t.direct": t.Direct,
+						"regexp":   t.Regexp,
+						"ACL":      t.ACL,
+					}).Warn("Unauthorized Trigger")
+				} else {
+					logrus.WithFields(logrus.Fields{
+						"player":   dm.Author.Username,
+						"playerID": dm.Author.ID,
+						"channel":  channel.Name,
+						"direct":   direct,
+						"t.direct": t.Direct,
+						"regexp":   t.Regexp,
+						"ACL":      t.ACL,
+					}).Trace("Trigger matched, running hook")
 
-				t.Hook(dm)
+					err := t.Hook(dm)
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"player":   dm.Author.Username,
+							"playerID": dm.Author.ID,
+							"channel":  channel.Name,
+							"direct":   direct,
+							"t.direct": t.Direct,
+							"regexp":   t.Regexp,
+							"ACL":      t.ACL,
+							"error":    err,
+						}).Error("Error Hooking")
+					}
+				}
 			} else {
 				logrus.WithFields(logrus.Fields{
 					"direct":   direct,
@@ -269,6 +296,8 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegVersion())
 	triggers = append(triggers, hooks.RegTimezones())
 	triggers = append(triggers, hooks.RegStatus())
+
+	triggers = append(triggers, hooks.RegSay())
 
 	return nil
 }
