@@ -134,7 +134,7 @@ func PutProduct(n models.Product) error {
 		"class":   n.Class,
 		"name":    n.Name,
 		"version": versionString,
-	}).Debug("PutProduct")
+	}).Trace("PutProduct Successful")
 
 	return nil
 }
