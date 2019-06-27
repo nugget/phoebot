@@ -26,7 +26,6 @@ import (
 	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/products/mojang"
 	"github.com/nugget/phoebot/products/papermc"
-	"github.com/nugget/phoebot/products/serverpro"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -476,7 +475,7 @@ func main() {
 	go processAnnounceStream()
 	go processMojangStream()
 
-	go serverpro.Poller(interval)
+	// go serverpro.Poller(interval)
 	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
 	go mojang.Poller(interval)
 
