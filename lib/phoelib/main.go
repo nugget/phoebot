@@ -108,6 +108,7 @@ func LoadIgnores() error {
 		}).Info("Updated ignores list from database")
 
 		Ignores = newIgnores
+		ignoresHash = newHash
 	}
 
 	return nil
