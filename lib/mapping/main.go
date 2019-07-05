@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/phoelib"
 )
 
 type Map struct {
@@ -96,7 +97,7 @@ func Update(m Map) error {
 func GetByID(id int) (Map, error) {
 	query := `SELECT mapid, scale, lx, lz, rx, rz FROM map WHERE mapid = $1 AND deleted IS NULL  ORDER BY changed DESC LIMIT 1`
 
-	//phoelib.LogSQL(query, id)
+	phoelib.LogSQL(query, id)
 	rows, err := db.DB.Query(query, id)
 	if err != nil {
 		return Map{}, err
@@ -124,10 +125,10 @@ func GetByPosition(x, z int) ([]Map, error) {
 
 	query := `SELECT mapid, scale, lx, lz, rx, rz FROM map
 	          WHERE deleted IS NULL AND
-			      $1 >= lx AND $1 <= rx AND
-				  $2 >= lz AND $2 <= rz`
+					$1 >= lx AND $1 <= rx AND
+					$2 >= lz AND $2 <= rz`
 
-	//phoelib.LogSQL(query, x, z)
+	phoelib.LogSQL(query, x, z)
 	rows, err := db.DB.Query(query, x, z)
 	if err != nil {
 		return nil, err
