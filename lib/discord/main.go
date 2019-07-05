@@ -74,3 +74,27 @@ func GetChannel(id string) (*discordgo.Channel, error) {
 	err = UpdateChannel(channel)
 	return channel, err
 }
+
+func GetChannelByName(name string) (*discordgo.Channel, error) {
+	query := `SELECT channelid FROM channel WHERE name ILIKE $1 or name ILIKE '#'||$1`
+
+	phoelib.LogSQL(query, name)
+	rows, err := db.DB.Query(query, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var channelID string
+
+		err := rows.Scan(&channelID)
+		if err != nil {
+			return nil, err
+		}
+
+		return GetChannel(channelID)
+	}
+
+	return nil, fmt.Errorf("Not Found")
+}

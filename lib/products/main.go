@@ -134,7 +134,7 @@ func PutProduct(n models.Product) error {
 		"class":   n.Class,
 		"name":    n.Name,
 		"version": versionString,
-	}).Debug("PutProduct")
+	}).Trace("PutProduct Successful")
 
 	return nil
 }
@@ -187,7 +187,7 @@ func Poller(class string, name string, interval int, fn models.LatestVersionFunc
 					"name":          p.Name,
 					"latestVersion": p.Latest.Version,
 					"newVersion":    maxVer,
-				}).Debug("Version unchanged")
+				}).Trace("Version unchanged")
 
 				// Uncomment this to report versions to Discord on every fetch
 				// even if the version has not changed

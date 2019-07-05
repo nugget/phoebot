@@ -12,4 +12,5 @@ type Trigger struct {
 	Regexp *regexp.Regexp
 	Hook   HookFunction
 	Direct bool
+	ACL    string
 }
