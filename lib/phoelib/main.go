@@ -1,7 +1,9 @@
 package phoelib
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"strings"
 
 	"github.com/nugget/phoebot/lib/db"
@@ -16,7 +18,8 @@ type Ignore struct {
 }
 
 var (
-	Ignores []Ignore
+	Ignores     []Ignore
+	ignoresHash hash.Hash
 )
 
 func DebugSlice(res []string) {
@@ -61,9 +64,12 @@ func LogSQL(query string, args ...string) {
 }
 
 func LoadIgnores() error {
-	var newIgnores []Ignore
+	var (
+		newIgnores []Ignore
+		idList     []string
+	)
 
-	query := `SELECT category, target FROM ignore WHERE deleted IS NULL AND enabled IS TRUE`
+	query := `SELECT ignoreid, category, target FROM ignore WHERE deleted IS NULL AND enabled IS TRUE ORDER BY added`
 
 	rows, err := db.DB.Query(query)
 	if err != nil {
@@ -73,8 +79,9 @@ func LoadIgnores() error {
 
 	for rows.Next() {
 		i := Ignore{}
+		id := ""
 
-		err := rows.Scan(&i.Category, &i.Target)
+		err := rows.Scan(&id, &i.Category, &i.Target)
 		if err != nil {
 			return err
 		}
@@ -82,11 +89,27 @@ func LoadIgnores() error {
 		i.Category = strings.ToLower(i.Category)
 
 		newIgnores = append(newIgnores, i)
+		idList = append(idList, id)
 	}
+	logrus.WithField("idList", idList).Trace("idList Debug")
 
-	logrus.WithField("count", len(newIgnores)).Debug("Loaded ignores list from database.")
+	newHash := sha256.New()
+	newHash.Write([]byte(strings.Join(idList, ":")))
 
-	Ignores = newIgnores
+	if newHash == ignoresHash {
+		logrus.WithFields(logrus.Fields{
+			"count":    len(newIgnores),
+			"listHash": fmt.Sprintf("%x", newHash.Sum(nil)),
+		}).Trace("Ignores list unchanged")
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"count":    len(newIgnores),
+			"listHash": fmt.Sprintf("%x", newHash.Sum(nil)),
+		}).Info("Updated ignores list from database")
+
+		Ignores = newIgnores
+		ignoresHash = newHash
+	}
 
 	return nil
 }

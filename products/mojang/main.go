@@ -108,7 +108,13 @@ func ArticleExistsInDB(a models.Article) (bool, error) {
 		// We have already logged this article
 		return true, nil
 	} else if matchCount > 1 {
-		return true, fmt.Errorf("Unexpectedly found %d matching articles", matchCount)
+		logrus.WithFields(logrus.Fields{
+			"matchCount": matchCount,
+			"title":      a.Title,
+			"URL":        a.URL,
+			"version":    a.Version,
+		}).Trace("Unexpectedly found more than 1 matching articles")
+		return true, nil
 	}
 
 	return false, nil
@@ -219,7 +225,7 @@ func SeekReleases() error {
 		return true
 	})
 
-	logrus.WithField("count", count).Info("Reviewed article list from mojang")
+	logrus.WithField("count", count).Trace("Reviewed article list from mojang")
 
 	return nil
 }
@@ -229,7 +235,7 @@ func Poller(interval int) {
 	interval = interval + slew
 
 	for {
-		logrus.WithField("interval", interval).Debug(fmt.Sprintf("Looping %s Poller", CLASS))
+		logrus.WithField("interval", interval).Trace(fmt.Sprintf("Looping %s Poller", CLASS))
 
 		err := SeekReleases()
 		if err != nil {
