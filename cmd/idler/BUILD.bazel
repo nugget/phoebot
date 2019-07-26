@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/nugget/phoebot/cmd/idler",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//lib/builddata:go_default_library",
+        "//lib/ipc:go_default_library",
+        "//lib/mcserver:go_default_library",
+        "//lib/phoelib:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
+        "//vendor/github.com/spf13/viper:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "idler",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
