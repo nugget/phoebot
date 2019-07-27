@@ -305,6 +305,7 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegSay())
 
 	triggers = append(triggers, hooks.RegMapMe())
+	triggers = append(triggers, hooks.RegNewMap())
 
 	return nil
 }
@@ -379,7 +380,8 @@ func processChatStream(s mcserver.Server) {
 						logrus.WithFields(logrus.Fields{
 							"error": err,
 						}).Error("Error Hooking")
-					} else if response != "" {
+					}
+					if response != "" {
 						who, err := mcserver.GetPlayerNameFromWhisper(noColorsMessage)
 						if err != nil {
 							logrus.WithFields(logrus.Fields{
@@ -404,53 +406,53 @@ func processChatStream(s mcserver.Server) {
 			// We hit triggers so no default action is desired with this
 			// chatStream message
 			logrus.Debug("No more chatStream processing since we hit at least one trigger.")
-			break
-		}
-
-		var (
-			matchingSubs []models.Subscription
-			err          error
-			style        string
-		)
-
-		switch mcserver.ChatMsgClass(c) {
-		case "whisper":
-			logrus.WithFields(f).Info(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
-		case "chat":
-			logrus.WithFields(f).Debug(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
-		case "death":
-			logrus.WithFields(f).Info(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
-			style = "**"
-		case "join":
-			go StatsUpdate(s)
-			logrus.WithFields(f).Info(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
-		case "announcement":
-			logrus.WithFields(f).Warn(noColorsMessage)
-		case "ignore":
-			logrus.WithFields(f).Warn(noColorsMessage)
-		default:
-			logrus.WithFields(f).Info(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
-		}
-		if err != nil {
-			logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
 		} else {
-			for _, sub := range matchingSubs {
-				message := noColorsMessage
 
-				if sub.Target != "" {
-					message = fmt.Sprintf("%s: %s", sub.Target, message)
+			var (
+				matchingSubs []models.Subscription
+				err          error
+				style        string
+			)
+
+			switch mcserver.ChatMsgClass(c) {
+			case "whisper":
+				logrus.WithFields(f).Info(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
+			case "chat":
+				logrus.WithFields(f).Debug(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
+			case "death":
+				logrus.WithFields(f).Info(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
+				style = "**"
+			case "join":
+				go StatsUpdate(s)
+				logrus.WithFields(f).Info(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
+			case "announcement":
+				logrus.WithFields(f).Warn(noColorsMessage)
+			case "ignore":
+				logrus.WithFields(f).Warn(noColorsMessage)
+			default:
+				logrus.WithFields(f).Info(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
+			}
+			if err != nil {
+				logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
+			} else {
+				for _, sub := range matchingSubs {
+					message := noColorsMessage
+
+					if sub.Target != "" {
+						message = fmt.Sprintf("%s: %s", sub.Target, message)
+					}
+					logrus.WithFields(logrus.Fields{
+						"channel": sub.ChannelID,
+						"message": message,
+					}).Debug("ChannelMessageSend")
+
+					discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
 				}
-				logrus.WithFields(logrus.Fields{
-					"channel": sub.ChannelID,
-					"message": message,
-				}).Debug("ChannelMessageSend")
-
-				discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
 			}
 		}
 
