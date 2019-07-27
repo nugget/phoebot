@@ -40,19 +40,24 @@ func NearestPos(val, scale int) int {
 	i := -64
 
 	for {
-		//	fmt.Printf("mapsize=%d val=%d i=%d\n", mapSize, val, i)
+		logrus.WithFields(logrus.Fields{
+			"val":     val,
+			"i":       i,
+			"scale":   scale,
+			"mapsize": mapSize,
+		}).Trace("NearestPos Loop")
+
 		if val > 0 {
 			if val <= (i + mapSize) {
 				return i
 			}
 			i += mapSize
 		} else {
-			if val >= (i - mapSize) {
+			if val >= (i) {
 				return i
 			}
 			i -= mapSize
 		}
-
 	}
 }
 
@@ -60,15 +65,32 @@ func NearestTopLeft(x, z, scale int) (int, int) {
 	cX := NearestPos(x, scale)
 	cZ := NearestPos(z, scale)
 
+	logrus.WithFields(logrus.Fields{
+		"x":        x,
+		"z":        z,
+		"scale":    scale,
+		"topLeftX": cX,
+		"topLeftZ": cZ,
+	}).Trace("NearestTopLeft")
+
 	return cX, cZ
 }
 
 func MapBoundaries(x, z, scale int) (int, int, int, int) {
 	tlX, tlZ := NearestTopLeft(x, z, scale)
-	// fmt.Printf("Nearest Top Left to (%d, %d) is (%d, %d)\n", x, z, tlX, tlZ)
 
 	brX := tlX + MapSize(scale) - 1
 	brZ := tlZ + MapSize(scale) - 1
+
+	logrus.WithFields(logrus.Fields{
+		"x":            x,
+		"z":            z,
+		"scale":        scale,
+		"topLeftX":     tlX,
+		"topLeftZ":     tlZ,
+		"bottomRightX": brX,
+		"bottomRightZ": brZ,
+	}).Trace("MapBoundaries")
 
 	return tlX, tlZ, brX, brZ
 }
