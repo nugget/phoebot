@@ -7,7 +7,7 @@ import (
 )
 
 type HookFunction func(*discordgo.MessageCreate) error
-type GameHookFunction func(string) error
+type GameHookFunction func(string) (string, error)
 
 type Trigger struct {
 	Regexp   *regexp.Regexp

@@ -374,13 +374,28 @@ func processChatStream(s mcserver.Server) {
 						"regexp":    t.Regexp,
 					}).Warn("InGame Trigger Match!")
 
-					err := t.GameHook(noColorsMessage)
+					response, err := t.GameHook(noColorsMessage)
 					if err != nil {
 						logrus.WithFields(logrus.Fields{
 							"error": err,
 						}).Error("Error Hooking")
+					} else if response != "" {
+						who, err := mcserver.GetPlayerNameFromWhisper(noColorsMessage)
+						if err != nil {
+							logrus.WithFields(logrus.Fields{
+								"err": err,
+								"who": who,
+							}).Error("Unable to GetPlayerNameFromWhisper")
+						} else {
+							err := s.Whisper(who, response)
+							if err != nil {
+								logrus.WithFields(logrus.Fields{
+									"err": err,
+									"who": who,
+								}).Error("Whisper failed")
+							}
+						}
 					}
-
 					triggerHits++
 				}
 			}

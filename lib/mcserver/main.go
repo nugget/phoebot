@@ -2,6 +2,7 @@ package mcserver
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -275,6 +276,16 @@ func (s *Server) OnDieMessage() error {
 	return nil
 }
 
+func (s *Server) Whisper(who, message string) error {
+	command := fmt.Sprintf("/tell %s %s", who, message)
+	logrus.WithFields(logrus.Fields{
+		"who":     who,
+		"command": command,
+	}).Debug("Whisper")
+	err := s.Client.Chat(command)
+	return err
+}
+
 func ChatMsgClass(m chat.Message) string {
 	if m.Translate == "commands.message.display.incoming" {
 		return "whisper"
@@ -323,4 +334,15 @@ func ChatMsgClass(m chat.Message) string {
 	}
 
 	return "other"
+}
+
+func GetPlayerNameFromWhisper(data string) (string, error) {
+	r := regexp.MustCompile(`^([^ ]+) whispers to you:`)
+	res := r.FindStringSubmatch(data)
+
+	if len(res) != 2 {
+		return "", fmt.Errorf("Unable to parse Whisper data")
+	}
+
+	return res[1], nil
 }
