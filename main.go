@@ -228,6 +228,10 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	}).Trace("Evaluating triggers")
 
 	for _, t := range triggers {
+		if t.InGame == true {
+			// This is not a discord trigger
+			break
+		}
 		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
 				if t.ACL != "" && !phoelib.PlayerHasACL(dm.Author.ID, t.ACL) {
@@ -299,6 +303,8 @@ func LoadTriggers() error {
 
 	triggers = append(triggers, hooks.RegSay())
 
+	triggers = append(triggers, hooks.RegMapMe())
+
 	return nil
 }
 
@@ -351,6 +357,30 @@ func processChatStream(s mcserver.Server) {
 			"translate": c.Translate,
 			"class":     mcserver.ChatMsgClass(c),
 		})
+
+		// Process in-game triggers
+		//
+		triggerHits := 0
+
+		for _, t := range triggers {
+			if t.InGame == true {
+				if t.Regexp.MatchString(noColorsMessage) {
+					logrus.WithFields(logrus.Fields{
+						"event":     "inGameTriggerHit",
+						"translate": c.Translate,
+						"class":     mcserver.ChatMsgClass(c),
+						"message":   noColorsMessage,
+						"regexp":    t.Regexp,
+					}).Warn("InGame Trigger Match!")
+				}
+			}
+		}
+		if triggerHits > 0 {
+			// We hit triggers so no default action is desired with this
+			// chatStream message
+			logrus.Debug("No more chatStream processing since we hit at least one trigger.")
+			break
+		}
 
 		var (
 			matchingSubs []models.Subscription

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "developertools.go",
         "main.go",
+        "mapping.go",
         "say.go",
         "status.go",
         "subscriptions.go",

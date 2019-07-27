@@ -7,10 +7,13 @@ import (
 )
 
 type HookFunction func(*discordgo.MessageCreate) error
+type GameHookFunction func(string) error
 
 type Trigger struct {
-	Regexp *regexp.Regexp
-	Hook   HookFunction
-	Direct bool
-	ACL    string
+	Regexp   *regexp.Regexp
+	Hook     HookFunction
+	GameHook GameHookFunction
+	Direct   bool
+	InGame   bool
+	ACL      string
 }
