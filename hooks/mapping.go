@@ -67,7 +67,7 @@ func ProcMapMe(message string) (string, error) {
 		}).Info("Position covered by map")
 		fmtMapList = append(
 			fmtMapList,
-			fmt.Sprintf("[Map #%d 1:%d scale]", m.MapID, m.Scale),
+			fmt.Sprintf("[#%d 1:%d]\n", m.MapID, m.Scale),
 		)
 	}
 
@@ -79,10 +79,8 @@ func ProcMapMe(message string) (string, error) {
 		), nil
 	} else {
 		return fmt.Sprintf(
-			"There are %d maps for (%d, %d): %s",
+			"I found %d maps: %s",
 			len(fmtMapList),
-			p.X,
-			p.Z,
 			strings.Join(fmtMapList, ","),
 		), nil
 	}
@@ -155,7 +153,78 @@ func ProcNewMap(message string) (string, error) {
 
 	logrus.Info(desc)
 
-	return "", nil
+	err = mapping.Update(m)
+	if err != nil {
+		return "I wasn't able to register your map, sorry.", err
+	}
+
+	return desc, nil
+}
+
+func RegNewMap() (t Trigger) {
+	t.Regexp = regexp.MustCompile("(?i)newmap ([0-9]+) ([0-9])")
+	t.GameHook = ProcNewMap
+	t.InGame = true
+
+	return t
+}
+
+func ProcNewMap(message string) (string, error) {
+	t := RegNewMap()
+	res := t.Regexp.FindStringSubmatch(message)
+
+	mapid, err := strconv.Atoi(res[1])
+	if err != nil {
+		return fmt.Sprintf("'%s' doesn't look like a map ID", res[1]), err
+	}
+	scale, err := strconv.Atoi(res[2])
+	if err != nil {
+		return fmt.Sprintf("'%s' doesn't look like a map scaling", res[2]), err
+	}
+
+	who, err := mcserver.GetPlayerNameFromWhisper(message)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			"who": who,
+		}).Error("Unable to GetPlayerNameFromWhisper")
+		return "", err
+	}
+
+	p, err := console.GetPlayer(who)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			"who": who,
+		}).Error("Unable to GetPlayer")
+		return "", err
+	}
+
+	m := mapping.NewMap()
+
+	m.Scale = scale
+	m.MapID = mapid
+	m.LeftX, m.LeftZ, m.RightX, m.RightZ = mapping.MapBoundaries(p.X, p.Z, scale)
+
+	logrus.WithFields(logrus.Fields{
+		"scale":   scale,
+		"mapid":   mapid,
+		"playerx": p.X,
+		"playerz": p.Z,
+		"leftx":   m.LeftX,
+		"leftz":   m.LeftZ,
+		"rightx":  m.RightX,
+		"rightz":  m.RightZ,
+	}).Debug("MapBoundaries")
+
+	desc := fmt.Sprintf("Map #%d scaled 1:%d spans from (%d, %d) to (%d, %d)",
+		m.MapID,
+		m.Scale,
+		m.LeftX, m.LeftZ,
+		m.RightX, m.RightZ,
+	)
+
+	logrus.Info(desc)
 
 	err = mapping.Update(m)
 	if err != nil {
