@@ -15,6 +15,7 @@ import (
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
@@ -372,6 +373,15 @@ func processChatStream(s mcserver.Server) {
 						"message":   noColorsMessage,
 						"regexp":    t.Regexp,
 					}).Warn("InGame Trigger Match!")
+
+					err := t.GameHook(noColorsMessage)
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"error": err,
+						}).Error("Error Hooking")
+					}
+
+					triggerHits++
 				}
 			}
 		}
@@ -553,6 +563,20 @@ func main() {
 	)
 	if err != nil {
 		logrus.WithError(err).Error("Error with mcserver Authenticate")
+	}
+
+	console.Initialize(
+		config.GetString("RCON_HOSTNAME"),
+		config.GetInt("RCON_PORT"),
+		config.GetString("RCON_PASSWORD"),
+	)
+
+	{
+		p, err := console.GetPlayer("MacNugget")
+		logrus.WithFields(logrus.Fields{
+			"player": p,
+			"err":    err,
+		}).Info("GetPlayer from ProcMapMe")
 	}
 
 	go processChatStream(mc)

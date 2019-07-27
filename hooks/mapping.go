@@ -3,6 +3,8 @@ package hooks
 import (
 	"regexp"
 
+	"github.com/nugget/phoebot/lib/console"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,6 +25,12 @@ func ProcMapMe(message string) error {
 	//
 
 	logrus.Warn("Hey!")
+
+	p, err := console.GetPlayer("MacNugget")
+	logrus.WithFields(logrus.Fields{
+		"p":   p,
+		"err": err,
+	}).Info("GetPlayer from ProcMapMe")
 
 	return nil
 }

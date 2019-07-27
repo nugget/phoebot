@@ -3,14 +3,13 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
-        "console.go",
         "main.go",
+        "playerdata.go",
     ],
-    importpath = "github.com/nugget/phoebot/lib/mapping",
+    importpath = "github.com/nugget/phoebot/lib/console",
     visibility = ["//visibility:public"],
     deps = [
-        "//lib/db:go_default_library",
-        "//lib/phoelib:go_default_library",
+        "//vendor/github.com/seeruk/minecraft-rcon/rcon:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )
