@@ -42,9 +42,9 @@ func (p *Player) ParsePos(data string) error {
 		return err
 	}
 
-	p.X = int(math.Round(xf))
-	p.Y = int(math.Round(yf))
-	p.Z = int(math.Round(zf))
+	p.X = int(math.Floor(xf))
+	p.Y = int(math.Floor(yf))
+	p.Z = int(math.Floor(zf))
 
 	return nil
 }
