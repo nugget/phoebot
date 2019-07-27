@@ -286,6 +286,14 @@ func (s *Server) Whisper(who, message string) error {
 	return err
 }
 
+func (s *Server) Say(command string) error {
+	logrus.WithFields(logrus.Fields{
+		"command": command,
+	}).Debug("Say")
+	err := s.Client.Chat(command)
+	return err
+}
+
 func ChatMsgClass(m chat.Message) string {
 	if m.Translate == "commands.message.display.incoming" {
 		return "whisper"
