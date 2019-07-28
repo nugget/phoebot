@@ -1,6 +1,8 @@
 package console
 
 import (
+	"fmt"
+
 	"github.com/seeruk/minecraft-rcon/rcon"
 	"github.com/sirupsen/logrus"
 )
@@ -24,6 +26,10 @@ func Initialize(hostname string, port int, password string) (err error) {
 }
 
 func (c *Connection) sendCommand(command string) (string, error) {
+	if c.client == nil {
+		return "", fmt.Errorf("No RCON connection")
+	}
+
 	response, err := c.client.SendCommand(command)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{

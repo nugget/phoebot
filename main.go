@@ -584,11 +584,14 @@ func main() {
 		logrus.WithError(err).Error("Error with mcserver Authenticate")
 	}
 
-	console.Initialize(
+	err = console.Initialize(
 		config.GetString("RCON_HOSTNAME"),
 		config.GetInt("RCON_PORT"),
 		config.GetString("RCON_PASSWORD"),
 	)
+	if err != nil {
+		logrus.WithError(err).Error("RCON Initialization Failure")
+	}
 
 	{
 		p, err := console.GetPlayer("MacNugget")
