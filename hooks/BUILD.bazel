@@ -5,7 +5,9 @@ go_library(
     srcs = [
         "developertools.go",
         "main.go",
+        "mapping.go",
         "say.go",
+        "serverinfo.go",
         "status.go",
         "subscriptions.go",
         "template.go",
@@ -16,8 +18,11 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//lib/builddata:go_default_library",
+        "//lib/console:go_default_library",
         "//lib/discord:go_default_library",
         "//lib/ipc:go_default_library",
+        "//lib/mapping:go_default_library",
+        "//lib/mcserver:go_default_library",
         "//lib/phoelib:go_default_library",
         "//lib/products:go_default_library",
         "//lib/subscriptions:go_default_library",

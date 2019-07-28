@@ -5,7 +5,7 @@ go 1.12
 require (
 	cloud.google.com/go v0.40.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.5 // indirect
-	github.com/Tnze/go-mc v1.0.2-0.20190625060103-9df0ae90648d
+	github.com/Tnze/go-mc v1.14.4
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.19.0
 	github.com/coreos/bbolt v1.3.3 // indirect
@@ -20,13 +20,14 @@ require (
 	github.com/kisielk/errcheck v1.2.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pty v1.1.5 // indirect
-	github.com/lib/pq v1.1.1
+	github.com/lib/pq v1.2.0
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/tsdb v0.8.0 // indirect
 	github.com/rogpeppe/fastuuid v1.1.0 // indirect
+	github.com/seeruk/minecraft-rcon v0.0.0-20190221212056-6ab996d90449
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect

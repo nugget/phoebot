@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["client.go"],
+    importmap = "github.com/nugget/phoebot/vendor/github.com/seeruk/minecraft-rcon/rcon",
+    importpath = "github.com/seeruk/minecraft-rcon/rcon",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/seeruk/minecraft-rcon/errhandling:go_default_library"],
+)
