@@ -299,6 +299,10 @@ func ChatMsgClass(m chat.Message) string {
 		return "whisper"
 	}
 
+	if m.Translate == "commands.message.display.outgoing" {
+		return "ignore"
+	}
+
 	if strings.HasPrefix(m.Translate, "chat.type.text") {
 		return "chat"
 	}
