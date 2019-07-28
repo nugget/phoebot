@@ -15,6 +15,7 @@ import (
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
@@ -228,6 +229,10 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	}).Trace("Evaluating triggers")
 
 	for _, t := range triggers {
+		if t.InGame == true {
+			// This is not a discord trigger
+			break
+		}
 		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
 				if t.ACL != "" && !phoelib.PlayerHasACL(dm.Author.ID, t.ACL) {
@@ -296,8 +301,13 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegVersion())
 	triggers = append(triggers, hooks.RegTimezones())
 	triggers = append(triggers, hooks.RegStatus())
+	triggers = append(triggers, hooks.RegServerInfo())
+	triggers = append(triggers, hooks.RegServerList())
 
 	triggers = append(triggers, hooks.RegSay())
+
+	triggers = append(triggers, hooks.RegMapMe())
+	triggers = append(triggers, hooks.RegNewMap())
 
 	return nil
 }
@@ -352,50 +362,99 @@ func processChatStream(s mcserver.Server) {
 			"class":     mcserver.ChatMsgClass(c),
 		})
 
-		var (
-			matchingSubs []models.Subscription
-			err          error
-			style        string
-		)
+		// Process in-game triggers
+		//
+		triggerHits := 0
 
-		switch mcserver.ChatMsgClass(c) {
-		case "whisper":
-			logrus.WithFields(f).Info(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
-		case "chat":
-			logrus.WithFields(f).Debug(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
-		case "death":
-			logrus.WithFields(f).Info(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
-			style = "**"
-		case "join":
-			go StatsUpdate(s)
-			logrus.WithFields(f).Info(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
-		case "announcement":
-			logrus.WithFields(f).Warn(noColorsMessage)
-		case "ignore":
-			logrus.WithFields(f).Warn(noColorsMessage)
-		default:
-			logrus.WithFields(f).Info(noColorsMessage)
-			matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
-		}
-		if err != nil {
-			logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
-		} else {
-			for _, sub := range matchingSubs {
-				message := noColorsMessage
+		for _, t := range triggers {
+			if t.InGame == true {
+				if t.Regexp.MatchString(noColorsMessage) {
+					logrus.WithFields(logrus.Fields{
+						"event":     "inGameTriggerHit",
+						"translate": c.Translate,
+						"class":     mcserver.ChatMsgClass(c),
+						"message":   noColorsMessage,
+						"regexp":    t.Regexp,
+					}).Warn("InGame Trigger Match!")
 
-				if sub.Target != "" {
-					message = fmt.Sprintf("%s: %s", sub.Target, message)
+					response, err := t.GameHook(noColorsMessage)
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"error": err,
+						}).Error("Error Hooking")
+					}
+					if response != "" {
+						who, err := mcserver.GetPlayerNameFromWhisper(noColorsMessage)
+						if err != nil {
+							logrus.WithFields(logrus.Fields{
+								"err": err,
+								"who": who,
+							}).Error("Unable to GetPlayerNameFromWhisper")
+						} else {
+							err := s.Whisper(who, response)
+							if err != nil {
+								logrus.WithFields(logrus.Fields{
+									"err": err,
+									"who": who,
+								}).Error("Whisper failed")
+							}
+						}
+					}
+					triggerHits++
 				}
-				logrus.WithFields(logrus.Fields{
-					"channel": sub.ChannelID,
-					"message": message,
-				}).Debug("ChannelMessageSend")
+			}
+		}
+		if triggerHits > 0 {
+			// We hit triggers so no default action is desired with this
+			// chatStream message
+			logrus.Debug("No more chatStream processing since we hit at least one trigger.")
+		} else {
 
-				discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
+			var (
+				matchingSubs []models.Subscription
+				err          error
+				style        string
+			)
+
+			switch mcserver.ChatMsgClass(c) {
+			case "whisper":
+				logrus.WithFields(f).Info(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "whispers")
+			case "chat":
+				logrus.WithFields(f).Debug(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "chats")
+			case "death":
+				logrus.WithFields(f).Info(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "deaths")
+				style = "**"
+			case "join":
+				go StatsUpdate(s)
+				logrus.WithFields(f).Info(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
+			case "announcement":
+				logrus.WithFields(f).Warn(noColorsMessage)
+			case "ignore":
+				logrus.WithFields(f).Warn(noColorsMessage)
+			default:
+				logrus.WithFields(f).Info(noColorsMessage)
+				matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
+			}
+			if err != nil {
+				logrus.WithError(err).Warn("GetMatching failed on mcserver chat")
+			} else {
+				for _, sub := range matchingSubs {
+					message := noColorsMessage
+
+					if sub.Target != "" {
+						message = fmt.Sprintf("%s: %s", sub.Target, message)
+					}
+					logrus.WithFields(logrus.Fields{
+						"channel": sub.ChannelID,
+						"message": message,
+					}).Debug("ChannelMessageSend")
+
+					discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
+				}
 			}
 		}
 
@@ -525,6 +584,31 @@ func main() {
 		logrus.WithError(err).Error("Error with mcserver Authenticate")
 	}
 
+	err = console.Initialize(
+		config.GetString("RCON_HOSTNAME"),
+		config.GetInt("RCON_PORT"),
+		config.GetString("RCON_PASSWORD"),
+	)
+	if err != nil {
+		logrus.WithError(err).Error("RCON Initialization Failure")
+	}
+
+	{
+		p, err := console.GetPlayer("MacNugget")
+		logrus.WithFields(logrus.Fields{
+			"player": p,
+			"err":    err,
+		}).Info("GetPlayer")
+	}
+
+	{
+		s, err := console.GetServerInfo()
+		logrus.WithFields(logrus.Fields{
+			"server": s,
+			"err":    err,
+		}).Info("GetServerInfo")
+
+	}
 	go processChatStream(mc)
 	go StatsUpdate(mc)
 	go mc.Handler()
