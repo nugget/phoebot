@@ -24,8 +24,8 @@ import (
 // 	return int(math.Floor(p.X)), int(math.Floor(p.Y)), int(math.Floor(p.Z))
 // }
 
-// HandleGame recive server packet and response them correctly.
-// Note that HandleGame will block if you don't recive from Events.
+// HandleGame receive server packet and response them correctly.
+// Note that HandleGame will block if you don't receive from Events.
 func (c *Client) HandleGame() error {
 	for {
 		select {
@@ -67,7 +67,7 @@ func (c *Client) handlePacket(p pk.Packet) (disconnect bool, err error) {
 		err = handleSpawnPositionPacket(c, p)
 	case data.PlayerAbilitiesClientbound:
 		err = handlePlayerAbilitiesPacket(c, p)
-		c.conn.WritePacket(
+		_ = c.conn.WritePacket(
 			//ClientSettings packet (serverbound)
 			pk.Marshal(
 				data.ClientSettings,
@@ -138,7 +138,7 @@ func handleSoundEffect(c *Client, p pk.Packet) error {
 	}
 
 	if c.Events.SoundPlay != nil {
-		c.Events.SoundPlay(
+		err = c.Events.SoundPlay(
 			data.SoundNames[SoundID], int(SoundCategory),
 			float64(x)/8, float64(y)/8, float64(z)/8,
 			float32(Volume), float32(Pitch))
@@ -160,7 +160,7 @@ func handleNamedSoundEffect(c *Client, p pk.Packet) error {
 	}
 
 	if c.Events.SoundPlay != nil {
-		c.Events.SoundPlay(
+		err = c.Events.SoundPlay(
 			string(SoundName), int(SoundCategory),
 			float64(x)/8, float64(y)/8, float64(z)/8,
 			float32(Volume), float32(Pitch))
@@ -212,7 +212,7 @@ func handleSetSlotPacket(c *Client, p pk.Packet) error {
 }
 
 // func handleMultiBlockChangePacket(c *Client, p pk.Packet) error {
-// 	if !c.settings.ReciveMap {
+// 	if !c.settings.ReceiveMap {
 // 		return nil
 // 	}
 
@@ -253,7 +253,7 @@ func handleSetSlotPacket(c *Client, p pk.Packet) error {
 // }
 
 // func handleBlockChangePacket(c *Client, p pk.Packet) error {
-// 	if !c.settings.ReciveMap {
+// 	if !c.settings.ReceiveMap {
 // 		return nil
 // 	}
 // 	var pos pk.Position
@@ -435,7 +435,7 @@ func handleHeldItemPacket(c *Client, p pk.Packet) error {
 }
 
 func handleChunkDataPacket(c *Client, p pk.Packet) error {
-	if !c.settings.ReciveMap {
+	if !c.settings.ReceiveMap {
 		return nil
 	}
 	var (

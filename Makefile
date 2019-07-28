@@ -23,5 +23,9 @@ mojang: gazelle
 	clear
 	bazel run //cmd/mojangtest
 
+mapper: gazelle
+	clear
+	bazel run //cmd/mapper
+
 deploy:
 	bazel run :deploy.apply

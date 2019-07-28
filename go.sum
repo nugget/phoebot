@@ -11,6 +11,8 @@ github.com/Tnze/go-mc v1.0.1 h1:55V57A+EDX1lOAXK9aAztIpVLPhhYv4WW1dpGkDPo+I=
 github.com/Tnze/go-mc v1.0.1/go.mod h1:PoH6MiEWY36P3cwHBDgntkV0/d93Kp2nnf3Y21GO4s4=
 github.com/Tnze/go-mc v1.0.2-0.20190625060103-9df0ae90648d h1:12VBrOE8BKV1RMpRe/VT3Rl4R/UT1Xb9g/r2oHIJwUk=
 github.com/Tnze/go-mc v1.0.2-0.20190625060103-9df0ae90648d/go.mod h1:PoH6MiEWY36P3cwHBDgntkV0/d93Kp2nnf3Y21GO4s4=
+github.com/Tnze/go-mc v1.14.4 h1:+tTin5MQ8UN6i2aMJpSg803vrrQ/XPKumTA+PSxDr6U=
+github.com/Tnze/go-mc v1.14.4/go.mod h1:PoH6MiEWY36P3cwHBDgntkV0/d93Kp2nnf3Y21GO4s4=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
@@ -130,6 +132,8 @@ github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6So
 github.com/rogpeppe/fastuuid v1.1.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
+github.com/seeruk/minecraft-rcon v0.0.0-20190221212056-6ab996d90449 h1:Ab1or/YKLAvhJJ52jVyH7pHZEvCSTD1p+STkIeBhKLo=
+github.com/seeruk/minecraft-rcon v0.0.0-20190221212056-6ab996d90449/go.mod h1:iwLNhQYniZZKxB7sTl8xhVx1/NQTc7cahZ7oPD9hOJo=
 github.com/sirupsen/logrus v1.2.0 h1:juTguoYk5qI21pwyTXY3B3Y5cOTH3ZUyZCg1v/mihuo=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.2 h1:SPIRibHv4MatM3XXNO2BJeFLZwZ2LvZgfQ5+UNI2im4=
