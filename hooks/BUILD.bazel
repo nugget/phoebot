@@ -7,6 +7,7 @@ go_library(
         "main.go",
         "mapping.go",
         "say.go",
+        "serverinfo.go",
         "status.go",
         "subscriptions.go",
         "template.go",

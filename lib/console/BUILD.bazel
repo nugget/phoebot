@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "main.go",
         "playerdata.go",
+        "server.go",
     ],
     importpath = "github.com/nugget/phoebot/lib/console",
     visibility = ["//visibility:public"],

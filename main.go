@@ -301,6 +301,8 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegVersion())
 	triggers = append(triggers, hooks.RegTimezones())
 	triggers = append(triggers, hooks.RegStatus())
+	triggers = append(triggers, hooks.RegServerInfo())
+	triggers = append(triggers, hooks.RegServerList())
 
 	triggers = append(triggers, hooks.RegSay())
 
@@ -593,9 +595,17 @@ func main() {
 		logrus.WithFields(logrus.Fields{
 			"player": p,
 			"err":    err,
-		}).Info("GetPlayer from ProcMapMe")
+		}).Info("GetPlayer")
 	}
 
+	{
+		s, err := console.GetServerInfo()
+		logrus.WithFields(logrus.Fields{
+			"server": s,
+			"err":    err,
+		}).Info("GetServerInfo")
+
+	}
 	go processChatStream(mc)
 	go StatsUpdate(mc)
 	go mc.Handler()
