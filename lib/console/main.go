@@ -36,6 +36,19 @@ func (c *Connection) sendCommand(command string) (string, error) {
 			"command": command,
 			"error":   err,
 		}).Error("Failed RCON Command")
+
+		err = c.client.Reconnect()
+		if err != nil {
+			logrus.WithError(err).Error("Failed RCON Reconnect")
+		} else {
+			response, err = c.client.SendCommand(command)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"command": command,
+					"error":   err,
+				}).Error("Failed RCON Command (retry)")
+			}
+		}
 	} else if response != "" {
 		logrus.WithFields(logrus.Fields{
 			"command":  command,

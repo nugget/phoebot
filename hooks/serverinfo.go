@@ -13,7 +13,7 @@ import (
 )
 
 func RegServerInfo() (t Trigger) {
-	t.Regexp = regexp.MustCompile("(?i)server info")
+	t.Regexp = regexp.MustCompile("(?i)!server ?info")
 	t.Hook = ProcServerInfo
 	t.Direct = false
 
@@ -42,7 +42,7 @@ func ProcServerInfo(dm *discordgo.MessageCreate) error {
 }
 
 func RegServerList() (t Trigger) {
-	t.Regexp = regexp.MustCompile("(?i)who is on the server")
+	t.Regexp = regexp.MustCompile("(?i)^(who is on the server|!who|!list)")
 	t.Hook = ProcServerList
 	t.Direct = false
 
