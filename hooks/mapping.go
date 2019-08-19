@@ -132,6 +132,7 @@ func ProcNewMap(message string) (string, error) {
 	m.Scale = scale
 	m.MapID = mapid
 	m.LeftX, m.LeftZ, m.RightX, m.RightZ = mapping.MapBoundaries(p.X, p.Z, scale)
+	m.Owner = who
 
 	logrus.WithFields(logrus.Fields{
 		"scale":   scale,
@@ -156,6 +157,76 @@ func ProcNewMap(message string) (string, error) {
 	err = mapping.Update(m)
 	if err != nil {
 		return "I wasn't able to register your map, sorry.", err
+	}
+
+	return desc, nil
+}
+
+func RegPOI() (t Trigger) {
+	t.Regexp = regexp.MustCompile("(?i)poi ([^ ]+) (.+)")
+	t.GameHook = ProcPOI
+	t.InGame = true
+
+	return t
+}
+
+func ProcPOI(message string) (string, error) {
+	t := RegPOI()
+	res := t.Regexp.FindStringSubmatch(message)
+
+	if len(res) != 3 || res[1] == "" || res[2] == "" {
+		return fmt.Sprintf("You need to tell me what the POI is"), fmt.Errorf("Invalid POI")
+	}
+
+	poi := mapping.NewPOI()
+
+	poi.Class = res[1]
+	poi.Description = res[2]
+
+	who, err := mcserver.GetPlayerNameFromWhisper(message)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			"who": poi.Owner,
+		}).Error("Unable to GetPlayerNameFromWhisper")
+		return "", err
+	}
+
+	poi.Owner = who
+
+	p, err := console.GetPlayer(who)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			"who": who,
+		}).Error("Unable to GetPlayer")
+		return "", err
+	}
+
+	poi.X = p.X
+	poi.Y = p.Y
+	poi.Z = p.Z
+
+	logrus.WithFields(logrus.Fields{
+		"player":      poi.Owner,
+		"class":       poi.Class,
+		"description": poi.Description,
+		"playerx":     poi.X,
+		"playery":     poi.Y,
+		"playerz":     poi.Z,
+	}).Info("New POI")
+
+	desc := fmt.Sprintf(
+		"I'll remember that %s is at (%d, %d, %d)",
+		poi.Description,
+		poi.X,
+		poi.Y,
+		poi.Z,
+	)
+
+	err = mapping.UpdatePOI(poi)
+	if err != nil {
+		return "I wasn't able to register your POI, sorry.", err
 	}
 
 	return desc, nil
