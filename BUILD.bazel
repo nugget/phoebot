@@ -100,7 +100,7 @@ container_push(
     registry = DOCKER_REGISTRY,
     format = "Docker",
     repository = DOCKER_REPO,
-    tag = "{GIT_VERSION}",
+    tag = "{STABLE_GIT_VERSION}",
 )
 
 k8s_object(
