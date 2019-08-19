@@ -9,3 +9,4 @@ discordlogs 2019-05-27T18:37:30Z David McNett <nugget@nigeru.nuggethaus.net> # T
 mojangreleases 2019-05-28T01:44:03Z David McNett <nugget@nigeru.nuggethaus.net> # Table to track mojang releases
 ignore 2019-05-29T02:26:39Z David McNett <nugget@nigeru.nuggethaus.net> # Add an ignore list table
 map 2019-07-05T02:17:05Z David McNett <nugget@activestate.com> # Table to track Cartograpjy Guild Maps
+mapowner 2019-08-19T21:54:23Z David McNett <nugget@activestate.com> # Track who created each map entry

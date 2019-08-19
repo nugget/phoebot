@@ -14,6 +14,7 @@ type Map struct {
 	LeftZ  int
 	RightX int
 	RightZ int
+	Owner  string
 }
 
 func NewMap() Map {
@@ -103,15 +104,15 @@ func Update(m Map) error {
 
 	logrus.WithField("map", m).Info("map.Update")
 
-	query := `INSERT INTO map (mapid, scale, lx, lz, rx, rz)
-			  SELECT $1, $2, $3, $4, $5, $6
+	query := `INSERT INTO map (mapid, scale, lx, lz, rx, rz, owner)
+			  SELECT $1, $2, $3, $4, $5, $6, $7
 			  ON CONFLICT (mapid) 
 			     DO UPDATE SET scale = $2,
 				    lx = $3, lz = $4,
 					rx = $5, rz = $6`
 
 	//phoelib.LogSQL(query, m.MapID, m.Scale, m.LeftX, m.LeftZ, m.RightX, m.RightZ)
-	_, err := db.DB.Exec(query, m.MapID, m.Scale, m.LeftX, m.LeftZ, m.RightX, m.RightZ)
+	_, err := db.DB.Exec(query, m.MapID, m.Scale, m.LeftX, m.LeftZ, m.RightX, m.RightZ, m.Owner)
 
 	return err
 }
