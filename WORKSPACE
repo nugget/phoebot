@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 http_archive(
     name = "io_bazel_rules_go",
@@ -55,11 +56,11 @@ load(
 
 _go_image_repos()
 
-http_archive(
+git_repository(
     name = "io_bazel_rules_k8s",
-    sha256 = "91fef3e6054096a8947289ba0b6da3cba559ecb11c851d7bdfc9ca395b46d8d8",
-    strip_prefix = "rules_k8s-0.1",
-    urls = ["https://github.com/bazelbuild/rules_k8s/archive/v0.1.tar.gz"],
+    commit = "b799dd0cd7140ed7b58f1fd4c9a14fc924239b0b",
+    remote = "https://github.com/bazelbuild/rules_k8s.git",
+    shallow_since = "1566217058 -0400",
 )
 
 load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_repositories")
