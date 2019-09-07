@@ -206,6 +206,7 @@ func ProcPOI(message string) (string, error) {
 	poi.X = p.X
 	poi.Y = p.Y
 	poi.Z = p.Z
+	poi.Dimension = p.Dimension
 
 	logrus.WithFields(logrus.Fields{
 		"player":      poi.Owner,
@@ -214,6 +215,7 @@ func ProcPOI(message string) (string, error) {
 		"playerx":     poi.X,
 		"playery":     poi.Y,
 		"playerz":     poi.Z,
+		"dimension":   poi.Dimension,
 	}).Info("New POI")
 
 	desc := fmt.Sprintf(
@@ -224,7 +226,7 @@ func ProcPOI(message string) (string, error) {
 		poi.Z,
 	)
 
-	err = mapping.UpdatePOI(poi)
+	err = poi.Update()
 	if err != nil {
 		return "I wasn't able to register your POI, sorry.", err
 	}
