@@ -5,6 +5,8 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Player struct {
@@ -75,6 +77,15 @@ func (p *Player) GetData(path string, fn ParseFunction) error {
 	command := fmt.Sprintf("data get entity %s %s", p.Name, path)
 
 	result, err := s.sendCommand(command)
+
+	logrus.WithFields(logrus.Fields{
+		"path":    path,
+		"fn":      fn,
+		"command": command,
+		"result":  result,
+		"err":     err,
+	}).Trace("console.GetData")
+
 	if err != nil {
 		return err
 	}
