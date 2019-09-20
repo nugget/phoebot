@@ -345,6 +345,14 @@ func ChatMsgClass(m chat.Message) string {
 		return "ignore"
 	}
 
+	if strings.Contains(text, "is now AFK") {
+		return "ignore"
+	}
+
+	if strings.Contains(text, "is no longer AFK") {
+		return "ignore"
+	}
+
 	return "other"
 }
 
