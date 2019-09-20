@@ -29,3 +29,7 @@ mapper: gazelle
 
 deploy:
 	bazel run :deploy.apply
+
+log:
+	kubectx nuggethaus
+	stern --all-namespaces phoebot
