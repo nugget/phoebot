@@ -1,2 +1,7 @@
 build --workspace_status_command=build_tools/workspace-status
 run --workspace_status_command=build_tools/workspace-status
+build --stamp
+
+build --host_force_python=PY2
+test --host_force_python=PY2
+run --host_force_python=PY2

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "console.go",
         "main.go",
+        "poi.go",
     ],
     importpath = "github.com/nugget/phoebot/lib/mapping",
     visibility = ["//visibility:public"],

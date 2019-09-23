@@ -308,6 +308,9 @@ func LoadTriggers() error {
 
 	triggers = append(triggers, hooks.RegMapMe())
 	triggers = append(triggers, hooks.RegNewMap())
+	triggers = append(triggers, hooks.RegPOI())
+
+	triggers = append(triggers, hooks.RegNearestPortal())
 
 	return nil
 }

@@ -6,6 +6,7 @@ go_library(
         "developertools.go",
         "main.go",
         "mapping.go",
+        "portals.go",
         "say.go",
         "serverinfo.go",
         "status.go",
