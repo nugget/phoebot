@@ -1,0 +1,24 @@
+-- Deploy phoebot:containers to pg
+
+BEGIN;
+    CREATE TABLE container (
+        containerID uuid NOT NULL DEFAULT gen_random_uuid(),
+        added timestamp(0) NOT NULL DEFAULT current_timestamp,
+        changed timestamp(0) NOT NULL DEFAULT current_timestamp,
+        deleted timestamp(0),
+        enabled boolean NOT NULL DEFAULT TRUE,
+        name varchar NOT NULL DEFAULT '',
+        dimension varchar DEFAULT 'overworld',
+        x int,
+        y int,
+        z int,
+        json varchar NOT NULL DEFAULT '{}',
+        PRIMARY KEY(containerID)
+    );
+    CREATE TRIGGER onupdate BEFORE UPDATE ON container FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
+    GRANT SELECT, INSERT, UPDATE ON container TO phoebot;
+
+    ALTER TABLE player ADD COLUMN verifyCode varchar NOT NULL DEFAULT '';
+    ALTER TABLE channel ADD COLUMN playerID varchar NOT NULL DEFAULT '';
+
+COMMIT;

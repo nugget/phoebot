@@ -282,6 +282,11 @@ func (s *Server) Whisper(who, message string) error {
 		"who":     who,
 		"command": command,
 	}).Debug("Whisper")
+
+	if !s.Connected {
+		return fmt.Errorf("mcserver client connection is nil")
+	}
+
 	err := s.Client.Chat(command)
 	return err
 }

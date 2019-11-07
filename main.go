@@ -22,6 +22,7 @@ import (
 	"github.com/nugget/phoebot/lib/mcserver"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
+	"github.com/nugget/phoebot/lib/postal"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
 	"github.com/nugget/phoebot/models"
@@ -328,7 +329,39 @@ func housekeeping(interval int) error {
 	return nil
 }
 
-func processChatStream(s mcserver.Server) {
+func MailboxLoop(mc *mcserver.Server) error {
+
+	for {
+		if !mc.Connected {
+			logrus.Debug("Skipping MailboxLoop, not connected to server")
+		} else {
+			err := postal.PollContainers()
+
+			if err != nil {
+				logrus.WithError(err).Error("postalPollContainers failure")
+			}
+		}
+		time.Sleep(time.Duration(15) * time.Second)
+	}
+
+	return nil
+}
+
+func processWhisperStream(s *mcserver.Server) {
+	w, stillOpen := <-ipc.GameWhisperStream
+
+	logrus.WithFields(logrus.Fields{
+		"whisper":   w,
+		"stillOpen": stillOpen,
+	}).Info("GameWhisperStream message received")
+
+	err := s.Whisper(w.Who, w.Message)
+	if err != nil {
+		logrus.WithError(err).Error("processWhisperStream Error")
+	}
+}
+
+func processChatStream(s *mcserver.Server) {
 	for {
 		c, stillOpen := <-ipc.ServerChatStream
 
@@ -467,7 +500,7 @@ func processChatStream(s mcserver.Server) {
 	}
 }
 
-func StatsUpdate(s mcserver.Server) error {
+func StatsUpdate(s *mcserver.Server) error {
 	ps, err := s.Status()
 	if err != nil {
 		logrus.WithError(err).Error("PingAndList Failure")
@@ -612,8 +645,10 @@ func main() {
 		}).Info("GetServerInfo")
 
 	}
-	go processChatStream(mc)
-	go StatsUpdate(mc)
+	go processChatStream(&mc)
+	go processWhisperStream(&mc)
+	go StatsUpdate(&mc)
+	go MailboxLoop(&mc)
 	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)
