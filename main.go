@@ -300,6 +300,7 @@ func LoadTriggers() error {
 	// want to add
 	triggers = append(triggers, hooks.RegTemplate())
 	triggers = append(triggers, hooks.RegLoglevel())
+	triggers = append(triggers, hooks.RegCustomName())
 
 	triggers = append(triggers, hooks.RegSubscriptions())
 	triggers = append(triggers, hooks.RegUnsubAll())
@@ -338,7 +339,6 @@ func housekeeping(interval int) error {
 }
 
 func MailboxLoop(mc *mcserver.Server) error {
-
 	for {
 		if !mc.Connected {
 			logrus.Debug("Skipping MailboxLoop, not connected to server")
@@ -349,7 +349,25 @@ func MailboxLoop(mc *mcserver.Server) error {
 				logrus.WithError(err).Error("postal.PollContainers failure")
 			}
 		}
-		time.Sleep(time.Duration(10) * time.Second)
+		time.Sleep(time.Duration(300) * time.Second)
+	}
+
+	return nil
+}
+
+func MailboxScanner(mc *mcserver.Server) error {
+
+	for {
+		if !mc.Connected {
+			logrus.Debug("Skipping MailboxScanner, not connected to server")
+		} else {
+			err := postal.SearchForMailboxes(-35, 71, 152, -29, 69, 152)
+
+			if err != nil {
+				logrus.WithError(err).Error("postal.SearchForMailboxes failure")
+			}
+		}
+		time.Sleep(time.Duration(30) * time.Second)
 	}
 
 	return nil
@@ -357,16 +375,36 @@ func MailboxLoop(mc *mcserver.Server) error {
 
 func processWhisperStream(s *mcserver.Server) {
 	for {
-		w, stillOpen := <-ipc.GameWhisperStream
+		w, stillOpen := <-ipc.ServerWhisperStream
 
 		logrus.WithFields(logrus.Fields{
 			"whisper":   w,
 			"stillOpen": stillOpen,
-		}).Info("GameWhisperStream message received")
+		}).Info("ServerWhisperStream message received")
 
 		err := s.Whisper(w.Who, w.Message)
 		if err != nil {
 			logrus.WithError(err).Error("processWhisperStream Error")
+		}
+
+		if !stillOpen {
+			return
+		}
+	}
+}
+
+func processSayStream(s *mcserver.Server) {
+	for {
+		command, stillOpen := <-ipc.ServerSayStream
+
+		logrus.WithFields(logrus.Fields{
+			"command":   command,
+			"stillOpen": stillOpen,
+		}).Info("ServerSayStream message received")
+
+		err := s.Say(command)
+		if err != nil {
+			logrus.WithError(err).Error("processSayStream Error")
 		}
 
 		if !stillOpen {
@@ -661,8 +699,10 @@ func main() {
 	}
 	go processChatStream(&mc)
 	go processWhisperStream(&mc)
+	go processSayStream(&mc)
 	go StatsUpdate(&mc)
 	go MailboxLoop(&mc)
+	// go MailboxScanner(&mc)
 	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)

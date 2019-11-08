@@ -56,9 +56,9 @@ func ProcLinkRequest(dm *discordgo.MessageCreate) error {
 	}
 
 	verifyMsg := fmt.Sprintf("Discord user %s says that they are you.  If this is correct, please use code '%s' on Discord to verify your identity.", dm.Author.Username, code)
-	w := models.GameWhisper{gameNick, verifyMsg}
-	if ipc.GameWhisperStream != nil {
-		ipc.GameWhisperStream <- w
+	w := models.Whisper{gameNick, verifyMsg}
+	if ipc.ServerWhisperStream != nil {
+		ipc.ServerWhisperStream <- w
 
 		msg := fmt.Sprintf("Please reply with `!verify CODE` using the code I just sent to %s in the game", gameNick)
 		discord.Session.ChannelMessageSend(dm.ChannelID, msg)

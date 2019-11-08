@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nugget/phoebot/lib/discord"
+	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
 
 	"github.com/bwmarrin/discordgo"
@@ -48,4 +49,33 @@ func ProcLoglevel(dm *discordgo.MessageCreate) error {
 	discord.Session.ChannelMessageSend(dm.ChannelID, message)
 
 	return nil
+}
+
+func RegCustomName() (t Trigger) {
+	t.Regexp = regexp.MustCompile("(?i)customname ([0-9-]+) ([0-9-]+) ([0-9-]+) (.*)")
+	t.GameHook = ProcCustomName
+	t.InGame = true
+
+	return t
+}
+
+func ProcCustomName(message string) (string, error) {
+	t := RegCustomName()
+	res := t.Regexp.FindStringSubmatch(message)
+
+	if len(res) != 5 {
+		fmt.Printf("(%d) '%v'\n", len(message), message)
+		fmt.Printf("(%d) '%+v'\n", len(res), res)
+		fmt.Printf("(%d) '%q'\n", len(res), res)
+		return "Invalid syntax", nil
+	}
+
+	x, y, z, name := res[1], res[2], res[3], res[4]
+
+	command := fmt.Sprintf("/data modify block %s %s %s CustomName set value '{\"text\":\"%s\"}'", x, y, z, name)
+	if ipc.ServerSayStream != nil {
+		ipc.ServerSayStream <- command
+	}
+
+	return "Block Updated", nil
 }

@@ -27,7 +27,7 @@ type DiscordMessage struct {
 	Message   string
 }
 
-type GameWhisper struct {
+type Whisper struct {
 	Who     string
 	Message string
 }

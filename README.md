@@ -154,3 +154,8 @@ change the verbosity of the console logging.  This is useful for debugging.
 [Discord server]: https://discord.gg/a6KnJcj
 [hosting provider]: https://server.pro/
 [Discord developer portal]: https://discordapp.com/developers/applications
+
+
+
+/data modify block x y z CustomName set value '{"text":"MOO"}'
+

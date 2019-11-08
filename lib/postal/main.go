@@ -67,7 +67,7 @@ func (m *Mailbox) Notify() error {
 		return errors.New("Can't notify on a mailbox with no playerID")
 	}
 
-	message := fmt.Sprintf("You've got mail in %s at (%d, %d, %d)", m.Name, m.X, m.Y, m.Z)
+	message := fmt.Sprintf("You've got mail in your mailbox at (%d, %d, %d)", m.X, m.Y, m.Z)
 
 	gameNick, err := player.GameNickFromPlayerID(m.PlayerID)
 	if err != nil {
@@ -85,10 +85,10 @@ func (m *Mailbox) Notify() error {
 	}
 
 	if gameNick != "" {
-		w := models.GameWhisper{gameNick, message}
+		w := models.Whisper{gameNick, message}
 
-		if ipc.GameWhisperStream != nil {
-			ipc.GameWhisperStream <- w
+		if ipc.ServerWhisperStream != nil {
+			ipc.ServerWhisperStream <- w
 		}
 	}
 
@@ -140,6 +140,14 @@ func PollContainers() error {
 	return nil
 }
 
+func IsContainer(json string) bool {
+	return true
+}
+
+func PlayerNameFromJSON(json string) (string, error) {
+	return "", nil
+}
+
 func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 	if sx > fx {
 		sx, fx = fx, sx
@@ -153,20 +161,44 @@ func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 		sz, fz = fz, sz
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"sx": sx,
+		"sy": sy,
+		"sz": sz,
+		"fx": fx,
+		"fy": fy,
+		"fz": fz,
+	}).Info("SearchForMailboxes")
+
 	for x := sx; x <= fx; x++ {
 		for y := sy; y <= fy; y++ {
 			for z := sz; z <= fz; z++ {
 				data, err := console.GetBlock(x, y, z, "")
 				if err != nil {
-					return err
+					logrus.WithFields(logrus.Fields{
+						"x":   x,
+						"y":   y,
+						"z":   z,
+						"err": err,
+					}).Info("GetBlock Failure")
+					continue
 				}
 
-				logrus.WithFields(logrus.Fields{
-					"x":    x,
-					"y":    y,
-					"z":    z,
-					"data": data,
-				}).Info("Container")
+				if IsContainer(data) {
+					playerName, err := PlayerNameFromJSON(data)
+					if err != nil {
+						logrus.WithError(err).Error("PlayerNameFromJSON Failed")
+						continue
+					}
+
+					logrus.WithFields(logrus.Fields{
+						"x":          x,
+						"y":          y,
+						"z":          z,
+						"data":       data,
+						"playerName": playerName,
+					}).Info("Container")
+				}
 			}
 		}
 	}
