@@ -1,6 +1,7 @@
 package mcserver
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -277,6 +278,9 @@ func (s *Server) OnDieMessage() error {
 }
 
 func (s *Server) Whisper(who, message string) error {
+	if who == "" {
+		return errors.New("Cannot send a message to nobody")
+	}
 	command := fmt.Sprintf("/tell %s %s", who, message)
 	logrus.WithFields(logrus.Fields{
 		"who":     who,
@@ -306,6 +310,10 @@ func ChatMsgClass(m chat.Message) string {
 
 	if m.Translate == "commands.message.display.outgoing" {
 		return "ignore"
+	}
+
+	if strings.Contains(text, "No player was found") {
+		return "join"
 	}
 
 	if strings.HasPrefix(m.Translate, "chat.type.text") {

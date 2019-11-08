@@ -3,6 +3,7 @@ package postal
 import (
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/db"
@@ -73,10 +74,22 @@ func (m *Mailbox) Notify() error {
 		return err
 	}
 
-	w := models.GameWhisper{gameNick, message}
+	if gameNick == "" {
+		re := regexp.MustCompile("^([^']+)'s Mailbox")
+		res := re.FindStringSubmatch(m.Name)
+		gameNick = res[1]
+		logrus.WithFields(logrus.Fields{
+			"name":     m.Name,
+			"gameNick": gameNick,
+		}).Debug("No game nick from playerID, parsing name")
+	}
 
-	if ipc.GameWhisperStream != nil {
-		ipc.GameWhisperStream <- w
+	if gameNick != "" {
+		w := models.GameWhisper{gameNick, message}
+
+		if ipc.GameWhisperStream != nil {
+			ipc.GameWhisperStream <- w
+		}
 	}
 
 	channel, err := discord.GetChannelByPlayerID(m.PlayerID)
