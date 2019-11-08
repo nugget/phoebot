@@ -203,6 +203,10 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		// This is a private message window
 		direct = true
 		channel.Name = "PM"
+		err := discord.SetPMOwner(dm)
+		if err != nil {
+			logrus.WithError(err).Error("Unable to update PM channel owner")
+		}
 	}
 
 	logMsg := fmt.Sprintf("<%s> %s", dm.Author.Username, dm.Content)
@@ -232,8 +236,9 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	for _, t := range triggers {
 		if t.InGame == true {
 			// This is not a discord trigger
-			break
+			continue
 		}
+
 		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
 				if t.ACL != "" && !phoelib.PlayerHasACL(dm.Author.ID, t.ACL) {
@@ -313,6 +318,9 @@ func LoadTriggers() error {
 
 	triggers = append(triggers, hooks.RegNearestPortal())
 
+	triggers = append(triggers, hooks.RegLinkRequest())
+	triggers = append(triggers, hooks.RegLinkVerify())
+
 	return nil
 }
 
@@ -341,7 +349,7 @@ func MailboxLoop(mc *mcserver.Server) error {
 				logrus.WithError(err).Error("postalPollContainers failure")
 			}
 		}
-		time.Sleep(time.Duration(15) * time.Second)
+		time.Sleep(time.Duration(60) * time.Second)
 	}
 
 	return nil

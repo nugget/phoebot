@@ -34,7 +34,7 @@ So, for example, in the `#chatter` window you could say:
 
 @Phoebot subscribe papermc paper
 
-@Pohebot subscribe server.pro vanilla
+@Phoebot subscribe server.pro vanilla
 ```
 
 This would add a subscription to that specific channel, and whenever a new
@@ -48,6 +48,25 @@ subscriptions` command.
 
 We will be adding more sources and products over time, including things like
 popular data packs and add-ons.
+
+#### Linking Discord and Minecraft accounts
+
+On discord, you can send this command to Phoebot in a private message while you
+are also logged in to the Minecraft server:
+```
+!gamenick MacNugget
+```
+
+Phoebot will send you a whisper on the server with a verification code, which
+you can then send on Discord in the form:
+
+```
+!verify CODE
+```
+
+This will link your Discord and Minecraft account so the bot knows how to reach
+you in both places.
+
 
 #### Version Report
 

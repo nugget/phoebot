@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "developertools.go",
+        "linking.go",
         "main.go",
         "mapping.go",
         "portals.go",
@@ -20,6 +21,7 @@ go_library(
     deps = [
         "//lib/builddata:go_default_library",
         "//lib/console:go_default_library",
+        "//lib/db:go_default_library",
         "//lib/discord:go_default_library",
         "//lib/ipc:go_default_library",
         "//lib/mapping:go_default_library",

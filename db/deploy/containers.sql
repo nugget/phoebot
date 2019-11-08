@@ -19,6 +19,7 @@ BEGIN;
     GRANT SELECT, INSERT, UPDATE ON container TO phoebot;
 
     ALTER TABLE player ADD COLUMN verifyCode varchar NOT NULL DEFAULT '';
+    ALTER TABLE player ADD COLUMN verified bool NOT NULL DEFAULT FALSE;
     ALTER TABLE channel ADD COLUMN playerID varchar NOT NULL DEFAULT '';
 
 COMMIT;

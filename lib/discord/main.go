@@ -17,10 +17,11 @@ var (
 func RecordLog(m *discordgo.MessageCreate) error {
 	if m.GuildID == "" || m.ChannelID == "" || m.Type > 0 {
 		logrus.WithFields(logrus.Fields{
-			"playerID":  m.Author.ID,
-			"guildID":   m.GuildID,
-			"channelID": m.ChannelID,
-			"type":      m.Type,
+			"playerID":   m.Author.ID,
+			"authorName": m.Author.Username,
+			"guildID":    m.GuildID,
+			"channelID":  m.ChannelID,
+			"type":       m.Type,
 		}).Debug("Not saving private message")
 		return nil
 	}
@@ -63,6 +64,13 @@ func UpdateChannel(c *discordgo.Channel) error {
 
 	phoelib.LogSQL(query, c.ID, c.GuildID, channelName, string(c.Type), c.Topic)
 	_, err := db.DB.Exec(query, c.ID, c.GuildID, channelName, c.Type, c.Topic)
+	return err
+}
+
+func SetPMOwner(m *discordgo.MessageCreate) error {
+	query := `UPDATE channel SET playerID = $2 WHERE channelID = $1 AND playerID <> $2 RETURNING channelID`
+
+	_, err := db.DB.Exec(query, m.ChannelID, m.Author.ID)
 	return err
 }
 

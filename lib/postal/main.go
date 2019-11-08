@@ -68,7 +68,6 @@ func PollContainers() error {
 			  FROM container WHERE deleted IS NULL AND enabled IS TRUE`
 
 	phoelib.LogSQL(query)
-
 	rows, err := db.DB.Query(query)
 	if err != nil {
 		return err
