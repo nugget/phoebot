@@ -75,7 +75,7 @@ func SetPMOwner(m *discordgo.MessageCreate) error {
 }
 
 func GetChannel(id string) (*discordgo.Channel, error) {
-	channel, err := Session.State.Channel(id)
+	channel, err := Session.Channel(id)
 	if err != nil {
 		return channel, err
 	}
@@ -102,6 +102,31 @@ func GetChannelByName(name string) (*discordgo.Channel, error) {
 			return nil, err
 		}
 
+		return GetChannel(channelID)
+	}
+
+	return nil, fmt.Errorf("Not Found")
+}
+
+func GetChannelByPlayerID(playerID string) (*discordgo.Channel, error) {
+	query := `SELECT channelid FROM channel WHERE playerID = $1`
+
+	phoelib.LogSQL(query, playerID)
+	rows, err := db.DB.Query(query, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var channelID string
+
+		err := rows.Scan(&channelID)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println("Looking for channelID", channelID)
 		return GetChannel(channelID)
 	}
 

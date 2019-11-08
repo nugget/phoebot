@@ -114,6 +114,12 @@ func ProcLinkVerify(dm *discordgo.MessageCreate) error {
 			"playerID":      playerID,
 			"minecraftName": minecraftName,
 		}).Info("Linked Minecraft Account")
+
+		if minecraftName == "unknown" {
+
+		}
+		msg := fmt.Sprintf("You are successfully linked with Minecraft user %s", minecraftName)
+		discord.Session.ChannelMessageSend(dm.ChannelID, msg)
 	}
 
 	return nil

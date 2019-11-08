@@ -8,8 +8,10 @@ go_library(
     deps = [
         "//lib/console:go_default_library",
         "//lib/db:go_default_library",
+        "//lib/discord:go_default_library",
         "//lib/ipc:go_default_library",
         "//lib/phoelib:go_default_library",
+        "//lib/player:go_default_library",
         "//models:go_default_library",
         "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],

@@ -346,26 +346,32 @@ func MailboxLoop(mc *mcserver.Server) error {
 			err := postal.PollContainers()
 
 			if err != nil {
-				logrus.WithError(err).Error("postalPollContainers failure")
+				logrus.WithError(err).Error("postal.PollContainers failure")
 			}
 		}
-		time.Sleep(time.Duration(60) * time.Second)
+		time.Sleep(time.Duration(10) * time.Second)
 	}
 
 	return nil
 }
 
 func processWhisperStream(s *mcserver.Server) {
-	w, stillOpen := <-ipc.GameWhisperStream
+	for {
+		w, stillOpen := <-ipc.GameWhisperStream
 
-	logrus.WithFields(logrus.Fields{
-		"whisper":   w,
-		"stillOpen": stillOpen,
-	}).Info("GameWhisperStream message received")
+		logrus.WithFields(logrus.Fields{
+			"whisper":   w,
+			"stillOpen": stillOpen,
+		}).Info("GameWhisperStream message received")
 
-	err := s.Whisper(w.Who, w.Message)
-	if err != nil {
-		logrus.WithError(err).Error("processWhisperStream Error")
+		err := s.Whisper(w.Who, w.Message)
+		if err != nil {
+			logrus.WithError(err).Error("processWhisperStream Error")
+		}
+
+		if !stillOpen {
+			return
+		}
 	}
 }
 

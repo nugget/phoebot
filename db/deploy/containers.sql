@@ -8,6 +8,7 @@ BEGIN;
         deleted timestamp(0),
         enabled boolean NOT NULL DEFAULT TRUE,
         name varchar NOT NULL DEFAULT '',
+        playerID varchar NOT NULL DEFAULT '',
         dimension varchar DEFAULT 'overworld',
         x int,
         y int,

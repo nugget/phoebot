@@ -22,3 +22,26 @@ func UpdateFromDiscord(u *discordgo.User) error {
 
 	return err
 }
+
+func GameNickFromPlayerID(playerID string) (string, error) {
+	query := `SELECT minecraftName FROM player WHERE playerID = $1 AND verified IS TRUE ORDER BY changed DESC LIMIT 1`
+
+	phoelib.LogSQL(query, playerID)
+
+	rows, err := db.DB.Query(query, playerID)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	gameNick := ""
+
+	for rows.Next() {
+		err := rows.Scan(&gameNick)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return gameNick, nil
+}

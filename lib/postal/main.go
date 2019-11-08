@@ -1,10 +1,15 @@
 package postal
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/models"
 
 	"github.com/sirupsen/logrus"
@@ -24,6 +29,7 @@ type Mailbox struct {
 	json      string
 	Name      string
 	Items     []string
+	PlayerID  string
 }
 
 func (m *Mailbox) Update() (bool, error) {
@@ -33,12 +39,13 @@ func (m *Mailbox) Update() (bool, error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"id":   m.ID,
-		"x":    m.X,
-		"y":    m.Y,
-		"z":    m.Z,
-		"json": m.json,
-		"new":  newJSON,
+		"id":      m.ID,
+		"x":       m.X,
+		"y":       m.Y,
+		"z":       m.Z,
+		"json":    m.json,
+		"new":     newJSON,
+		"changed": (m.json != newJSON),
 	}).Info("UpdateContainer")
 
 	if m.json == newJSON {
@@ -54,17 +61,36 @@ func (m *Mailbox) Update() (bool, error) {
 }
 
 func (m *Mailbox) Notify() error {
-	w := models.GameWhisper{m.Name, "Mailbox contents have changed"}
+	if m.PlayerID == "" {
+		// No player known, skipping notification
+		return errors.New("Can't notify on a mailbox with no playerID")
+	}
+
+	message := fmt.Sprintf("You've got mail in %s at (%d, %d, %d)", m.Name, m.X, m.Y, m.Z)
+
+	gameNick, err := player.GameNickFromPlayerID(m.PlayerID)
+	if err != nil {
+		return err
+	}
+
+	w := models.GameWhisper{gameNick, message}
 
 	if ipc.GameWhisperStream != nil {
 		ipc.GameWhisperStream <- w
 	}
 
+	channel, err := discord.GetChannelByPlayerID(m.PlayerID)
+	if err != nil {
+		return err
+	}
+
+	discord.Session.ChannelMessageSend(channel.ID, message)
+
 	return nil
 }
 
 func PollContainers() error {
-	query := `SELECT containerID, x, y, z, name, json
+	query := `SELECT containerID, x, y, z, name, json, playerID
 			  FROM container WHERE deleted IS NULL AND enabled IS TRUE`
 
 	phoelib.LogSQL(query)
@@ -83,6 +109,7 @@ func PollContainers() error {
 			&m.Z,
 			&m.Name,
 			&m.json,
+			&m.PlayerID,
 		)
 		if err != nil {
 			return err
