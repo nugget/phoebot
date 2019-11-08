@@ -7,13 +7,14 @@ BEGIN;
         changed timestamp(0) NOT NULL DEFAULT current_timestamp,
         deleted timestamp(0),
         enabled boolean NOT NULL DEFAULT TRUE,
+        id varchar NOT NULL DEFAULT '',
         name varchar NOT NULL DEFAULT '',
         playerID varchar NOT NULL DEFAULT '',
         dimension varchar DEFAULT 'overworld',
         x int,
         y int,
         z int,
-        json varchar NOT NULL DEFAULT '{}',
+        nbt varchar NOT NULL DEFAULT '{}',
         PRIMARY KEY(containerID)
     );
     CREATE TRIGGER onupdate BEFORE UPDATE ON container FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
