@@ -312,10 +312,6 @@ func ChatMsgClass(m chat.Message) string {
 		return "ignore"
 	}
 
-	if strings.Contains(text, "No player was found") {
-		return "join"
-	}
-
 	if strings.HasPrefix(m.Translate, "chat.type.text") {
 		return "chat"
 	}
@@ -363,6 +359,10 @@ func ChatMsgClass(m chat.Message) string {
 	}
 
 	if strings.Contains(text, "is no longer AFK") {
+		return "ignore"
+	}
+
+	if strings.Contains(text, "No player was found") {
 		return "ignore"
 	}
 
