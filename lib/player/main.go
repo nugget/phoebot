@@ -45,3 +45,26 @@ func GameNickFromPlayerID(playerID string) (string, error) {
 
 	return gameNick, nil
 }
+
+func PlayerIDFromGameNick(gameNick string) (string, error) {
+	query := `SELECT playerID FROM player WHERE minecraftName = $1 AND verified IS TRUE ORDER BY changed DESC LIMIT 1`
+
+	phoelib.LogSQL(query, gameNick)
+
+	rows, err := db.DB.Query(query, gameNick)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	playerID := ""
+
+	for rows.Next() {
+		err := rows.Scan(&playerID)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return playerID, nil
+}
