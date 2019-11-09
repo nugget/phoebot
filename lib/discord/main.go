@@ -22,7 +22,7 @@ func RecordLog(m *discordgo.MessageCreate) error {
 			"guildID":    m.GuildID,
 			"channelID":  m.ChannelID,
 			"type":       m.Type,
-		}).Debug("Not saving private message")
+		}).Trace("Not saving private message")
 		return nil
 	}
 
@@ -105,7 +105,7 @@ func GetChannelByName(name string) (*discordgo.Channel, error) {
 		return GetChannel(channelID)
 	}
 
-	return nil, fmt.Errorf("Not Found")
+	return nil, fmt.Errorf("Discord channel not found for name %s", name)
 }
 
 func GetChannelByPlayerID(playerID string) (*discordgo.Channel, error) {
@@ -130,5 +130,5 @@ func GetChannelByPlayerID(playerID string) (*discordgo.Channel, error) {
 		return GetChannel(channelID)
 	}
 
-	return nil, fmt.Errorf("Not Found")
+	return nil, fmt.Errorf("Discord channel not found for playerID %s", playerID)
 }

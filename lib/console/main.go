@@ -56,7 +56,7 @@ func (c *Connection) sendCommand(command string) (string, error) {
 		logrus.WithFields(logrus.Fields{
 			"command":  command,
 			"response": response,
-		}).Debug("Successful RCON Command")
+		}).Trace("Successful RCON Command")
 	}
 
 	return response, err

@@ -3,6 +3,7 @@ package console
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -23,7 +24,7 @@ func GetBlock(x, y, z int, path string) (string, error) {
 		"err":    err,
 	}).Trace("console.GetBlock")
 
-	r := regexp.MustCompile(`: ({.*})`)
+	r := regexp.MustCompile(`data: (.*)`)
 	res := r.FindStringSubmatch(data)
 
 	if len(res) != 2 {
@@ -35,4 +36,45 @@ func GetBlock(x, y, z int, path string) (string, error) {
 	}
 
 	return res[1], nil
+}
+
+func GetString(x, y, z int, path string) (string, error) {
+	data, err := GetBlock(x, y, z, path)
+	if err != nil {
+		return "", err
+	}
+
+	t := ""
+
+	pattern := fmt.Sprintf(`"([^"]+)"`)
+	re := regexp.MustCompile(pattern)
+	res := re.FindStringSubmatch(data)
+	if len(res) == 2 {
+		t = res[1]
+	}
+
+	t = strings.ReplaceAll(t, `\'`, `'`)
+
+	return t, nil
+
+}
+
+func GetText(x, y, z int, path string) (string, error) {
+	data, err := GetBlock(x, y, z, path)
+	if err != nil {
+		return "", err
+	}
+
+	t := ""
+
+	pattern := fmt.Sprintf(`'{"text":"([^"]+)"`)
+	re := regexp.MustCompile(pattern)
+	res := re.FindStringSubmatch(data)
+	if len(res) == 2 {
+		t = res[1]
+	}
+
+	t = strings.ReplaceAll(t, `\'`, `'`)
+
+	return t, nil
 }

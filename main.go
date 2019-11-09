@@ -47,6 +47,8 @@ func setupConfig() *viper.Viper {
 	c := viper.New()
 	c.AutomaticEnv()
 	c.SetDefault("MC_CHECK_INTERVAL", 600)
+	c.SetDefault("MAILBOX_SCAN_INTERVAL", 7200)
+	c.SetDefault("MAILBOX_POLL_INTERVAL", 300)
 
 	return c
 }
@@ -338,36 +340,54 @@ func housekeeping(interval int) error {
 	return nil
 }
 
-func MailboxLoop(mc *mcserver.Server) error {
+func MailboxLoop(mc *mcserver.Server, interval int) error {
 	for {
 		if !mc.Connected {
-			logrus.Debug("Skipping MailboxLoop, not connected to server")
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Warn("Skipping MailboxLoop")
 		} else {
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Trace("MailboxLoop starting")
 			err := postal.PollContainers()
 
 			if err != nil {
 				logrus.WithError(err).Error("postal.PollContainers failure")
 			}
 		}
-		time.Sleep(time.Duration(300) * time.Second)
+		time.Sleep(time.Duration(interval) * time.Second)
 	}
 
 	return nil
 }
 
-func MailboxScanner(mc *mcserver.Server) error {
+func MailboxScanner(mc *mcserver.Server, interval int) (err error) {
 
 	for {
 		if !mc.Connected {
-			logrus.Debug("Skipping MailboxScanner, not connected to server")
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Warn("Skipping MailboxScanner")
 		} else {
-			err := postal.SearchForMailboxes(-35, 71, 152, -29, 69, 152)
-
-			if err != nil {
-				logrus.WithError(err).Error("postal.SearchForMailboxes failure")
+			switch mc.Hostname {
+			case "phoenixcraft.serv.nu":
+				err = postal.SearchForMailboxes(-35, 71, 152, -29, 69, 152)
+				if err != nil {
+					logrus.WithError(err).Error("postal.SearchForMailboxes failure")
+				}
+			case "172.28.0.24":
+				err = postal.SearchForMailboxes(200, 81, 264, 204, 79, 264)
+				if err != nil {
+					logrus.WithError(err).Error("postal.SearchForMailboxes failure")
+				}
 			}
+
 		}
-		time.Sleep(time.Duration(30) * time.Second)
+		time.Sleep(time.Duration(interval) * time.Second)
 	}
 
 	return nil
@@ -522,7 +542,7 @@ func processChatStream(s *mcserver.Server) {
 			case "announcement":
 				logrus.WithFields(f).Warn(noColorsMessage)
 			case "ignore":
-				logrus.WithFields(f).Warn(noColorsMessage)
+				logrus.WithFields(f).Info(noColorsMessage)
 			default:
 				logrus.WithFields(f).Info(noColorsMessage)
 				matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
@@ -701,8 +721,8 @@ func main() {
 	go processWhisperStream(&mc)
 	go processSayStream(&mc)
 	go StatsUpdate(&mc)
-	go MailboxLoop(&mc)
-	// go MailboxScanner(&mc)
+	go MailboxLoop(&mc, config.GetInt("MAILBOX_POLL_INTERVAL"))
+	go MailboxScanner(&mc, config.GetInt("MAILBOX_SCAN_INTERVAL"))
 	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)
