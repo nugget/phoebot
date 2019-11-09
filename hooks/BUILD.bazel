@@ -27,6 +27,7 @@ go_library(
         "//lib/mapping:go_default_library",
         "//lib/mcserver:go_default_library",
         "//lib/phoelib:go_default_library",
+        "//lib/postal:go_default_library",
         "//lib/products:go_default_library",
         "//lib/subscriptions:go_default_library",
         "//models:go_default_library",

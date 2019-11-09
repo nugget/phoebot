@@ -180,6 +180,7 @@ func (m *Mailbox) Update() (bool, error) {
 
 	err = m.Parse()
 	if err != nil {
+		m.Log("Parse Failed")
 		return false, err
 	}
 
@@ -326,6 +327,10 @@ func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 				m, err := NewMailbox(data)
 				if err != nil {
 					logrus.WithError(err).Error("NewMailbox Failure")
+					continue
+				}
+
+				if m.CustomName == "MAIL BOX" {
 					continue
 				}
 

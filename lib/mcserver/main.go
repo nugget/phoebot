@@ -312,6 +312,10 @@ func ChatMsgClass(m chat.Message) string {
 		return "ignore"
 	}
 
+	if m.Translate == "commands.data.block.modified" {
+		return "ignore"
+	}
+
 	if strings.HasPrefix(m.Translate, "chat.type.text") {
 		return "chat"
 	}
@@ -363,6 +367,14 @@ func ChatMsgClass(m chat.Message) string {
 	}
 
 	if strings.Contains(text, "No player was found") {
+		return "ignore"
+	}
+
+	if strings.Contains(text, "Expected whitespace") {
+		return "ignore"
+	}
+
+	if strings.HasPrefix(text, "[") {
 		return "ignore"
 	}
 

@@ -303,6 +303,7 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegTemplate())
 	triggers = append(triggers, hooks.RegLoglevel())
 	triggers = append(triggers, hooks.RegCustomName())
+	triggers = append(triggers, hooks.RegScanMailboxes())
 
 	triggers = append(triggers, hooks.RegSubscriptions())
 	triggers = append(triggers, hooks.RegUnsubAll())
