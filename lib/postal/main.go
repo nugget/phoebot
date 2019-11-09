@@ -34,6 +34,7 @@ type Mailbox struct {
 	Items       []Item `nbt:"Items"`
 	PlayerID    string
 	NBT         string
+	Empty       bool
 }
 
 func NewMailbox(data string) (Mailbox, error) {
@@ -61,6 +62,7 @@ func (m *Mailbox) Log(desc string) error {
 		"playerID":    m.PlayerID,
 		"isContainer": m.IsContainer(),
 		"containerID": m.ContainerID,
+		"empty":       m.Empty,
 	}).Info(desc)
 
 	return nil
@@ -138,6 +140,13 @@ func (m *Mailbox) Parse() (err error) {
 		return err
 	}
 
+	itemBuf, _ := console.GetString(m.X, m.Y, m.Z, "Items")
+	if itemBuf == "" {
+		m.Empty = true
+	} else {
+		m.Empty = false
+	}
+
 	// This is fine if it errors
 	m.CustomName, _ = console.GetText(m.X, m.Y, m.Z, "CustomName")
 	m.FindPlayerName()
@@ -151,9 +160,7 @@ func (m *Mailbox) Parse() (err error) {
 	return err
 }
 
-func (m *Mailbox) Update() (bool, error) {
-	var err error
-
+func (m *Mailbox) Update() (notifyUser bool, err error) {
 	if m.CustomName == "" {
 		return false, nil
 	}
@@ -200,10 +207,12 @@ func (m *Mailbox) Update() (bool, error) {
 		var cID string
 		rows.Scan(&cID)
 		m.Log("Updated changed container in db")
-		return true, nil
+
+		// If container is empty, don't send a notification
+		notifyUser = !m.Empty
 	}
 
-	return false, nil
+	return notifyUser, nil
 }
 
 func (m *Mailbox) Notify() error {
@@ -274,13 +283,13 @@ func PollContainers() error {
 
 		m.FindPlayerName()
 
-		changed, err := m.Update()
+		notifyUser, err := m.Update()
 		if err != nil {
 			logrus.WithError(err).Error("Failed Mailbox Update")
 			failed++
 			continue
 		}
-		if changed {
+		if notifyUser {
 			updated++
 			err := m.Notify()
 			if err != nil {
