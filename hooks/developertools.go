@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
@@ -90,20 +91,15 @@ func RegScanMailboxes() (t Trigger) {
 }
 
 func ProcScanMailboxes(message string) (string, error) {
-	var err error
-
-	err = postal.SearchForMailboxes(-35, 71, 152, -29, 69, 152)
+	err := postal.SearchServer(console.Hostname())
 	if err != nil {
-		logrus.WithError(err).Error("postal.SearchForMailboxes failure")
+		logrus.WithError(err).Error("postal.SearchServer failure")
+		return fmt.Sprintf("%s", err), err
 	}
-	err = postal.SearchForMailboxes(-11, 71, 152, -5, 69, 152)
-	if err != nil {
-		logrus.WithError(err).Error("postal.SearchForMailboxes failure")
-	}
-
 	err = postal.PollContainers()
 	if err != nil {
 		logrus.WithError(err).Error("postal.PollContainers failure")
+		return fmt.Sprintf("%s", err), err
 	}
 
 	return "Scanned for new mailboxes", nil

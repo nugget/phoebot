@@ -374,23 +374,10 @@ func MailboxScanner(mc *mcserver.Server, interval int) (err error) {
 				"connected": mc.Connected,
 			}).Warn("Skipping MailboxScanner")
 		} else {
-			switch mc.Hostname {
-			case "phoenixcraft.serv.nu":
-				err = postal.SearchForMailboxes(-35, 71, 152, -29, 69, 152)
-				if err != nil {
-					logrus.WithError(err).Error("postal.SearchForMailboxes failure")
-				}
-				err = postal.SearchForMailboxes(-11, 71, 152, -5, 69, 152)
-				if err != nil {
-					logrus.WithError(err).Error("postal.SearchForMailboxes failure")
-				}
-			case "172.28.0.24":
-				err = postal.SearchForMailboxes(200, 81, 264, 204, 79, 264)
-				if err != nil {
-					logrus.WithError(err).Error("postal.SearchForMailboxes failure")
-				}
+			err := postal.SearchServer(mc.Hostname)
+			if err != nil {
+				logrus.WithError(err).Error("postal.SearchServer failure")
 			}
-
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}

@@ -250,7 +250,11 @@ func PollContainers() error {
 	}
 	defer rows.Close()
 
+	polled, updated, failed := 0, 0, 0
+
 	for rows.Next() {
+		polled++
+
 		m := Mailbox{}
 		err := rows.Scan(
 			&m.ContainerID,
@@ -263,16 +267,21 @@ func PollContainers() error {
 			&m.PlayerID,
 		)
 		if err != nil {
-			return err
+			logrus.WithError(err).Error("Failed Mailbox scan")
+			failed++
+			continue
 		}
 
 		m.FindPlayerName()
 
 		changed, err := m.Update()
 		if err != nil {
-			return err
+			logrus.WithError(err).Error("Failed Mailbox Update")
+			failed++
+			continue
 		}
 		if changed {
+			updated++
 			err := m.Notify()
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
@@ -284,6 +293,12 @@ func PollContainers() error {
 			}
 		}
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"polled":  polled,
+		"updated": updated,
+		"failed":  failed,
+	}).Trace("PollContainers")
 
 	return nil
 }
@@ -308,7 +323,9 @@ func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 		"fx": fx,
 		"fy": fy,
 		"fz": fz,
-	}).Info("SearchForMailboxes")
+	}).Debug("SearchForMailboxes")
+
+	failed, unassigned, updated := 0, 0, 0
 
 	for x := sx; x <= fx; x++ {
 		for y := sy; y <= fy; y++ {
@@ -321,16 +338,19 @@ func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 						"z":   z,
 						"err": err,
 					}).Debug("GetBlock Failure")
+					failed++
 					continue
 				}
 
 				m, err := NewMailbox(data)
 				if err != nil {
 					logrus.WithError(err).Error("NewMailbox Failure")
+					failed++
 					continue
 				}
 
 				if m.CustomName == "MAIL BOX" {
+					unassigned++
 					continue
 				}
 
@@ -340,11 +360,47 @@ func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 						_, err := m.Update()
 						if err != nil {
 							logrus.WithError(err).Error("Mailbox Update() Failure")
+							failed++
 							continue
+						} else {
+							updated++
 						}
 					}
 				}
 			}
+		}
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"sx":         sx,
+		"sy":         sy,
+		"sz":         sz,
+		"fx":         fx,
+		"fy":         fy,
+		"fz":         fz,
+		"failed":     failed,
+		"unassigned": unassigned,
+		"updated":    updated,
+	}).Info("SearchForMailboxes Complete")
+
+	return nil
+}
+
+func SearchServer(hostname string) (err error) {
+	switch hostname {
+	case "phoenixcraft.serv.nu":
+		err = SearchForMailboxes(-35, 71, 152, -29, 69, 152)
+		if err != nil {
+			return err
+		}
+		err = SearchForMailboxes(-11, 71, 152, -5, 69, 152)
+		if err != nil {
+			return err
+		}
+	case "172.28.0.24":
+		err = SearchForMailboxes(200, 81, 264, 204, 79, 264)
+		if err != nil {
+			return err
 		}
 	}
 

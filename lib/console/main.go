@@ -62,6 +62,10 @@ func (c *Connection) sendCommand(command string) (string, error) {
 	return response, err
 }
 
+func Hostname() string {
+	return s.Hostname
+}
+
 func Test() {
 	s.sendCommand("version")
 	s.sendCommand("data get entity MacNugget")
