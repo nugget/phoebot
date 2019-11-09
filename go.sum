@@ -11,6 +11,8 @@ github.com/Tnze/go-mc v1.0.1 h1:55V57A+EDX1lOAXK9aAztIpVLPhhYv4WW1dpGkDPo+I=
 github.com/Tnze/go-mc v1.0.1/go.mod h1:PoH6MiEWY36P3cwHBDgntkV0/d93Kp2nnf3Y21GO4s4=
 github.com/Tnze/go-mc v1.0.2-0.20190625060103-9df0ae90648d h1:12VBrOE8BKV1RMpRe/VT3Rl4R/UT1Xb9g/r2oHIJwUk=
 github.com/Tnze/go-mc v1.0.2-0.20190625060103-9df0ae90648d/go.mod h1:PoH6MiEWY36P3cwHBDgntkV0/d93Kp2nnf3Y21GO4s4=
+github.com/Tnze/go-mc v1.14.4-0.20191020061938-9576aa282301 h1:A7zSP5sfdQQE15Zjvs4BjUXxFyd11TiOfZ/kmbD+KgE=
+github.com/Tnze/go-mc v1.14.4-0.20191020061938-9576aa282301/go.mod h1:ZQpDcppzIn7X37rsk39CAL4C7nkmu4sxWvDpcy9pncc=
 github.com/Tnze/go-mc v1.14.4 h1:+tTin5MQ8UN6i2aMJpSg803vrrQ/XPKumTA+PSxDr6U=
 github.com/Tnze/go-mc v1.14.4/go.mod h1:PoH6MiEWY36P3cwHBDgntkV0/d93Kp2nnf3Y21GO4s4=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -63,6 +65,7 @@ github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXi
 github.com/google/pprof v0.0.0-20181206194817-3ea8567a2e57/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/google/pprof v0.0.0-20190515194954-54271f7e092f/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
+github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
 github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=

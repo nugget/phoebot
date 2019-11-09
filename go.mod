@@ -5,7 +5,7 @@ go 1.12
 require (
 	cloud.google.com/go v0.40.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.5 // indirect
-	github.com/Tnze/go-mc v1.14.4
+	github.com/Tnze/go-mc v1.14.4-0.20191020061938-9576aa282301
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.19.0
 	github.com/coreos/bbolt v1.3.3 // indirect
@@ -27,6 +27,7 @@ require (
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/tsdb v0.8.0 // indirect
 	github.com/rogpeppe/fastuuid v1.1.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/seeruk/minecraft-rcon v0.0.0-20190221212056-6ab996d90449
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
