@@ -52,7 +52,6 @@ func UpdateChannel(c *discordgo.Channel) error {
 	case 1:
 		// This is PM channel
 		channelName = fmt.Sprintf("@%s", c.Recipients[0])
-		fmt.Printf("---\n%+v\n---\n", c)
 	default:
 		logrus.WithFields(logrus.Fields{
 			"type":    c.Type,
