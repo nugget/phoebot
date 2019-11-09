@@ -379,6 +379,10 @@ func MailboxScanner(mc *mcserver.Server, interval int) (err error) {
 				if err != nil {
 					logrus.WithError(err).Error("postal.SearchForMailboxes failure")
 				}
+				err = postal.SearchForMailboxes(-11, 71, 152, -5, 69, 152)
+				if err != nil {
+					logrus.WithError(err).Error("postal.SearchForMailboxes failure")
+				}
 			case "172.28.0.24":
 				err = postal.SearchForMailboxes(200, 81, 264, 204, 79, 264)
 				if err != nil {
