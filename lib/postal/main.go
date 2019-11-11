@@ -191,10 +191,10 @@ func (m *Mailbox) Update() (notifyUser bool, err error) {
 		return false, err
 	}
 
-	if m.Name == "" {
+	if m.CustomName == "" {
 		errMsg := "Will not update container with empty name"
 		m.Log(errMsg)
-		return false, fmt.Errorf(errmsg)
+		return false, fmt.Errorf(errMsg)
 	}
 
 	query := `UPDATE container SET nbt = $2, name = $3, playerid = $4, id = $5
