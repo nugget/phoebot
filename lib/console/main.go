@@ -1,6 +1,8 @@
 package console
 
 import (
+	"sync"
+
 	"github.com/seeruk/minecraft-rcon/rcon"
 	"github.com/sirupsen/logrus"
 )
@@ -10,6 +12,7 @@ type Connection struct {
 	Port     int
 	password string
 	client   *rcon.Client
+	mux      sync.Mutex
 }
 
 var s Connection
@@ -33,6 +36,11 @@ func (c *Connection) sendCommand(command string) (string, error) {
 		}
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"command": command,
+	}).Trace("c.mux.Lock()")
+
+	c.mux.Lock()
 	response, err := c.client.SendCommand(command)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
@@ -58,6 +66,11 @@ func (c *Connection) sendCommand(command string) (string, error) {
 			"response": response,
 		}).Trace("Successful RCON Command")
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"command": command,
+	}).Trace("c.mux.UnLock()")
+	c.mux.Unlock()
 
 	return response, err
 }

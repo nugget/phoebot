@@ -28,6 +28,13 @@ func GetBlock(x, y, z int, path string) (string, error) {
 	res := r.FindStringSubmatch(data)
 
 	if len(res) != 2 {
+		logrus.WithFields(logrus.Fields{
+			"x":      x,
+			"y":      y,
+			"z":      z,
+			"path":   path,
+			"result": data,
+		}).Debug("Bad block data")
 		return "", fmt.Errorf("Unable to parse block data")
 	}
 

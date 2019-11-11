@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -35,7 +36,8 @@ import (
 )
 
 var (
-	triggers []hooks.Trigger
+	triggers  []hooks.Trigger
+	postalMux sync.Mutex
 )
 
 func shutdown() {
@@ -349,6 +351,7 @@ func MailboxLoop(mc *mcserver.Server, interval int) error {
 				"connected": mc.Connected,
 			}).Warn("Skipping MailboxLoop")
 		} else {
+			postalMux.Lock()
 			logrus.WithFields(logrus.Fields{
 				"interval":  interval,
 				"connected": mc.Connected,
@@ -358,6 +361,7 @@ func MailboxLoop(mc *mcserver.Server, interval int) error {
 			if err != nil {
 				logrus.WithError(err).Error("postal.PollContainers failure")
 			}
+			postalMux.Unlock()
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
@@ -374,10 +378,12 @@ func MailboxScanner(mc *mcserver.Server, interval int) (err error) {
 				"connected": mc.Connected,
 			}).Warn("Skipping MailboxScanner")
 		} else {
+			postalMux.Lock()
 			err := postal.SearchServer(mc.Hostname)
 			if err != nil {
 				logrus.WithError(err).Error("postal.SearchServer failure")
 			}
+			postalMux.Unlock()
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
