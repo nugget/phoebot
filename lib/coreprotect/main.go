@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
@@ -14,19 +15,21 @@ var (
 )
 
 type containerLog struct {
-	RowID      int
-	Epoch      int
-	User       int
-	Wid        int
+	Epoch      int64
+	Timestamp  time.Time
+	User       string
 	X          int
 	Y          int
 	Z          int
-	Type       int
-	Data       int
+	Material   string
 	Amount     int
-	Metadata   []byte
 	Action     int
 	RolledBack int
+}
+
+func (c *containerLog) Parse() error {
+	c.Timestamp = time.Unix(c.Epoch, 0)
+	return nil
 }
 
 func Connect(URIstring string) error {
@@ -42,7 +45,7 @@ func Connect(URIstring string) error {
 	}).Info("Connecting to CoreProtect")
 
 	p, _ := u.User.Password()
-	connString := fmt.Sprintf("%s:%s@tcp(%s)/%s", u.User, u.User.Username(), p, u.Host, u.Path)
+	connString := fmt.Sprintf("%s:%s@tcp(%s)%s", u.User.Username(), p, u.Host, u.Path)
 
 	DB, err = sql.Open(u.Scheme, connString)
 	if err != nil {
@@ -64,11 +67,12 @@ func Connect(URIstring string) error {
 }
 
 func ScanBoxes() error {
-	query := `SELECT rowid, time, user, wid, x, y, z, type,
-                     data, amount, metadata, action, rolled_back
-	          FROM co_container
-			  LEFT JOIN co_material_map 
-			  WHERE user = 28 AND type = 26 ORDER BY time`
+	query := `SELECT
+				c.time, u.user, x, y, z, m.material, c.amount, c.action, c.rolled_back
+		   	  FROM co_container c 
+			  LEFT JOIN (co_user u, co_material_map m) on (c.type = m.rowid and c.user = u.rowid)
+			  WHERE x >= -35 and x <= -29 and y >= 69 and y <= 71 and z = 152
+			  ORDER BY time DESC LIMIT 10`
 
 	rows, err := DB.Query(query)
 	if err != nil {
@@ -80,26 +84,22 @@ func ScanBoxes() error {
 		c := containerLog{}
 
 		err = rows.Scan(
-			&c.RowID,
 			&c.Epoch,
 			&c.User,
-			&c.Wid,
 			&c.X,
 			&c.Y,
 			&c.Z,
-			&c.Type,
-			&c.Data,
+			&c.Material,
 			&c.Amount,
-			&c.Metadata,
 			&c.Action,
 			&c.RolledBack,
 		)
 		if err != nil {
-			panic(err.Error())
+			return err
 		}
+		c.Parse()
 
 		fmt.Printf("%+v\n", c)
-		fmt.Printf("%s\n", c.Metadata)
 		fmt.Println("-- ")
 
 	}

@@ -4,10 +4,19 @@ import (
 	"os"
 
 	"github.com/nugget/phoebot/lib/coreprotect"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	coreprotect.Connect(os.Getenv("COREPROTECT_URI"))
-	coreprotect.ScanBoxes()
+	var err error
+
+	err = coreprotect.Connect(os.Getenv("COREPROTECT_URI"))
+	if err != nil {
+		logrus.WithError(err).Fatal("coreprotect.Connect Failed")
+	}
+	err = coreprotect.ScanBoxes()
+	if err != nil {
+		logrus.WithError(err).Fatal("coreprotect.ScanBoxes Failed")
+	}
 
 }
