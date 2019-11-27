@@ -53,6 +53,8 @@ func ProcLoglevel(dm *discordgo.MessageCreate) error {
 	return nil
 }
 
+// /tell phoebot customname -11 71 152 Will0wPeak\'s Mailbox
+
 func RegCustomName() (t Trigger) {
 	t.Regexp = regexp.MustCompile("(?i)customname ([0-9-]+) ([0-9-]+) ([0-9-]+) (.*)")
 	t.GameHook = ProcCustomName

@@ -66,15 +66,44 @@ func Connect(URIstring string) error {
 	return nil
 }
 
-func ScanBoxes() error {
+func ScanBoxes(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz int) error {
+	wid := 1
+	epoch := lastScan.Unix()
+
+	if sx > fx {
+		sx, fx = fx, sx
+	}
+
+	if sy > fy {
+		sy, fy = fy, sy
+	}
+
+	if sz > fz {
+		sz, fz = fz, sz
+	}
+
 	query := `SELECT
 				c.time, u.user, x, y, z, m.material, c.amount, c.action, c.rolled_back
 		   	  FROM co_container c 
 			  LEFT JOIN (co_user u, co_material_map m) on (c.type = m.rowid and c.user = u.rowid)
-			  WHERE x >= -35 and x <= -29 and y >= 69 and y <= 71 and z = 152
-			  ORDER BY time DESC LIMIT 10`
+			  WHERE c.rolled_back = 0 AND c.action = 1
+			    AND c.wid = ?
+			    AND c.x >= ? AND c.x <= ? 
+				AND c.y >= ? AND c.y <= ? 
+				AND c.z >= ? AND c.z <= ?
+				AND c.time > ?
+			  ORDER BY c.time`
 
-	rows, err := DB.Query(query)
+	logrus.WithFields(logrus.Fields{
+		"lastScan":  lastScan,
+		"epoch":     epoch,
+		"dimension": dimension,
+		"wid":       wid,
+		"start":     fmt.Sprintf("(%d, %d, %d)", sx, sy, sz),
+		"finish":    fmt.Sprintf("(%d, %d, %d)", fx, fy, fz),
+	}).Info("Scanning for postal activity")
+
+	rows, err := DB.Query(query, wid, sx, fx, sy, fy, sz, fz, epoch)
 	if err != nil {
 		return err
 	}

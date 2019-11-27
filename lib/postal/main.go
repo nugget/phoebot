@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/nugget/phoebot/lib/console"
+	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
@@ -401,22 +403,66 @@ func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 	return nil
 }
 
-func SearchServer(hostname string) (err error) {
-	switch hostname {
-	case "phoenixcraft.serv.nu":
-		err = SearchForMailboxes(-35, 71, 152, -29, 69, 152)
+func SearchServer() error {
+	query := `SELECT scanrangeID, lastscan, current_timestamp, name, dimension, sx, sy, sz, fx, fy, fz FROM postal_scan WHERE enabled IS TRUE AND deleted IS NULL`
+
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			scanRangeID string
+			lastScan    time.Time
+			currentTime time.Time
+			name        string
+			dimension   string
+			sx          int
+			sy          int
+			sz          int
+			fx          int
+			fy          int
+			fz          int
+		)
+
+		err := rows.Scan(
+			&scanRangeID,
+			&lastScan,
+			&currentTime,
+			&name,
+			&dimension,
+			&sx, &sy, &sz,
+			&fx, &fy, &fz,
+		)
 		if err != nil {
 			return err
 		}
-		err = SearchForMailboxes(-11, 71, 152, -5, 69, 152)
+
+		logrus.WithFields(logrus.Fields{
+			"scanRangeID": scanRangeID,
+			"currentTime": currentTime,
+			"lastScan":    lastScan,
+			"dimension":   dimension,
+			"name":        name,
+			"start":       fmt.Sprintf("(%d, %d, %d)", sx, sy, sz),
+			"finish":      fmt.Sprintf("(%d, %d, %d)", fx, fy, fz),
+		}).Info("Scanning for postal activity")
+
+		err = coreprotect.ScanBoxes(dimension, lastScan, sx, sy, sz, fx, fy, fz)
+
+		query := `UPDATE postal_scan SET lastScan = $1 WHERE scanrangeID = $2`
+		_, err = db.DB.Exec(query, currentTime, scanRangeID)
+
 		if err != nil {
-			return err
+			logrus.WithFields(logrus.Fields{
+				"id":       scanRangeID,
+				"lastScan": currentTime,
+				"err":      err,
+			}).Error("Unable to update last scan time")
 		}
-	case "172.28.0.24":
-		err = SearchForMailboxes(200, 81, 264, 204, 79, 264)
-		if err != nil {
-			return err
-		}
+
 	}
 
 	return nil
