@@ -17,6 +17,7 @@ import (
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
 	"github.com/nugget/phoebot/lib/console"
+	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
@@ -631,6 +632,7 @@ func main() {
 	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
 	debugLevel := config.GetString("PHOEBOT_DEBUG")
 	dbURI := config.GetString("DATABASE_URI")
+	cpURI := config.GetString("COREPROTECT_URI")
 
 	if debugLevel != "" {
 		_, err := phoelib.LogLevel(debugLevel)
@@ -646,6 +648,16 @@ func main() {
 
 	LoadTriggers()
 	ipc.InitStreams()
+
+	err = coreprotect.Connect(cpURI)
+	if err != nil {
+		logrus.WithError(err).Fatal("Unable to connect to CoreProtect")
+	}
+
+	err = coreprotect.ScanBoxes()
+	if err != nil {
+		logrus.WithError(err).Fatal("CoreProtect Error")
+	}
 
 	discord.Session, err = discordgo.New("Bot " + discordBotToken)
 	if err != nil {
@@ -687,7 +699,7 @@ func main() {
 		config.GetString("MOJANG_PASSWORD"),
 	)
 	if err != nil {
-		logrus.WithError(err).Error("Error with mcserver Authenticate")
+		logrus.WithError(err).Error("Error with mcserver Connect")
 	}
 
 	err = console.Initialize(
@@ -715,6 +727,9 @@ func main() {
 		}).Info("GetServerInfo")
 
 	}
+
+	err = coreprotect.Connect(dbURI)
+
 	go processChatStream(&mc)
 	go processWhisperStream(&mc)
 	go processSayStream(&mc)

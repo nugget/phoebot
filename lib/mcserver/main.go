@@ -9,9 +9,9 @@ import (
 
 	"github.com/nugget/phoebot/lib/ipc"
 
-	"github.com/Tnze/go-mc/authenticate"
 	"github.com/Tnze/go-mc/bot"
 	"github.com/Tnze/go-mc/chat"
+	"github.com/Tnze/go-mc/yggdrasil"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
@@ -24,7 +24,7 @@ type Server struct {
 	password    string
 	Connected   bool
 	ConnectTime time.Time
-	authData    authenticate.Response
+	access      *yggdrasil.Access
 }
 
 type PingStats struct {
@@ -66,27 +66,31 @@ func (s *Server) Connect() (err error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"token":       s.authData.AccessToken,
 		"connectTime": s.ConnectTime,
 		"connected":   s.Connected,
 	}).Debug("mcserver Connect()")
 
-	// Super-old token
-	// s.authData.AccessToken = "6432e3d646a348aca3e46aca488ba333"
-
-	if s.authData.AccessToken == "" {
-		s.authData, err = authenticate.Authenticate(s.Email, s.password)
-		if err != nil {
-			return err
-		}
-		logrus.WithFields(logrus.Fields{
-			"name":  s.authData.SelectedProfile.Name,
-			"uuid":  s.authData.SelectedProfile.ID,
-			"token": s.authData.AccessToken,
-		}).Info("Authenticated with mojang")
-
-		s.Client.Name, s.Client.Auth.UUID, s.Client.AsTk = s.authData.SelectedProfile.Name, s.authData.SelectedProfile.ID, s.authData.AccessToken
+	ok, err := s.access.Validate()
+	if err != nil {
+		return err
 	}
+
+	if !ok {
+		return fmt.Errorf("Mojang accessToken is not valid")
+	}
+
+	s.access, err = yggdrasil.Authenticate(s.Email, s.password)
+	if err != nil {
+		return err
+	}
+
+	name, uuid := s.access.SelectedProfile()
+
+	logrus.WithFields(logrus.Fields{
+		"name":  name,
+		"uuid":  uuid,
+		"token": s.access.AccessToken(),
+	}).Info("Authenticated with mojang")
 
 	err = s.Client.JoinServer(s.Hostname, s.Port)
 	if err != nil {
@@ -94,7 +98,7 @@ func (s *Server) Connect() (err error) {
 
 		if strings.Contains(err.Error(), "auth fail") {
 			logrus.WithError(err).Error("Authentication Failure, clearing access token")
-			s.authData.AccessToken = ""
+			s.access.Invalidate()
 		}
 
 		return err
@@ -126,16 +130,13 @@ func (s *Server) TestConnection() error {
 		return fmt.Errorf("We are not connected")
 	}
 
-	inventory := s.Client.MainInventory()
 	err := s.Client.SwingArm(0)
 
 	//fmt.Printf("Client: %+v\n", Client)
 	//fmt.Printf("PlayInfo: %+v\n", Client.PlayInfo)
 	//fmt.Printf("Chunks: %d\n", len(Client.Wd.Chunks))
-	//fmt.Printf("inv: %+v\n", inventory)
 
 	logrus.WithFields(logrus.Fields{
-		"slot0":      inventory[0],
 		"chunkCount": len(s.Client.Wd.Chunks),
 		"gamemode":   s.Client.PlayInfo.Gamemode,
 		"dimension":  s.Client.PlayInfo.Dimension,
@@ -145,7 +146,6 @@ func (s *Server) TestConnection() error {
 
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"slot0":      inventory[0],
 			"chunkCount": len(s.Client.Wd.Chunks),
 			"gamemode":   s.Client.PlayInfo.Gamemode,
 			"dimension":  s.Client.PlayInfo.Dimension,
