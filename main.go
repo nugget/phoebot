@@ -380,7 +380,7 @@ func MailboxScanner(mc *mcserver.Server, interval int) (err error) {
 			}).Warn("Skipping MailboxScanner")
 		} else {
 			postalMux.Lock()
-			err := postal.SearchServer(mc.Hostname)
+			err := postal.SearchServer()
 			if err != nil {
 				logrus.WithError(err).Error("postal.SearchServer failure")
 			}
@@ -652,11 +652,6 @@ func main() {
 	err = coreprotect.Connect(cpURI)
 	if err != nil {
 		logrus.WithError(err).Fatal("Unable to connect to CoreProtect")
-	}
-
-	err = coreprotect.ScanBoxes()
-	if err != nil {
-		logrus.WithError(err).Fatal("CoreProtect Error")
 	}
 
 	discord.Session, err = discordgo.New("Bot " + discordBotToken)

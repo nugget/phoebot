@@ -24,7 +24,7 @@ type Server struct {
 	password    string
 	Connected   bool
 	ConnectTime time.Time
-	access      *yggdrasil.Access
+	auth        *yggdrasil.Access
 }
 
 type PingStats struct {
@@ -68,28 +68,32 @@ func (s *Server) Connect() (err error) {
 	logrus.WithFields(logrus.Fields{
 		"connectTime": s.ConnectTime,
 		"connected":   s.Connected,
+		"auth":        s.auth,
 	}).Debug("mcserver Connect()")
 
-	ok, err := s.access.Validate()
+	if s.auth != nil {
+		ok, err := s.auth.Validate()
+		if err != nil {
+			return err
+		}
+
+		if !ok {
+			return fmt.Errorf("Mojang accessToken is not valid")
+		}
+	}
+
+	s.auth, err = yggdrasil.Authenticate(s.Email, s.password)
 	if err != nil {
 		return err
 	}
 
-	if !ok {
-		return fmt.Errorf("Mojang accessToken is not valid")
-	}
-
-	s.access, err = yggdrasil.Authenticate(s.Email, s.password)
-	if err != nil {
-		return err
-	}
-
-	name, uuid := s.access.SelectedProfile()
+	s.Client.Auth.UUID, s.Client.Name = s.auth.SelectedProfile()
+	s.Client.AsTk = s.auth.AccessToken()
 
 	logrus.WithFields(logrus.Fields{
-		"name":  name,
-		"uuid":  uuid,
-		"token": s.access.AccessToken(),
+		"name":  s.Client.Name,
+		"uuid":  s.Client.Auth.UUID,
+		"token": s.Client.AsTk,
 	}).Info("Authenticated with mojang")
 
 	err = s.Client.JoinServer(s.Hostname, s.Port)
@@ -98,7 +102,7 @@ func (s *Server) Connect() (err error) {
 
 		if strings.Contains(err.Error(), "auth fail") {
 			logrus.WithError(err).Error("Authentication Failure, clearing access token")
-			s.access.Invalidate()
+			s.auth.Invalidate()
 		}
 
 		return err

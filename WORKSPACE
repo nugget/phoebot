@@ -707,8 +707,8 @@ go_repository(
 go_repository(
     name = "com_github_tnze_go_mc",
     importpath = "github.com/Tnze/go-mc",
-    sum = "h1:A7zSP5sfdQQE15Zjvs4BjUXxFyd11TiOfZ/kmbD+KgE=",
-    version = "v1.14.4-0.20191020061938-9576aa282301",
+    sum = "h1:l0PcsFoKpZpUJe68J5yU2X44uBYtUGvmI+XdCOKPuEQ=",
+    version = "v1.14.4-0.20191202004051-547a8cc7ac52",
 )
 
 go_repository(
