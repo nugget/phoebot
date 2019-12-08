@@ -404,7 +404,7 @@ func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 }
 
 func SearchServer() error {
-	query := `SELECT scanrangeID, lastscan, current_timestamp, name, dimension, sx, sy, sz, fx, fy, fz FROM postal_scan WHERE enabled IS TRUE AND deleted IS NULL`
+	query := `SELECT scanrangeID, lastscan, current_timestamp, name, dimension, sx, sy, sz, fx, fy, fz FROM scanrange WHERE enabled IS TRUE AND deleted IS NULL AND scantype = 'mailboxes'`
 
 	rows, err := db.DB.Query(query)
 	if err != nil {
