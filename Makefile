@@ -37,4 +37,10 @@ log:
 cptest: gazelle
 	clear
 	bazel run //cmd/cptest
-	
+
+dbpb:
+	psql ${DATABASE_URI}
+
+# brew cask install mysql-shell
+dbcp:
+	mysqlsh --sql --uri ${COREPROTECT_URI}
