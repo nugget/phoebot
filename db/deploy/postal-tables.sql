@@ -12,6 +12,7 @@ BEGIN;
         scantype varchar NOT NULL DEFAULT 'mailboxes',
         name varchar NOT NULL DEFAULT '',
         dimension varchar DEFAULT 'overworld',
+        owner varchar NOT NULL DEFAULT '',
         sx int,
         sy int,
         sz int,
