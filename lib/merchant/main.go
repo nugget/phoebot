@@ -25,7 +25,7 @@ func ScanStock() error {
 			"owner":       sr.Owner,
 			"start":       fmt.Sprintf("(%d, %d, %d)", sr.Sx, sr.Sy, sr.Sz),
 			"finish":      fmt.Sprintf("(%d, %d, %d)", sr.Fx, sr.Fy, sr.Fz),
-		}).Info("Scanning for merchant activity")
+		}).Debug("Scanning for merchant activity")
 
 		l, err := coreprotect.ScanContainers(sr.Dimension, sr.LastScan,
 			sr.Sx, sr.Sy, sr.Sz, sr.Fx, sr.Fy, sr.Fz)
@@ -34,18 +34,21 @@ func ScanStock() error {
 		}
 
 		for i, t := range l {
-			if t.User == sr.Owner {
-				logrus.WithFields(logrus.Fields{
-					"i":         i,
-					"container": sr.Name,
-					"owner":     sr.Owner,
-					"item":      t.Material,
-					"quantity":  t.Amount,
-					"action":    t.Action,
-				}).Info("Owner merchant activity")
-			} else {
-				message := fmt.Sprintf("%s took %d %s from %s at (%d, %d, %d)",
-					t.User, t.Amount, t.Material, sr.Name, t.X, t.Y, t.Z)
+			logrus.WithFields(logrus.Fields{
+				"i":          i,
+				"container":  sr.Name,
+				"player":     t.User,
+				"owner":      sr.Owner,
+				"item":       t.Material,
+				"quantity":   t.Amount,
+				"action":     t.Action,
+				"actionCode": t.ActionCode,
+			}).Info("Merchant activity")
+
+			if t.User != sr.Owner {
+				message := fmt.Sprintf("%s %s %d %s %s %s at (%d, %d, %d)",
+					t.User, t.Action, t.Amount, t.Material, t.Preposition,
+					sr.Name, t.X, t.Y, t.Z)
 
 				err = player.SendMessage(sr.Owner, message)
 				if err != nil {
@@ -57,4 +60,8 @@ func ScanStock() error {
 	}
 
 	return nil
+}
+
+func HasDiamonds(x, y, z int) (int, error) {
+	return 0, nil
 }

@@ -14,6 +14,8 @@ import (
 	"github.com/Tnze/go-mc/yggdrasil"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+
+	_ "github.com/Tnze/go-mc/data/lang/en-au"
 )
 
 type Server struct {

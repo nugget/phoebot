@@ -11,6 +11,7 @@ go_library(
         "@com_github_tidwall_gjson//:go_default_library",
         "@com_github_tnze_go_mc//bot:go_default_library",
         "@com_github_tnze_go_mc//chat:go_default_library",
+        "@com_github_tnze_go_mc//data/lang/en-us:go_default_library",
         "@com_github_tnze_go_mc//yggdrasil:go_default_library",
     ],
 )

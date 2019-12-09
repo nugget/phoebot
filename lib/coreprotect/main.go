@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -15,20 +16,33 @@ var (
 )
 
 type ContainerLog struct {
-	Epoch      int64
-	Timestamp  time.Time
-	User       string
-	X          int
-	Y          int
-	Z          int
-	Material   string
-	Amount     int
-	Action     int
-	RolledBack int
+	Epoch       int64
+	Timestamp   time.Time
+	User        string
+	X           int
+	Y           int
+	Z           int
+	Material    string
+	Amount      int
+	Action      string
+	ActionCode  int
+	RolledBack  int
+	Preposition string
 }
 
 func (c *ContainerLog) Parse() error {
 	c.Timestamp = time.Unix(c.Epoch, 0)
+
+	if c.ActionCode == 1 {
+		c.Action = "placed"
+		c.Preposition = "into"
+	} else {
+		c.Action = "took"
+		c.Preposition = "from"
+	}
+
+	c.Material = strings.ToTitle(strings.TrimPrefix(c.Material, "minecraft:"))
+
 	return nil
 }
 
@@ -86,7 +100,7 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 				c.time, u.user, x, y, z, m.material, c.amount, c.action, c.rolled_back
 		   	  FROM co_container c 
 			  LEFT JOIN (co_user u, co_material_map m) on (c.type = m.rowid and c.user = u.rowid)
-			  WHERE c.rolled_back = 0 AND c.action = 1
+			  WHERE c.rolled_back = 0 
 			    AND c.wid = ?
 			    AND c.x >= ? AND c.x <= ? 
 				AND c.y >= ? AND c.y <= ? 
@@ -101,7 +115,7 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 		"wid":       wid,
 		"start":     fmt.Sprintf("(%d, %d, %d)", sx, sy, sz),
 		"finish":    fmt.Sprintf("(%d, %d, %d)", fx, fy, fz),
-	}).Info("Looking for container activity")
+	}).Debug("Looking for container activity")
 
 	rows, err := DB.Query(query, wid, sx, fx, sy, fy, sz, fz, epoch)
 	if err != nil {
@@ -120,7 +134,7 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 			&c.Z,
 			&c.Material,
 			&c.Amount,
-			&c.Action,
+			&c.ActionCode,
 			&c.RolledBack,
 		)
 		if err != nil {
