@@ -21,3 +21,5 @@ something like this:
 ```
 /tell Phoebot FORSALE "My Wood Chests" 100 66 200 110 64 200
 ```
+
+From then on, Phoebot will let you know when your store has activity
