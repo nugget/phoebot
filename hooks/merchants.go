@@ -12,7 +12,7 @@ import (
 )
 
 func RegMerchantContainer() (t Trigger) {
-	t.Regexp = regexp.MustCompile(`(?i)forsale "([^"]+)" (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)`)
+	t.Regexp = regexp.MustCompile(`(?i)forsale "([^"]+)" ([0-9\-]+) ([0-9\-]+) ([0-9\-]+) ([0-9\-]+) ([0-9\-]+) ([0-9\-]+)`)
 	t.GameHook = ProcMerchantContainer
 	t.InGame = true
 
