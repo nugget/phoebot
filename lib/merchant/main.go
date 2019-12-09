@@ -3,6 +3,8 @@ package merchant
 import (
 	"fmt"
 
+	"github.com/nugget/phoebot/lib/db"
+
 	"github.com/nugget/phoebot/lib/containers"
 	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/player"
@@ -34,6 +36,8 @@ func ScanStock() error {
 		}
 
 		for i, t := range l {
+			// t.User = "FakeUser"
+
 			logrus.WithFields(logrus.Fields{
 				"i":          i,
 				"container":  sr.Name,
@@ -64,4 +68,13 @@ func ScanStock() error {
 
 func HasDiamonds(x, y, z int) (int, error) {
 	return 0, nil
+}
+
+func NewScanRange(owner, name string, sx, sy, sz, fx, fy, fz int) error {
+	query := `INSERT INTO scanrange (name, sx, sy, sz, fx, fy, fz, scantype, owner)
+              SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9`
+
+	_, err := db.DB.Exec(query, name, sx, sy, sz, fx, fy, fz, "inventory", owner)
+
+	return err
 }

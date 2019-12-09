@@ -57,7 +57,7 @@ func GetRanges(scanType string) (ranges []ScanRange, err error) {
 			"name":        sr.Name,
 			"start":       fmt.Sprintf("(%d, %d, %d)", sr.Sx, sr.Sy, sr.Sz),
 			"finish":      fmt.Sprintf("(%d, %d, %d)", sr.Fx, sr.Fy, sr.Fz),
-		}).Info("ScanRange loaded from database")
+		}).Debug("ScanRange loaded from database")
 
 		query := `UPDATE scanrange SET lastScan = $1 WHERE scanrangeID = $2`
 		_, err = db.DB.Exec(query, sr.CurrentTime, sr.ScanRangeID)

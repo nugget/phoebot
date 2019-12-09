@@ -331,6 +331,8 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegLinkRequest())
 	triggers = append(triggers, hooks.RegLinkVerify())
 
+	triggers = append(triggers, hooks.RegMerchantContainer())
+
 	return nil
 }
 

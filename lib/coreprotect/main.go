@@ -41,7 +41,7 @@ func (c *ContainerLog) Parse() error {
 		c.Preposition = "from"
 	}
 
-	c.Material = strings.ToTitle(strings.TrimPrefix(c.Material, "minecraft:"))
+	c.Material = strings.Title(strings.TrimPrefix(c.Material, "minecraft:"))
 
 	return nil
 }
