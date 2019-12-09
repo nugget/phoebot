@@ -27,7 +27,7 @@ func ScanStock() error {
 			"owner":       sr.Owner,
 			"start":       fmt.Sprintf("(%d, %d, %d)", sr.Sx, sr.Sy, sr.Sz),
 			"finish":      fmt.Sprintf("(%d, %d, %d)", sr.Fx, sr.Fy, sr.Fz),
-		}).Debug("Scanning for merchant activity")
+		}).Trace("Scanning for merchant activity")
 
 		l, err := coreprotect.ScanContainers(sr.Dimension, sr.LastScan,
 			sr.Sx, sr.Sy, sr.Sz, sr.Fx, sr.Fy, sr.Fz)

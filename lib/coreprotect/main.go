@@ -107,7 +107,7 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 		"wid":       wid,
 		"start":     fmt.Sprintf("(%d, %d, %d)", sx, sy, sz),
 		"finish":    fmt.Sprintf("(%d, %d, %d)", fx, fy, fz),
-	}).Debug("Looking for container activity")
+	}).Trace("Looking for container activity")
 
 	rows, err := DB.Query(query, wid, sx, fx, sy, fy, sz, fz, epoch)
 	if err != nil {
