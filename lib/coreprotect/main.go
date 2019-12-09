@@ -97,7 +97,7 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 	}
 
 	query := `SELECT
-				c.time, u.user, x, y, z, m.material, c.amount, c.action, c.rolled_back
+				u.user, x, y, z, m.material, c.action, c.rolled_back, max(c.time), sum(c.amount)
 		   	  FROM co_container c 
 			  LEFT JOIN (co_user u, co_material_map m) on (c.type = m.rowid and c.user = u.rowid)
 			  WHERE c.rolled_back = 0 
@@ -106,7 +106,8 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 				AND c.y >= ? AND c.y <= ? 
 				AND c.z >= ? AND c.z <= ?
 				AND c.time > ?
-			  ORDER BY c.time`
+			  GROUP BY u.user, x, y, z, m.material, c.action, c.rolled_back
+			  ORDER BY max(c.time)`
 
 	logrus.WithFields(logrus.Fields{
 		"lastScan":  lastScan,
@@ -127,15 +128,15 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 		c := ContainerLog{}
 
 		err = rows.Scan(
-			&c.Epoch,
 			&c.User,
 			&c.X,
 			&c.Y,
 			&c.Z,
 			&c.Material,
-			&c.Amount,
 			&c.ActionCode,
 			&c.RolledBack,
+			&c.Epoch,
+			&c.Amount,
 		)
 		if err != nil {
 			return nil, err
