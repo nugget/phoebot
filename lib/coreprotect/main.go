@@ -8,6 +8,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -84,17 +85,7 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 	wid := 1
 	epoch := lastScan.Unix()
 
-	if sx > fx {
-		sx, fx = fx, sx
-	}
-
-	if sy > fy {
-		sy, fy = fy, sy
-	}
-
-	if sz > fz {
-		sz, fz = fz, sz
-	}
+	sx, sy, sz, fx, fy, fz = phoelib.Rebound(sx, sy, sz, fx, fy, fz)
 
 	query := `SELECT
 				u.user, x, y, z, m.material, c.action, c.rolled_back, max(c.time), sum(c.amount)

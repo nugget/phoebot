@@ -7,11 +7,12 @@ import (
 
 	"github.com/nugget/phoebot/lib/mcserver"
 	"github.com/nugget/phoebot/lib/merchant"
+	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/sirupsen/logrus"
 )
 
 func RegMerchantContainer() (t Trigger) {
-	t.Regexp = regexp.MustCompile(`FORSALE "([^"]+)" (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)`)
+	t.Regexp = regexp.MustCompile(`(?i)forsale "([^"]+)" (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)`)
 	t.GameHook = ProcMerchantContainer
 	t.InGame = true
 
@@ -43,16 +44,30 @@ func ProcMerchantContainer(message string) (string, error) {
 		coords[i] = val
 	}
 
-	fmt.Printf("Coords: %+v\n", coords)
-
 	name := res[1]
-	fmt.Printf("Name: '%+v'\n", name)
 
-	err = merchant.NewScanRange(
-		who, name,
-		coords[0], coords[1], coords[2],
-		coords[3], coords[4], coords[5],
-	)
+	sx := coords[0]
+	sy := coords[1]
+	sz := coords[2]
+	fx := coords[3]
+	fy := coords[4]
+	fz := coords[5]
+
+	size := phoelib.SizeOf(sx, sy, sz, fx, fy, fz)
+
+	logrus.WithFields(logrus.Fields{
+		"player": who,
+		"name":   name,
+		"start":  fmt.Sprintf("(%d, %d, %d)", sx, sy, sz),
+		"finish": fmt.Sprintf("(%d, %d, %d)", fx, fy, fz),
+		"size":   size,
+	}).Info("Player requested new merchant scanrange")
+
+	if size > 64 {
+		return "That range is way to big!", fmt.Errorf("Range Too Large")
+	}
+
+	err = merchant.NewScanRange(who, name, sx, sy, sz, fx, fy, fz)
 	if err != nil {
 		return "I can't do that, sorry", err
 	}

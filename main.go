@@ -498,7 +498,6 @@ func processChatStream(s *mcserver.Server) {
 			"event":     "processChatStream",
 			"translate": c.Translate,
 			"class":     mcserver.ChatMsgClass(c),
-			"moo":       "cow",
 		})
 
 		// Process in-game triggers
@@ -511,7 +510,6 @@ func processChatStream(s *mcserver.Server) {
 					logrus.WithFields(logrus.Fields{
 						"event":     "inGameTriggerHit",
 						"translate": c.Translate,
-						"moo":       "black",
 						"class":     mcserver.ChatMsgClass(c),
 						"message":   noColorsMessage,
 						"regexp":    t.Regexp,

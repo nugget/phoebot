@@ -290,17 +290,7 @@ func PollContainers() error {
 }
 
 func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
-	if sx > fx {
-		sx, fx = fx, sx
-	}
-
-	if sy > fy {
-		sy, fy = fy, sy
-	}
-
-	if sz > fz {
-		sz, fz = fz, sz
-	}
+	sx, sy, sz, fx, fy, fz = phoelib.Rebound(sx, sy, sz, fx, fy, fz)
 
 	logrus.WithFields(logrus.Fields{
 		"sx": sx,
