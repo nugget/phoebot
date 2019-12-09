@@ -22,6 +22,7 @@ import (
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/mcserver"
+	"github.com/nugget/phoebot/lib/merchant"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/postal"
@@ -37,8 +38,9 @@ import (
 )
 
 var (
-	triggers  []hooks.Trigger
-	postalMux sync.Mutex
+	triggers    []hooks.Trigger
+	postalMux   sync.Mutex
+	merchantMux sync.Mutex
 )
 
 func shutdown() {
@@ -52,6 +54,7 @@ func setupConfig() *viper.Viper {
 	c.SetDefault("MC_CHECK_INTERVAL", 600)
 	c.SetDefault("MAILBOX_SCAN_INTERVAL", 7200)
 	c.SetDefault("MAILBOX_POLL_INTERVAL", 300)
+	c.SetDefault("MERCHANT_POLL_INTERVAL", 300)
 
 	return c
 }
@@ -344,6 +347,32 @@ func housekeeping(interval int) error {
 	return nil
 }
 
+func MerchantLoop(mc *mcserver.Server, interval int) error {
+	for {
+		if !mc.Connected {
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Warn("Skipping MerchantLoop")
+		} else {
+			merchantMux.Lock()
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Trace("MerchantLoop starting")
+			err := merchant.ScanStock()
+
+			if err != nil {
+				logrus.WithError(err).Error("merchant.ScanStock failure")
+			}
+			merchantMux.Unlock()
+		}
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
+
+	return nil
+}
+
 func MailboxLoop(mc *mcserver.Server, interval int) error {
 	for {
 		if !mc.Connected {
@@ -380,9 +409,9 @@ func MailboxScanner(mc *mcserver.Server, interval int) (err error) {
 			}).Warn("Skipping MailboxScanner")
 		} else {
 			postalMux.Lock()
-			err := postal.SearchServer()
+			err := postal.ScanMailboxes()
 			if err != nil {
-				logrus.WithError(err).Error("postal.SearchServer failure")
+				logrus.WithError(err).Error("postal.ScanMailboxes failure")
 			}
 			postalMux.Unlock()
 		}
@@ -723,14 +752,13 @@ func main() {
 
 	}
 
-	err = coreprotect.Connect(dbURI)
-
 	go processChatStream(&mc)
 	go processWhisperStream(&mc)
 	go processSayStream(&mc)
 	go StatsUpdate(&mc)
 	go MailboxLoop(&mc, config.GetInt("MAILBOX_POLL_INTERVAL"))
 	go MailboxScanner(&mc, config.GetInt("MAILBOX_SCAN_INTERVAL"))
+	go MerchantLoop(&mc, config.GetInt("MERCHANT_POLL_INTERVAL"))
 	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)

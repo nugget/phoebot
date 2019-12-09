@@ -129,11 +129,10 @@ the bot will make use of the following environment variables:
 ### Building Phoebot
 
 Phoebot is written in [Go](https://golang.org) and can be built with just the
-core Go language installed.  All dependencies are vendored and included in this
-repository using go modules.  However, the preferred development environment
-uses [Bazel](https://www.bazel.build) for building, testing, and deploying the
-bot. All you need to set up a local development environment is to install Bazel
-for your operating system.
+core Go language installed.  The preferred development environment uses
+[Bazel](https://www.bazel.build) for building, testing, and deploying the bot.
+All you need to set up a local development environment is to install Bazel for
+your operating system.
 
 The root level `Makefile` contains targets for common build operations.
 

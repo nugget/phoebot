@@ -9,11 +9,8 @@ import (
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
-	"github.com/nugget/phoebot/lib/discord"
-	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
-	"github.com/nugget/phoebot/models"
 
 	"github.com/sirupsen/logrus"
 )
@@ -225,35 +222,7 @@ func (m *Mailbox) Update() (notifyUser bool, err error) {
 
 func (m *Mailbox) Notify() error {
 	message := fmt.Sprintf("You've got mail in %s at (%d, %d, %d)", m.CustomName, m.X, m.Y, m.Z)
-
-	sentWhisper, sentDiscord := false, false
-
-	if m.PlayerName != "" {
-		w := models.Whisper{m.PlayerName, message}
-
-		if ipc.ServerWhisperStream != nil {
-			ipc.ServerWhisperStream <- w
-			sentWhisper = true
-		}
-	}
-
-	if m.PlayerID != "" {
-		channel, err := discord.GetChannelByPlayerID(m.PlayerID)
-		if err != nil {
-			logrus.WithError(err).Trace("Notify Discord channel lookup failed")
-		} else {
-			discord.Session.ChannelMessageSend(channel.ID, message)
-			sentDiscord = true
-		}
-	}
-
-	logrus.WithFields(logrus.Fields{
-		"Player":  m.PlayerName,
-		"whisper": sentWhisper,
-		"discord": sentDiscord,
-	}).Debug("Sent notifications for updated mailbox")
-
-	return nil
+	return player.SendMessage(m.PlayerName, message)
 }
 
 func PollContainers() error {
@@ -403,7 +372,7 @@ func SearchForMailboxes(sx, sy, sz, fx, fy, fz int) error {
 	return nil
 }
 
-func SearchServer() error {
+func ScanMailboxes() error {
 	query := `SELECT scanrangeID, lastscan, current_timestamp, name, dimension, sx, sy, sz, fx, fy, fz FROM scanrange WHERE enabled IS TRUE AND deleted IS NULL AND scantype = 'mailboxes'`
 
 	rows, err := db.DB.Query(query)
@@ -450,9 +419,9 @@ func SearchServer() error {
 			"finish":      fmt.Sprintf("(%d, %d, %d)", fx, fy, fz),
 		}).Info("Scanning for postal activity")
 
-		err = coreprotect.ScanBoxes(dimension, lastScan, sx, sy, sz, fx, fy, fz)
+		_, err = coreprotect.ScanContainers(dimension, lastScan, sx, sy, sz, fx, fy, fz)
 
-		query := `UPDATE postal_scan SET lastScan = $1 WHERE scanrangeID = $2`
+		query := `UPDATE scanrange SET lastScan = $1 WHERE scanrangeID = $2`
 		_, err = db.DB.Exec(query, currentTime, scanRangeID)
 
 		if err != nil {

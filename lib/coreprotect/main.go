@@ -14,7 +14,7 @@ var (
 	DB *sql.DB
 )
 
-type containerLog struct {
+type ContainerLog struct {
 	Epoch      int64
 	Timestamp  time.Time
 	User       string
@@ -27,7 +27,7 @@ type containerLog struct {
 	RolledBack int
 }
 
-func (c *containerLog) Parse() error {
+func (c *ContainerLog) Parse() error {
 	c.Timestamp = time.Unix(c.Epoch, 0)
 	return nil
 }
@@ -66,7 +66,7 @@ func Connect(URIstring string) error {
 	return nil
 }
 
-func ScanBoxes(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz int) error {
+func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz int) (l []ContainerLog, err error) {
 	wid := 1
 	epoch := lastScan.Unix()
 
@@ -101,16 +101,16 @@ func ScanBoxes(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz int)
 		"wid":       wid,
 		"start":     fmt.Sprintf("(%d, %d, %d)", sx, sy, sz),
 		"finish":    fmt.Sprintf("(%d, %d, %d)", fx, fy, fz),
-	}).Info("Scanning for postal activity")
+	}).Info("Looking for container activity")
 
 	rows, err := DB.Query(query, wid, sx, fx, sy, fy, sz, fz, epoch)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		c := containerLog{}
+		c := ContainerLog{}
 
 		err = rows.Scan(
 			&c.Epoch,
@@ -124,14 +124,12 @@ func ScanBoxes(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz int)
 			&c.RolledBack,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		c.Parse()
 
-		fmt.Printf("%+v\n", c)
-		fmt.Println("-- ")
-
+		l = append(l, c)
 	}
 
-	return nil
+	return l, nil
 }

@@ -2,7 +2,10 @@ package player
 
 import (
 	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/discord"
+	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/models"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -67,4 +70,40 @@ func PlayerIDFromGameNick(gameNick string) (string, error) {
 	}
 
 	return playerID, nil
+}
+
+func SendMessage(playerName, message string) error {
+	sentWhisper, sentDiscord := false, false
+
+	if playerName != "" {
+		w := models.Whisper{playerName, message}
+
+		if ipc.ServerWhisperStream != nil {
+			ipc.ServerWhisperStream <- w
+			sentWhisper = true
+		}
+	}
+
+	playerID, err := PlayerIDFromGameNick(playerName)
+	if err != nil {
+		return err
+	}
+
+	if playerID != "" {
+		channel, err := discord.GetChannelByPlayerID(playerID)
+		if err != nil {
+			return err
+		} else {
+			discord.Session.ChannelMessageSend(channel.ID, message)
+			sentDiscord = true
+		}
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"Player":  playerName,
+		"whisper": sentWhisper,
+		"discord": sentDiscord,
+	}).Debug("Sent message to player")
+
+	return nil
 }

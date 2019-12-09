@@ -92,9 +92,9 @@ func RegScanMailboxes() (t Trigger) {
 }
 
 func ProcScanMailboxes(message string) (string, error) {
-	err := postal.SearchServer()
+	err := postal.ScanMailboxes()
 	if err != nil {
-		logrus.WithError(err).Error("postal.SearchServer failure")
+		logrus.WithError(err).Error("postal.ScanMailboxes failure")
 		return fmt.Sprintf("%s", err), err
 	}
 	err = postal.PollContainers()
