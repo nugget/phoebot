@@ -1,6 +1,7 @@
 package mcserver
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -8,11 +9,13 @@ import (
 
 	"github.com/nugget/phoebot/lib/ipc"
 
-	"github.com/Tnze/go-mc/authenticate"
 	"github.com/Tnze/go-mc/bot"
 	"github.com/Tnze/go-mc/chat"
+	"github.com/Tnze/go-mc/yggdrasil"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+
+	_ "github.com/Tnze/go-mc/data/lang/en-au"
 )
 
 type Server struct {
@@ -23,7 +26,7 @@ type Server struct {
 	password    string
 	Connected   bool
 	ConnectTime time.Time
-	authData    authenticate.Response
+	auth        *yggdrasil.Access
 }
 
 type PingStats struct {
@@ -65,27 +68,35 @@ func (s *Server) Connect() (err error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"token":       s.authData.AccessToken,
 		"connectTime": s.ConnectTime,
 		"connected":   s.Connected,
+		"auth":        s.auth,
 	}).Debug("mcserver Connect()")
 
-	// Super-old token
-	// s.authData.AccessToken = "6432e3d646a348aca3e46aca488ba333"
-
-	if s.authData.AccessToken == "" {
-		s.authData, err = authenticate.Authenticate(s.Email, s.password)
+	if s.auth != nil {
+		ok, err := s.auth.Validate()
 		if err != nil {
 			return err
 		}
-		logrus.WithFields(logrus.Fields{
-			"name":  s.authData.SelectedProfile.Name,
-			"uuid":  s.authData.SelectedProfile.ID,
-			"token": s.authData.AccessToken,
-		}).Info("Authenticated with mojang")
 
-		s.Client.Name, s.Client.Auth.UUID, s.Client.AsTk = s.authData.SelectedProfile.Name, s.authData.SelectedProfile.ID, s.authData.AccessToken
+		if !ok {
+			return fmt.Errorf("Mojang accessToken is not valid")
+		}
 	}
+
+	s.auth, err = yggdrasil.Authenticate(s.Email, s.password)
+	if err != nil {
+		return err
+	}
+
+	s.Client.Auth.UUID, s.Client.Name = s.auth.SelectedProfile()
+	s.Client.AsTk = s.auth.AccessToken()
+
+	logrus.WithFields(logrus.Fields{
+		"name":  s.Client.Name,
+		"uuid":  s.Client.Auth.UUID,
+		"token": s.Client.AsTk,
+	}).Info("Authenticated with mojang")
 
 	err = s.Client.JoinServer(s.Hostname, s.Port)
 	if err != nil {
@@ -93,7 +104,7 @@ func (s *Server) Connect() (err error) {
 
 		if strings.Contains(err.Error(), "auth fail") {
 			logrus.WithError(err).Error("Authentication Failure, clearing access token")
-			s.authData.AccessToken = ""
+			s.auth.Invalidate()
 		}
 
 		return err
@@ -125,16 +136,13 @@ func (s *Server) TestConnection() error {
 		return fmt.Errorf("We are not connected")
 	}
 
-	inventory := s.Client.MainInventory()
 	err := s.Client.SwingArm(0)
 
 	//fmt.Printf("Client: %+v\n", Client)
 	//fmt.Printf("PlayInfo: %+v\n", Client.PlayInfo)
 	//fmt.Printf("Chunks: %d\n", len(Client.Wd.Chunks))
-	//fmt.Printf("inv: %+v\n", inventory)
 
 	logrus.WithFields(logrus.Fields{
-		"slot0":      inventory[0],
 		"chunkCount": len(s.Client.Wd.Chunks),
 		"gamemode":   s.Client.PlayInfo.Gamemode,
 		"dimension":  s.Client.PlayInfo.Dimension,
@@ -144,7 +152,6 @@ func (s *Server) TestConnection() error {
 
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"slot0":      inventory[0],
 			"chunkCount": len(s.Client.Wd.Chunks),
 			"gamemode":   s.Client.PlayInfo.Gamemode,
 			"dimension":  s.Client.PlayInfo.Dimension,
@@ -277,11 +284,19 @@ func (s *Server) OnDieMessage() error {
 }
 
 func (s *Server) Whisper(who, message string) error {
+	if who == "" {
+		return errors.New("Cannot send a message to nobody")
+	}
 	command := fmt.Sprintf("/tell %s %s", who, message)
 	logrus.WithFields(logrus.Fields{
 		"who":     who,
 		"command": command,
 	}).Debug("Whisper")
+
+	if !s.Connected {
+		return fmt.Errorf("mcserver client connection is nil")
+	}
+
 	err := s.Client.Chat(command)
 	return err
 }
@@ -300,6 +315,10 @@ func ChatMsgClass(m chat.Message) string {
 	}
 
 	if m.Translate == "commands.message.display.outgoing" {
+		return "ignore"
+	}
+
+	if m.Translate == "commands.data.block.modified" {
 		return "ignore"
 	}
 
@@ -350,6 +369,18 @@ func ChatMsgClass(m chat.Message) string {
 	}
 
 	if strings.Contains(text, "is no longer AFK") {
+		return "ignore"
+	}
+
+	if strings.Contains(text, "No player was found") {
+		return "ignore"
+	}
+
+	if strings.Contains(text, "Expected whitespace") {
+		return "ignore"
+	}
+
+	if strings.HasPrefix(text, "[") {
 		return "ignore"
 	}
 

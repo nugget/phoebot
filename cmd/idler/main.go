@@ -39,7 +39,7 @@ func setupConfig() *viper.Viper {
 	return c
 }
 
-func processChatStream(s mcserver.Server) {
+func processChatStream(s *mcserver.Server) {
 	for {
 		c, stillOpen := <-ipc.ServerChatStream
 
@@ -85,7 +85,7 @@ func processChatStream(s mcserver.Server) {
 	}
 }
 
-func processConsole(s mcserver.Server) {
+func processConsole(s *mcserver.Server) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for scanner.Scan() {
@@ -123,8 +123,8 @@ func main() {
 		logrus.WithError(err).Error("Error with mcserver Authenticate")
 	}
 
-	go processChatStream(mc)
-	go processConsole(mc)
+	go processChatStream(&mc)
+	go processConsole(&mc)
 
 	go mc.Handler()
 

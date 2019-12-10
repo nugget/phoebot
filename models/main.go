@@ -27,6 +27,11 @@ type DiscordMessage struct {
 	Message   string
 }
 
+type Whisper struct {
+	Who     string
+	Message string
+}
+
 type Product struct {
 	Class    string
 	Name     string

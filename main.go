@@ -10,18 +10,22 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
 	"github.com/nugget/phoebot/lib/console"
+	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/mcserver"
+	"github.com/nugget/phoebot/lib/merchant"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
+	"github.com/nugget/phoebot/lib/postal"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
 	"github.com/nugget/phoebot/models"
@@ -34,7 +38,9 @@ import (
 )
 
 var (
-	triggers []hooks.Trigger
+	triggers    []hooks.Trigger
+	postalMux   sync.Mutex
+	merchantMux sync.Mutex
 )
 
 func shutdown() {
@@ -46,6 +52,9 @@ func setupConfig() *viper.Viper {
 	c := viper.New()
 	c.AutomaticEnv()
 	c.SetDefault("MC_CHECK_INTERVAL", 600)
+	c.SetDefault("MAILBOX_SCAN_INTERVAL", 7200)
+	c.SetDefault("MAILBOX_POLL_INTERVAL", 300)
+	c.SetDefault("MERCHANT_POLL_INTERVAL", 300)
 
 	return c
 }
@@ -202,6 +211,10 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		// This is a private message window
 		direct = true
 		channel.Name = "PM"
+		err := discord.SetPMOwner(dm)
+		if err != nil {
+			logrus.WithError(err).Error("Unable to update PM channel owner")
+		}
 	}
 
 	logMsg := fmt.Sprintf("<%s> %s", dm.Author.Username, dm.Content)
@@ -231,8 +244,9 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	for _, t := range triggers {
 		if t.InGame == true {
 			// This is not a discord trigger
-			break
+			continue
 		}
+
 		if direct == t.Direct || t.Direct == false {
 			if t.Regexp.MatchString(dm.Content) {
 				if t.ACL != "" && !phoelib.PlayerHasACL(dm.Author.ID, t.ACL) {
@@ -294,6 +308,7 @@ func LoadTriggers() error {
 	// want to add
 	triggers = append(triggers, hooks.RegTemplate())
 	triggers = append(triggers, hooks.RegLoglevel())
+	triggers = append(triggers, hooks.RegCustomName())
 
 	triggers = append(triggers, hooks.RegSubscriptions())
 	triggers = append(triggers, hooks.RegUnsubAll())
@@ -312,6 +327,11 @@ func LoadTriggers() error {
 
 	triggers = append(triggers, hooks.RegNearestPortal())
 
+	triggers = append(triggers, hooks.RegLinkRequest())
+	triggers = append(triggers, hooks.RegLinkVerify())
+
+	triggers = append(triggers, hooks.RegMerchantContainer())
+
 	return nil
 }
 
@@ -328,7 +348,101 @@ func housekeeping(interval int) error {
 	return nil
 }
 
-func processChatStream(s mcserver.Server) {
+func MerchantLoop(mc *mcserver.Server, interval int) error {
+	for {
+		if !mc.Connected {
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Warn("Skipping MerchantLoop")
+		} else {
+			merchantMux.Lock()
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Trace("MerchantLoop starting")
+
+			err := merchant.ScanStock()
+
+			if err != nil {
+				logrus.WithError(err).Error("merchant.ScanStock failure")
+			}
+			merchantMux.Unlock()
+		}
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
+
+	return nil
+}
+
+func MailboxLoop(mc *mcserver.Server, interval int) error {
+	for {
+		if !mc.Connected {
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Warn("Skipping MailboxLoop")
+		} else {
+			postalMux.Lock()
+			logrus.WithFields(logrus.Fields{
+				"interval":  interval,
+				"connected": mc.Connected,
+			}).Trace("MailboxLoop starting")
+
+			err := postal.ScanMailboxes()
+
+			if err != nil {
+				logrus.WithError(err).Error("postal.PollContainers failure")
+			}
+			postalMux.Unlock()
+		}
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
+
+	return nil
+}
+
+func processWhisperStream(s *mcserver.Server) {
+	for {
+		w, stillOpen := <-ipc.ServerWhisperStream
+
+		logrus.WithFields(logrus.Fields{
+			"whisper":   w,
+			"stillOpen": stillOpen,
+		}).Info("ServerWhisperStream message received")
+
+		err := s.Whisper(w.Who, w.Message)
+		if err != nil {
+			logrus.WithError(err).Error("processWhisperStream Error")
+		}
+
+		if !stillOpen {
+			return
+		}
+	}
+}
+
+func processSayStream(s *mcserver.Server) {
+	for {
+		command, stillOpen := <-ipc.ServerSayStream
+
+		logrus.WithFields(logrus.Fields{
+			"command":   command,
+			"stillOpen": stillOpen,
+		}).Info("ServerSayStream message received")
+
+		err := s.Say(command)
+		if err != nil {
+			logrus.WithError(err).Error("processSayStream Error")
+		}
+
+		if !stillOpen {
+			return
+		}
+	}
+}
+
+func processChatStream(s *mcserver.Server) {
 	for {
 		c, stillOpen := <-ipc.ServerChatStream
 
@@ -437,7 +551,7 @@ func processChatStream(s mcserver.Server) {
 			case "announcement":
 				logrus.WithFields(f).Warn(noColorsMessage)
 			case "ignore":
-				logrus.WithFields(f).Warn(noColorsMessage)
+				logrus.WithFields(f).Info(noColorsMessage)
 			default:
 				logrus.WithFields(f).Info(noColorsMessage)
 				matchingSubs, err = subscriptions.GetMatching("mcserver", "events")
@@ -467,7 +581,7 @@ func processChatStream(s mcserver.Server) {
 	}
 }
 
-func StatsUpdate(s mcserver.Server) error {
+func StatsUpdate(s *mcserver.Server) error {
 	ps, err := s.Status()
 	if err != nil {
 		logrus.WithError(err).Error("PingAndList Failure")
@@ -528,6 +642,7 @@ func main() {
 	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
 	debugLevel := config.GetString("PHOEBOT_DEBUG")
 	dbURI := config.GetString("DATABASE_URI")
+	cpURI := config.GetString("COREPROTECT_URI")
 
 	if debugLevel != "" {
 		_, err := phoelib.LogLevel(debugLevel)
@@ -543,6 +658,11 @@ func main() {
 
 	LoadTriggers()
 	ipc.InitStreams()
+
+	err = coreprotect.Connect(cpURI)
+	if err != nil {
+		logrus.WithError(err).Fatal("Unable to connect to CoreProtect")
+	}
 
 	discord.Session, err = discordgo.New("Bot " + discordBotToken)
 	if err != nil {
@@ -584,7 +704,7 @@ func main() {
 		config.GetString("MOJANG_PASSWORD"),
 	)
 	if err != nil {
-		logrus.WithError(err).Error("Error with mcserver Authenticate")
+		logrus.WithError(err).Error("Error with mcserver Connect")
 	}
 
 	err = console.Initialize(
@@ -612,8 +732,13 @@ func main() {
 		}).Info("GetServerInfo")
 
 	}
-	go processChatStream(mc)
-	go StatsUpdate(mc)
+
+	go processChatStream(&mc)
+	go processWhisperStream(&mc)
+	go processSayStream(&mc)
+	go StatsUpdate(&mc)
+	go MailboxLoop(&mc, config.GetInt("MAILBOX_POLL_INTERVAL"))
+	go MerchantLoop(&mc, config.GetInt("MERCHANT_POLL_INTERVAL"))
 	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)

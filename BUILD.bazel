@@ -15,7 +15,6 @@ DOCKER_REPO = DOCKER_ORG + "/" + NAME
 gazelle(
     name = "gazelle",
     prefix = "github.com/nugget/phoebot",
-    external = "vendored",
 )
 
 go_library(
@@ -27,20 +26,23 @@ go_library(
         "//hooks:go_default_library",
         "//lib/builddata:go_default_library",
         "//lib/console:go_default_library",
+        "//lib/coreprotect:go_default_library",
         "//lib/db:go_default_library",
         "//lib/discord:go_default_library",
         "//lib/ipc:go_default_library",
         "//lib/mcserver:go_default_library",
+        "//lib/merchant:go_default_library",
         "//lib/phoelib:go_default_library",
         "//lib/player:go_default_library",
+        "//lib/postal:go_default_library",
         "//lib/products:go_default_library",
         "//lib/subscriptions:go_default_library",
         "//models:go_default_library",
         "//products/mojang:go_default_library",
         "//products/papermc:go_default_library",
-        "//vendor/github.com/bwmarrin/discordgo:go_default_library",
-        "//vendor/github.com/sirupsen/logrus:go_default_library",
-        "//vendor/github.com/spf13/viper:go_default_library",
+        "@com_github_bwmarrin_discordgo//:go_default_library",
+        "@com_github_sirupsen_logrus//:go_default_library",
+        "@com_github_spf13_viper//:go_default_library",
     ],
 )
 

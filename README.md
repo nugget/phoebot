@@ -34,7 +34,7 @@ So, for example, in the `#chatter` window you could say:
 
 @Phoebot subscribe papermc paper
 
-@Pohebot subscribe server.pro vanilla
+@Phoebot subscribe server.pro vanilla
 ```
 
 This would add a subscription to that specific channel, and whenever a new
@@ -48,6 +48,10 @@ subscriptions` command.
 
 We will be adding more sources and products over time, including things like
 popular data packs and add-ons.
+
+#### Linking Discord and Minecraft accounts
+
+These instructions have moved to [this document](docs/discord.md).
 
 #### Version Report
 
@@ -110,11 +114,10 @@ the bot will make use of the following environment variables:
 ### Building Phoebot
 
 Phoebot is written in [Go](https://golang.org) and can be built with just the
-core Go language installed.  All dependencies are vendored and included in this
-repository using go modules.  However, the preferred development environment
-uses [Bazel](https://www.bazel.build) for building, testing, and deploying the
-bot. All you need to set up a local development environment is to install Bazel
-for your operating system.
+core Go language installed.  The preferred development environment uses
+[Bazel](https://www.bazel.build) for building, testing, and deploying the bot.
+All you need to set up a local development environment is to install Bazel for
+your operating system.
 
 The root level `Makefile` contains targets for common build operations.
 
@@ -135,3 +138,8 @@ change the verbosity of the console logging.  This is useful for debugging.
 [Discord server]: https://discord.gg/a6KnJcj
 [hosting provider]: https://server.pro/
 [Discord developer portal]: https://discordapp.com/developers/applications
+
+
+
+/data modify block x y z CustomName set value '{"text":"MOO"}'
+

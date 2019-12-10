@@ -106,7 +106,7 @@ func LoadIgnores() error {
 		logrus.WithFields(logrus.Fields{
 			"count":    len(newIgnores),
 			"listHash": fmt.Sprintf("%x", newHash.Sum(nil)),
-		}).Info("Updated ignores list from database")
+		}).Debug("Updated ignores list from database")
 
 		Ignores = newIgnores
 		ignoresHash = newHash
@@ -159,4 +159,30 @@ func PlayerHasACL(playerID, acl string) bool {
 	}
 
 	return false
+}
+
+func Rebound(sx, sy, sz, fx, fy, fz int) (int, int, int, int, int, int) {
+	if sx > fx {
+		sx, fx = fx, sx
+	}
+
+	if sy > fy {
+		sy, fy = fy, sy
+	}
+
+	if sz > fz {
+		sz, fz = fz, sz
+	}
+
+	return sx, sy, sz, fx, fy, fz
+}
+
+func SizeOf(sx, sy, sz, fx, fy, fz int) int {
+	sx, sy, sz, fx, fy, fz = Rebound(sx, sy, sz, fx, fy, fz)
+
+	a := fx - sx + 1
+	b := fy - sy + 1
+	c := fz - sz + 1
+
+	return a * b * c
 }

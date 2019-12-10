@@ -17,11 +17,12 @@ var (
 func RecordLog(m *discordgo.MessageCreate) error {
 	if m.GuildID == "" || m.ChannelID == "" || m.Type > 0 {
 		logrus.WithFields(logrus.Fields{
-			"playerID":  m.Author.ID,
-			"guildID":   m.GuildID,
-			"channelID": m.ChannelID,
-			"type":      m.Type,
-		}).Debug("Not saving private message")
+			"playerID":   m.Author.ID,
+			"authorName": m.Author.Username,
+			"guildID":    m.GuildID,
+			"channelID":  m.ChannelID,
+			"type":       m.Type,
+		}).Trace("Not saving private message")
 		return nil
 	}
 
@@ -65,8 +66,15 @@ func UpdateChannel(c *discordgo.Channel) error {
 	return err
 }
 
+func SetPMOwner(m *discordgo.MessageCreate) error {
+	query := `UPDATE channel SET playerID = $2 WHERE channelID = $1 AND playerID <> $2 RETURNING channelID`
+
+	_, err := db.DB.Exec(query, m.ChannelID, m.Author.ID)
+	return err
+}
+
 func GetChannel(id string) (*discordgo.Channel, error) {
-	channel, err := Session.State.Channel(id)
+	channel, err := Session.Channel(id)
 	if err != nil {
 		return channel, err
 	}
@@ -96,5 +104,30 @@ func GetChannelByName(name string) (*discordgo.Channel, error) {
 		return GetChannel(channelID)
 	}
 
-	return nil, fmt.Errorf("Not Found")
+	return nil, fmt.Errorf("Discord channel not found for name %s", name)
+}
+
+func GetChannelByPlayerID(playerID string) (*discordgo.Channel, error) {
+	query := `SELECT channelid FROM channel WHERE playerID = $1`
+
+	phoelib.LogSQL(query, playerID)
+	rows, err := db.DB.Query(query, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var channelID string
+
+		err := rows.Scan(&channelID)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println("Looking for channelID", channelID)
+		return GetChannel(channelID)
+	}
+
+	return nil, fmt.Errorf("Discord channel not found for playerID %s", playerID)
 }
