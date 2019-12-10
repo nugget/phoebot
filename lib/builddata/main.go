@@ -86,7 +86,7 @@ func Uname() string {
 	buf.WriteString(Version() + "\n")
 	buf.WriteString(BuiltBy() + "\n")
 	buf.WriteString(GitInfo() + "\n")
-	buf.WriteString("Source code and issue tracker are at https://github.com/nugget/phoebot\n")
+	buf.WriteString("Documentation, source code, and issue tracker are at https://github.com/nugget/phoebot\n")
 
 	return buf.String()
 }

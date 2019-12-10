@@ -10,9 +10,9 @@ import (
 )
 
 func RegStatus() (t Trigger) {
-	t.Regexp = regexp.MustCompile("status report")
+	t.Regexp = regexp.MustCompile("!version")
 	t.Hook = ProcStatus
-	t.Direct = true
+	t.Direct = false
 
 	return t
 }

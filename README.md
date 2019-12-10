@@ -79,12 +79,6 @@ within a longer message and the conversion will still work.
 Phoebot also has support for the custom time zones "SYDNEY" and "BRISBANE" to
 allow for special-handling of our favorite Australian users.
 
-### Status Report
-
-Asking Phoebot for a `status report` will provide details about the bot's
-current code and runtime statistics.  This is for internal/developer use and
-probably isn't very interesting to anyone else.
-
 ### Installation and Operation
 
 * To add the bot to a Discord server, visit [this activation link].
