@@ -17,17 +17,8 @@ func ScanStock() error {
 		return err
 	}
 
-	for i, sr := range ranges {
-		logrus.WithFields(logrus.Fields{
-			"i":           i,
-			"scanRangeID": sr.ScanRangeID,
-			"lastScan":    sr.LastScan,
-			"dimension":   sr.Dimension,
-			"name":        sr.Name,
-			"owner":       sr.Owner,
-			"start":       fmt.Sprintf("(%d, %d, %d)", sr.Sx, sr.Sy, sr.Sz),
-			"finish":      fmt.Sprintf("(%d, %d, %d)", sr.Fx, sr.Fy, sr.Fz),
-		}).Trace("Scanning for merchant activity")
+	for _, sr := range ranges {
+		logrus.WithFields(sr.LogFields()).Trace("Scanning for merchant activity")
 
 		l, err := coreprotect.ScanContainers(sr.Dimension, sr.LastScan,
 			sr.Sx, sr.Sy, sr.Sz, sr.Fx, sr.Fy, sr.Fz)
@@ -64,10 +55,6 @@ func ScanStock() error {
 	}
 
 	return nil
-}
-
-func HasDiamonds(x, y, z int) (int, error) {
-	return 0, nil
 }
 
 func NewScanRange(owner, name string, sx, sy, sz, fx, fy, fz int) error {

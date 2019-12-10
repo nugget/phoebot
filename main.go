@@ -309,7 +309,6 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegTemplate())
 	triggers = append(triggers, hooks.RegLoglevel())
 	triggers = append(triggers, hooks.RegCustomName())
-	triggers = append(triggers, hooks.RegScanMailboxes())
 
 	triggers = append(triggers, hooks.RegSubscriptions())
 	triggers = append(triggers, hooks.RegUnsubAll())
@@ -362,6 +361,7 @@ func MerchantLoop(mc *mcserver.Server, interval int) error {
 				"interval":  interval,
 				"connected": mc.Connected,
 			}).Trace("MerchantLoop starting")
+
 			err := merchant.ScanStock()
 
 			if err != nil {
@@ -388,32 +388,11 @@ func MailboxLoop(mc *mcserver.Server, interval int) error {
 				"interval":  interval,
 				"connected": mc.Connected,
 			}).Trace("MailboxLoop starting")
-			err := postal.PollContainers()
+
+			err := postal.ScanMailboxes()
 
 			if err != nil {
 				logrus.WithError(err).Error("postal.PollContainers failure")
-			}
-			postalMux.Unlock()
-		}
-		time.Sleep(time.Duration(interval) * time.Second)
-	}
-
-	return nil
-}
-
-func MailboxScanner(mc *mcserver.Server, interval int) (err error) {
-
-	for {
-		if !mc.Connected {
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Warn("Skipping MailboxScanner")
-		} else {
-			postalMux.Lock()
-			err := postal.ScanMailboxes()
-			if err != nil {
-				logrus.WithError(err).Error("postal.ScanMailboxes failure")
 			}
 			postalMux.Unlock()
 		}
@@ -759,7 +738,6 @@ func main() {
 	go processSayStream(&mc)
 	go StatsUpdate(&mc)
 	go MailboxLoop(&mc, config.GetInt("MAILBOX_POLL_INTERVAL"))
-	go MailboxScanner(&mc, config.GetInt("MAILBOX_SCAN_INTERVAL"))
 	go MerchantLoop(&mc, config.GetInt("MERCHANT_POLL_INTERVAL"))
 	go mc.Handler()
 

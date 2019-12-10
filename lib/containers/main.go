@@ -76,3 +76,15 @@ func GetRanges(scanType string) (ranges []ScanRange, err error) {
 
 	return ranges, nil
 }
+
+func (sr *ScanRange) LogFields() logrus.Fields {
+	return logrus.Fields{
+		"scanRangeID": sr.ScanRangeID,
+		"lastScan":    sr.LastScan,
+		"dimension":   sr.Dimension,
+		"name":        sr.Name,
+		"owner":       sr.Owner,
+		"start":       fmt.Sprintf("(%d, %d, %d)", sr.Sx, sr.Sy, sr.Sz),
+		"finish":      fmt.Sprintf("(%d, %d, %d)", sr.Fx, sr.Fy, sr.Fz),
+	}
+}
