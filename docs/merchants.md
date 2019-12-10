@@ -1,6 +1,7 @@
 # Useful commands for merchants and shopkeepers
 
-Register shop containers for sale notifications
+Register shop containers for sale notifications.  This works best if you've
+also set up [the link to your Discord account].
 
 ```
 /tell Phoebot FORSALE "Meaningful Name" x y z x y z
@@ -23,3 +24,6 @@ something like this:
 ```
 
 From then on, Phoebot will let you know when your store has activity
+
+
+[The link to your Discord account]: discord.md

@@ -51,22 +51,7 @@ popular data packs and add-ons.
 
 #### Linking Discord and Minecraft accounts
 
-On discord, you can send this command to Phoebot in a private message while you
-are also logged in to the Minecraft server:
-```
-!gamenick MacNugget
-```
-
-Phoebot will send you a whisper on the server with a verification code, which
-you can then send on Discord in the form:
-
-```
-!verify CODE
-```
-
-This will link your Discord and Minecraft account so the bot knows how to reach
-you in both places.
-
+These instructions have moved to [this document](docs/discord.md).
 
 #### Version Report
 
