@@ -76,7 +76,7 @@ func SendMessage(playerName, message string) error {
 	sentWhisper, sentDiscord := false, false
 
 	if playerName != "" {
-		w := models.Whisper{playerName, message}
+		w := models.Whisper{Who: playerName, Message: message}
 
 		if ipc.ServerWhisperStream != nil {
 			ipc.ServerWhisperStream <- w

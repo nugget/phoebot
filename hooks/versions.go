@@ -40,7 +40,7 @@ func ProcVersion(dm *discordgo.MessageCreate) error {
 	for _, p := range productList {
 		mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
 			Name:   fmt.Sprintf("%s %s", p.Class, p.Name),
-			Value:  fmt.Sprintf("%s", p.Latest.Version),
+			Value:  p.Latest.Version.String(),
 			Inline: true,
 		})
 	}

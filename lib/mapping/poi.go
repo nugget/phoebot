@@ -24,7 +24,6 @@ func NewPOI() POI {
 }
 
 func (p POI) String() string {
-	return p.Description
 	switch p.Class {
 	case "portal":
 		return p.Description

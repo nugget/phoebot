@@ -84,8 +84,6 @@ func ProcMapMe(message string) (string, error) {
 			strings.Join(fmtMapList, ","),
 		), nil
 	}
-
-	return "", fmt.Errorf("ProcMapMe Unexpected exit")
 }
 
 func RegNewMap() (t Trigger) {

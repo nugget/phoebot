@@ -185,7 +185,10 @@ func processMsgStream() {
 }
 
 func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
-	discord.RecordLog(dm)
+	err := discord.RecordLog(dm)
+	if err != nil {
+		logrus.WithError(err).Error("Unable to RecordLog")
+	}
 
 	// Ignore all messages created by the bot itself
 	// This isn't required in this specific example but it's a good practice.
@@ -242,12 +245,12 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	}).Trace("Evaluating triggers")
 
 	for _, t := range triggers {
-		if t.InGame == true {
+		if t.InGame {
 			// This is not a discord trigger
 			continue
 		}
 
-		if direct == t.Direct || t.Direct == false {
+		if direct == t.Direct || !t.Direct {
 			if t.Regexp.MatchString(dm.Content) {
 				if t.ACL != "" && !phoelib.PlayerHasACL(dm.Author.ID, t.ACL) {
 					logrus.WithFields(logrus.Fields{
@@ -301,8 +304,6 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 	}
 }
 
-type hookFunction func(*discordgo.MessageCreate) error
-
 func LoadTriggers() error {
 	// This is the baseline feature you can use to pattern new features you
 	// want to add
@@ -335,7 +336,7 @@ func LoadTriggers() error {
 	return nil
 }
 
-func housekeeping(interval int) error {
+func housekeeping(interval int) {
 	for {
 		err := phoelib.LoadIgnores()
 		if err != nil {
@@ -344,11 +345,9 @@ func housekeeping(interval int) error {
 
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-
-	return nil
 }
 
-func MerchantLoop(mc *mcserver.Server, interval int) error {
+func MerchantLoop(mc *mcserver.Server, interval int) {
 	for {
 		if !mc.Connected {
 			logrus.WithFields(logrus.Fields{
@@ -371,11 +370,9 @@ func MerchantLoop(mc *mcserver.Server, interval int) error {
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-
-	return nil
 }
 
-func MailboxLoop(mc *mcserver.Server, interval int) error {
+func MailboxLoop(mc *mcserver.Server, interval int) {
 	for {
 		if !mc.Connected {
 			logrus.WithFields(logrus.Fields{
@@ -398,8 +395,6 @@ func MailboxLoop(mc *mcserver.Server, interval int) error {
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-
-	return nil
 }
 
 func processWhisperStream(s *mcserver.Server) {
@@ -484,7 +479,7 @@ func processChatStream(s *mcserver.Server) {
 		triggerHits := 0
 
 		for _, t := range triggers {
-			if t.InGame == true {
+			if t.InGame {
 				if t.Regexp.MatchString(noColorsMessage) {
 					logrus.WithFields(logrus.Fields{
 						"event":     "inGameTriggerHit",
@@ -581,7 +576,7 @@ func processChatStream(s *mcserver.Server) {
 	}
 }
 
-func StatsUpdate(s *mcserver.Server) error {
+func StatsUpdate(s *mcserver.Server) {
 	ps, err := s.Status()
 	if err != nil {
 		logrus.WithError(err).Error("PingAndList Failure")
@@ -623,8 +618,6 @@ func StatsUpdate(s *mcserver.Server) error {
 
 		}
 	}
-
-	return nil
 }
 
 func main() {
@@ -656,8 +649,15 @@ func main() {
 		logrus.WithError(err).Fatal("Unable to connect to database")
 	}
 
-	LoadTriggers()
-	ipc.InitStreams()
+	err = LoadTriggers()
+	if err != nil {
+		logrus.WithError(err).Fatal("Unable to load triggers")
+	}
+
+	err = ipc.InitStreams()
+	if err != nil {
+		logrus.WithError(err).Fatal("Unable to Init IPC")
+	}
 
 	err = coreprotect.Connect(cpURI)
 	if err != nil {
@@ -742,7 +742,7 @@ func main() {
 	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
 	discord.Session.Close()

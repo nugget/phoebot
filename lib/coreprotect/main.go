@@ -132,7 +132,11 @@ func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz
 		if err != nil {
 			return nil, err
 		}
-		c.Parse()
+
+		err = c.Parse()
+		if err != nil {
+			return nil, err
+		}
 
 		l = append(l, c)
 	}

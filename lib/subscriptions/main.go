@@ -14,8 +14,8 @@ import (
 
 func SubscriptionsMatch(a, b models.Subscription) bool {
 	if a.ChannelID == b.ChannelID {
-		if strings.ToLower(a.Class) == strings.ToLower(b.Class) {
-			if strings.ToLower(a.Name) == strings.ToLower(b.Name) {
+		if strings.EqualFold(a.Class, b.Class) {
+			if strings.EqualFold(a.Name, b.Name) {
 				return true
 			}
 		}

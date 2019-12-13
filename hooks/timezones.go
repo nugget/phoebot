@@ -105,7 +105,7 @@ func ProcTimezones(dm *discordgo.MessageCreate) error {
 	mE := discordgo.MessageEmbed{}
 
 	mF := discordgo.MessageEmbedFooter{}
-	mF.Text = r.Format(fmt.Sprintf("Converted from Mon 2-Jan-2006 15:04 MST (%s)", prettyTimezone(fmt.Sprintf("%s", parseLoc))))
+	mF.Text = r.Format(fmt.Sprintf("Converted from Mon 2-Jan-2006 15:04 MST (%s)", prettyTimezone(parseLoc.String())))
 	mE.Footer = &mF
 
 	mE.Fields = make([]*discordgo.MessageEmbedField, 0)
@@ -118,7 +118,7 @@ func ProcTimezones(dm *discordgo.MessageCreate) error {
 				"error": err,
 			}).Error("Unable to load timezone location")
 		} else {
-			locName := fmt.Sprintf("%s", loc)
+			locName := loc.String()
 			timezone := r.In(loc).Format("MST")
 			formatted := r.In(loc).Format("Mon 3:04PM")
 
@@ -139,7 +139,6 @@ func ProcTimezones(dm *discordgo.MessageCreate) error {
 
 	mS.Embed = &mE
 
-	discord.Session.ChannelMessageSendComplex(dm.ChannelID, &mS)
-
-	return nil
+	_, err = discord.Session.ChannelMessageSendComplex(dm.ChannelID, &mS)
+	return err
 }

@@ -56,7 +56,7 @@ func ProcLinkRequest(dm *discordgo.MessageCreate) error {
 	}
 
 	verifyMsg := fmt.Sprintf("Discord user %s says that they are you.  If this is correct, please use code '%s' on Discord to verify your identity.", dm.Author.Username, code)
-	w := models.Whisper{gameNick, verifyMsg}
+	w := models.Whisper{Who: gameNick, Message: verifyMsg}
 	if ipc.ServerWhisperStream != nil {
 		ipc.ServerWhisperStream <- w
 
@@ -116,8 +116,9 @@ func ProcLinkVerify(dm *discordgo.MessageCreate) error {
 		}).Info("Linked Minecraft Account")
 
 		if minecraftName == "unknown" {
-
+			return fmt.Errorf("Unknown Link minecraftName")
 		}
+
 		msg := fmt.Sprintf("You are successfully linked with Minecraft user %s", minecraftName)
 		discord.Session.ChannelMessageSend(dm.ChannelID, msg)
 	}

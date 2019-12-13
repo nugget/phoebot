@@ -115,7 +115,7 @@ func PutProduct(n models.Product) error {
 		return fmt.Errorf("Can't load malformed product: %+v", n)
 	}
 
-	versionString := fmt.Sprintf("%s", n.Latest.Version)
+	versionString := n.Latest.Version.String()
 
 	p, _ := GetProduct(n.Class, n.Name)
 	if p.Name != "" {

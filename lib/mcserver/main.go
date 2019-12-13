@@ -132,7 +132,7 @@ func (s *Server) Connect() (err error) {
 }
 
 func (s *Server) TestConnection() error {
-	if s.Connected == false {
+	if !s.Connected {
 		return fmt.Errorf("We are not connected")
 	}
 
