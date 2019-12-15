@@ -622,6 +622,7 @@ func StatsUpdate(s *mcserver.Server) {
 
 func main() {
 	config := setupConfig()
+	phoelib.Graylog()
 	builddata.LogConversational()
 
 	for _, f := range []string{"DISCORD_BOT_TOKEN", "DATABASE_URI"} {

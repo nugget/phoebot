@@ -6,6 +6,7 @@ require (
 	github.com/Tnze/go-mc v1.14.4-0.20191202004051-547a8cc7ac52
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.20.1
+	github.com/gemnasium/logrus-graylog-hook/v3 v3.0.2
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lib/pq v1.2.0
@@ -21,7 +22,7 @@ require (
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v1.0.0 // indirect
 	golang.org/x/crypto v0.0.0-20190618222545-ea8f1a30c443 // indirect
-	golang.org/x/sys v0.0.0-20191128015809-6d18c012aee9 // indirect
+	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )

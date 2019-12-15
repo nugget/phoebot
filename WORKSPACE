@@ -525,8 +525,8 @@ go_repository(
 go_repository(
     name = "com_github_pkg_errors",
     importpath = "github.com/pkg/errors",
-    sum = "h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=",
-    version = "v0.8.0",
+    sum = "h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=",
+    version = "v0.8.1",
 )
 
 go_repository(
@@ -889,8 +889,8 @@ go_repository(
 go_repository(
     name = "org_golang_x_sys",
     importpath = "golang.org/x/sys",
-    sum = "h1:ZBzSG/7F4eNKz2L3GE9o300RX0Az1Bw5HF7PDraD+qU=",
-    version = "v0.0.0-20191128015809-6d18c012aee9",
+    sum = "h1:gSbV7h1NRL2G1xTg/owz62CST1oJBmxy4QpMMregXVQ=",
+    version = "v0.0.0-20191210023423-ac6580df4449",
 )
 
 go_repository(
@@ -996,4 +996,11 @@ go_repository(
     importpath = "golang.org/x/xerrors",
     sum = "h1:9zdDQZ7Thm29KFXgAX/+yaf3eVbP7djjWp/dXAppNCc=",
     version = "v0.0.0-20190717185122-a985d3407aa7",
+)
+
+go_repository(
+    name = "com_github_gemnasium_logrus_graylog_hook_v3",
+    importpath = "github.com/gemnasium/logrus-graylog-hook/v3",
+    sum = "h1:K9u07HPH47zt+6NVDtk1Fhvsk3JtNyExsul600ColWo=",
+    version = "v3.0.2",
 )

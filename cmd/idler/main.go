@@ -99,6 +99,8 @@ func main() {
 
 	debugLevel := config.GetString("PHOEBOT_DEBUG")
 
+	phoelib.Graylog()
+
 	if debugLevel != "" {
 		_, err := phoelib.LogLevel(debugLevel)
 		if err != nil {

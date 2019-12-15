@@ -4,12 +4,17 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"hash"
+	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/nugget/phoebot/lib/builddata"
 	"github.com/nugget/phoebot/lib/db"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
+
+	graylog "github.com/gemnasium/logrus-graylog-hook/v3"
 )
 
 type Ignore struct {
@@ -51,6 +56,18 @@ func LogLevel(reqLevel string) (setLevel logrus.Level, err error) {
 	logrus.SetLevel(setLevel)
 
 	return setLevel, nil
+}
+
+func Graylog() error {
+	appName := filepath.Base(os.Args[0])
+
+	hook := graylog.NewGraylogHook("172.28.10.11:12201", map[string]interface{}{
+		"service": appName,
+		"version": builddata.Version(),
+	})
+	logrus.AddHook(hook)
+
+	return nil
 }
 
 func LogSQL(query string, args ...interface{}) {

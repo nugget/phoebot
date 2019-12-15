@@ -10,6 +10,8 @@ package builddata
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -51,7 +53,10 @@ func LogConversational() {
 }
 
 func Version() string {
-	return fmt.Sprintf("Phoebot/%s (%s)",
+	appName := filepath.Base(os.Args[0])
+
+	return fmt.Sprintf("%s/%s (%s)",
+		appName,
 		VERSION,
 		BUILDDATE,
 	)
