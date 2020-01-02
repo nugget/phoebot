@@ -8,7 +8,7 @@ require (
 	github.com/bwmarrin/discordgo v0.20.2
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/lib/pq v1.2.0
+	github.com/lib/pq v1.3.0
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/seeruk/minecraft-rcon v0.0.0-20190221212056-6ab996d90449
 	github.com/sirupsen/logrus v1.4.2
