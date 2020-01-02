@@ -4,6 +4,10 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Tnze/go-mc v1.14.4-0.20191202004051-547a8cc7ac52 h1:l0PcsFoKpZpUJe68J5yU2X44uBYtUGvmI+XdCOKPuEQ=
 github.com/Tnze/go-mc v1.14.4-0.20191202004051-547a8cc7ac52/go.mod h1:ZQpDcppzIn7X37rsk39CAL4C7nkmu4sxWvDpcy9pncc=
+github.com/Tnze/go-mc v1.14.5-0.20191223045922-cc40cd4ccaa0 h1:9fnZr65dWBZZJ2Sq3hFzWcsK4T9gNMNE8g0FBV3KHt4=
+github.com/Tnze/go-mc v1.14.5-0.20191223045922-cc40cd4ccaa0/go.mod h1:ZQpDcppzIn7X37rsk39CAL4C7nkmu4sxWvDpcy9pncc=
+github.com/Tnze/go-mc v1.14.5-0.20191229000553-05b7a48f870e h1:c2ZMJIVBXRrtoykfcaC+oijdF97xBBfFdkTbzsTGUnY=
+github.com/Tnze/go-mc v1.14.5-0.20191229000553-05b7a48f870e/go.mod h1:ZQpDcppzIn7X37rsk39CAL4C7nkmu4sxWvDpcy9pncc=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
