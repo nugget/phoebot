@@ -11,6 +11,11 @@ go-mc:
 	go get github.com/Tnze/go-mc@master
 	go mod download
 
+update-deps:
+	go get -u ./...
+	go mod tidy
+	go mod verify
+
 phoebot: gazelle
 	clear
 	bazel build :phoebot
