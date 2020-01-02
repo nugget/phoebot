@@ -1,6 +1,6 @@
 .PHONY:	gazelle phoebot run deploy
 
-deps: go-mc gazelle
+deps: go-mc modules gazelle
 
 gazelle:
 	@echo Running gazelle to process BUILD.bazel files for Go
@@ -11,7 +11,7 @@ go-mc:
 	go get github.com/Tnze/go-mc@master
 	go mod download
 
-deps: go-mc
+modules: 
 	go get -u ./...
 	go mod tidy
 	go mod verify
