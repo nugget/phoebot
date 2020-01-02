@@ -11,7 +11,7 @@ go-mc:
 	go get github.com/Tnze/go-mc@master
 	go mod download
 
-update-deps:
+update-deps: go-mc
 	go get -u ./...
 	go mod tidy
 	go mod verify
