@@ -3,7 +3,7 @@ module github.com/nugget/phoebot
 go 1.12
 
 require (
-	github.com/Tnze/go-mc v1.14.5-0.20191229000553-05b7a48f870e
+	github.com/Tnze/go-mc v1.14.5-0.20200116045701-4370b6c3cd47
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.20.2
 	github.com/go-sql-driver/mysql v1.4.1
@@ -26,3 +26,5 @@ require (
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )
+
+replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20200122181758-beac876beb50
