@@ -1,6 +1,9 @@
-.PHONY:	gazelle phoebot run deploy
+.PHONY:	gazelle phoebot run deploy clean release datapacks
 
 deps: go-mc modules gazelle
+
+clean:
+	rm -rf output
 
 gazelle:
 	@echo Running gazelle to process BUILD.bazel files for Go
@@ -34,6 +37,12 @@ mapper: gazelle
 
 deploy:
 	bazel run :deploy.apply
+
+datapacks:
+	mkdir -p output
+	cd datapacks && zip -r ../output/datapack-elytra-crafting.zip phoenixcraft_elytra_crafting
+
+release: datapacks
 
 log:
 	kubectx nuggethaus
