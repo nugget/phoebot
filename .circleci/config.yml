@@ -6,6 +6,7 @@ jobs:
     working_directory: ~/src/phoebot
     steps:
     - checkout
+    - run: go mod download
     - run: go test -v -race -coverprofile=coverage.txt ./...
     - run: bash <(curl -s https://codecov.io/bash)
 
