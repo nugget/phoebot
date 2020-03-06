@@ -27,4 +27,4 @@ require (
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )
 
-replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20200122181758-beac876beb50
+// replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20200122181758-beac876beb50
