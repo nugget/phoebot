@@ -3,7 +3,9 @@ package postal
 import (
 	"fmt"
 	"regexp"
+	"time"
 
+	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/containers"
 	"github.com/nugget/phoebot/lib/coreprotect"
@@ -11,6 +13,22 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
+
+func NewSignScan() error {
+	logrus.Info("NewSignScan")
+
+	lastScan, err := config.GetTime("lastSignScan", time.Unix(1, 0))
+
+	l, err := coreprotect.ScanSigns("mailbox", lastScan)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%+v\n", l)
+
+	return nil
+
+}
 
 func ScanMailboxes() error {
 	ranges, err := containers.GetRanges("mailboxes")

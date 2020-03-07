@@ -733,6 +733,11 @@ func main() {
 
 	}
 
+	err = postal.NewSignScan()
+	fmt.Println(err)
+
+	os.Exit(0)
+
 	go processChatStream(&mc)
 	go processWhisperStream(&mc)
 	go processSayStream(&mc)
