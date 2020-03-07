@@ -1,6 +1,7 @@
 package coreprotect
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -54,7 +55,52 @@ func (b *Block) Parse() error {
 
 		}
 	}
+
 	return nil
+}
+
+func (b *Block) MountedOn() (Block, error) {
+	var (
+		x int
+		y int
+		z int
+	)
+
+	if !strings.Contains(b.Material, "wall_sign") {
+		// This is not a wall sign
+		return Block{}, fmt.Errorf("%s is not a wall sign", b.Material)
+	}
+
+	x = b.X
+	y = b.Y
+	z = b.Z
+
+	// test is at -186 72 -181
+	facing := b.Blockdata["facing"]
+	switch facing {
+	case "west":
+		x++
+	case "east":
+		x--
+	case "south":
+		z--
+	case "north":
+		z++
+	default:
+		z++
+	}
+
+	retBlock, err := GetBlock(b.WorldID, x, y, z)
+	if err != nil {
+		return Block{}, err
+	}
+
+	//fmt.Printf("Sign at %d %d %d facing %s is attached to %s at %d %d %d\n",
+	//	b.X, b.Y, b.Z, facing,
+	//	retBlock.Material, retBlock.X, retBlock.Y, retBlock.Z,
+	//)
+
+	return retBlock, nil
 }
 
 func GetBlock(wid, x, y, z int) (b Block, err error) {

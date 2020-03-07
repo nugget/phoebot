@@ -3,6 +3,7 @@ package postal
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/nugget/phoebot/lib/config"
@@ -15,9 +16,14 @@ import (
 )
 
 func NewSignScan() error {
-	logrus.Info("NewSignScan")
-
 	lastScan, err := config.GetTime("lastSignScan", time.Unix(1, 0))
+	if err != nil {
+		return err
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"lastScan": lastScan,
+	}).Trace("NewSignScan")
 
 	ll, err := coreprotect.ScanSigns("mailbox", lastScan)
 	if err != nil {
@@ -28,9 +34,42 @@ func NewSignScan() error {
 		config.WriteTime("lastSignScan", l.Timestamp)
 
 		// {User:MacNugget Wid:1 X:-192 Y:73 Z:-182 Line1:MacNugget Line2:Mailbox Line3: Line4:}
-		b, err := coreprotect.GetBlock(l.Wid, l.X, l.Y, l.Z)
+		b, err := coreprotect.GetBlock(l.WorldID, l.X, l.Y, l.Z)
+		if err != nil {
+			return err
+		}
 
-		fmt.Printf("%+v\n%v\n", b, err)
+		if strings.Contains(b.Material, "wall_sign") {
+			// This is a wall sign, not a floor-standing sign
+			logrus.WithFields(logrus.Fields{
+				"player":     b.User,
+				"world":      b.World,
+				"item":       b.Material,
+				"action":     b.Action,
+				"actionCode": b.ActionCode,
+				"x":          b.X,
+				"y":          b.Y,
+				"z":          b.Z,
+				"blockdata":  b.Blockdata,
+			}).Info("New tagging wall sign placed")
+
+			c, err := b.MountedOn()
+			if err != nil {
+				return err
+			}
+
+			// test is at -186 72 -181
+			logrus.WithFields(logrus.Fields{
+				"x":        c.X,
+				"y":        c.Y,
+				"z":        c.Z,
+				"material": c.Material,
+				"world":    b.World,
+				"owner":    b.User,
+			}).Info("New mailbox tagged")
+
+		}
+
 	}
 
 	return nil

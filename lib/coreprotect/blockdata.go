@@ -12,9 +12,7 @@ func Blockdata(code int) (string, string, error) {
 		BlockdataLookup = make(map[int]string)
 	}
 
-	var eq string
-
-	_, ok := BlockdataLookup[code]
+	eq, ok := BlockdataLookup[code]
 	if !ok {
 		query := `SELECT data FROM co_blockdata_map WHERE id = ?`
 

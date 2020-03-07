@@ -5,7 +5,9 @@ go_library(
     srcs = [
         "block.go",
         "blockdata.go",
+        "container.go",
         "main.go",
+        "sign.go",
     ],
     importpath = "github.com/nugget/phoebot/lib/coreprotect",
     visibility = ["//visibility:public"],

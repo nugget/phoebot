@@ -16,6 +16,7 @@ import (
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
@@ -48,7 +49,7 @@ func shutdown() {
 	os.Exit(0)
 }
 
-func setupConfig() *viper.Viper {
+func setupvc() *viper.Viper {
 	c := viper.New()
 	c.AutomaticEnv()
 	c.SetDefault("MC_CHECK_INTERVAL", 600)
@@ -344,8 +345,16 @@ func housekeeping(interval int) error {
 
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
+}
 
-	return nil
+func SignLoop(mc *mcserver.Server, interval int) error {
+	for {
+		err := postal.NewSignScan()
+		if err != nil {
+			logrus.WithError(err).Error("postal.NewSignScan failed")
+		}
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
 }
 
 func MerchantLoop(mc *mcserver.Server, interval int) error {
@@ -371,8 +380,6 @@ func MerchantLoop(mc *mcserver.Server, interval int) error {
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-
-	return nil
 }
 
 func MailboxLoop(mc *mcserver.Server, interval int) error {
@@ -398,8 +405,6 @@ func MailboxLoop(mc *mcserver.Server, interval int) error {
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-
-	return nil
 }
 
 func processWhisperStream(s *mcserver.Server) {
@@ -628,21 +633,21 @@ func StatsUpdate(s *mcserver.Server) error {
 }
 
 func main() {
-	config := setupConfig()
+	vc := setupvc()
 	builddata.LogConversational()
 
 	for _, f := range []string{"DISCORD_BOT_TOKEN", "DATABASE_URI"} {
-		tV := config.GetString(f)
+		tV := vc.GetString(f)
 		if tV == "" {
 			logrus.WithField("variable", f).Fatal("Missing environment variable")
 		}
 	}
 
-	interval := config.GetInt("MC_CHECK_INTERVAL")
-	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
-	debugLevel := config.GetString("PHOEBOT_DEBUG")
-	dbURI := config.GetString("DATABASE_URI")
-	cpURI := config.GetString("COREPROTECT_URI")
+	interval := vc.GetInt("MC_CHECK_INTERVAL")
+	discordBotToken := vc.GetString("DISCORD_BOT_TOKEN")
+	debugLevel := vc.GetString("PHOEBOT_DEBUG")
+	dbURI := vc.GetString("DATABASE_URI")
+	cpURI := vc.GetString("COREPROTECT_URI")
 
 	if debugLevel != "" {
 		_, err := phoelib.LogLevel(debugLevel)
@@ -698,19 +703,19 @@ func main() {
 	}
 
 	err = mc.Authenticate(
-		config.GetString("MINECRAFT_SERVER"),
-		config.GetInt("MINECRAFT_PORT"),
-		config.GetString("MOJANG_EMAIL"),
-		config.GetString("MOJANG_PASSWORD"),
+		vc.GetString("MINECRAFT_SERVER"),
+		vc.GetInt("MINECRAFT_PORT"),
+		vc.GetString("MOJANG_EMAIL"),
+		vc.GetString("MOJANG_PASSWORD"),
 	)
 	if err != nil {
 		logrus.WithError(err).Error("Error with mcserver Connect")
 	}
 
 	err = console.Initialize(
-		config.GetString("RCON_HOSTNAME"),
-		config.GetInt("RCON_PORT"),
-		config.GetString("RCON_PASSWORD"),
+		vc.GetString("RCON_HOSTNAME"),
+		vc.GetInt("RCON_PORT"),
+		vc.GetString("RCON_PASSWORD"),
 	)
 	if err != nil {
 		logrus.WithError(err).Error("RCON Initialization Failure")
@@ -733,8 +738,8 @@ func main() {
 
 	}
 
-	err = postal.NewSignScan()
-	fmt.Println(err)
+	config.WriteString("lastSignScan", "1")
+	SignLoop(&mc, 5)
 
 	os.Exit(0)
 
@@ -742,8 +747,8 @@ func main() {
 	go processWhisperStream(&mc)
 	go processSayStream(&mc)
 	go StatsUpdate(&mc)
-	go MailboxLoop(&mc, config.GetInt("MAILBOX_POLL_INTERVAL"))
-	go MerchantLoop(&mc, config.GetInt("MERCHANT_POLL_INTERVAL"))
+	go MailboxLoop(&mc, vc.GetInt("MAILBOX_POLL_INTERVAL"))
+	go MerchantLoop(&mc, vc.GetInt("MERCHANT_POLL_INTERVAL"))
 	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)

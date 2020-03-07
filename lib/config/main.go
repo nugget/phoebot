@@ -12,25 +12,23 @@ import (
 )
 
 func GetString(item string, defaultValue string) (string, error) {
-	query := `SELECT key, value FROM config WHERE key = $1`
+	query := `SELECT value FROM config WHERE key = $1`
 
 	phoelib.LogSQL(query, item)
+
 	rows, err := db.DB.Query(query, item)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"error": err,
 			"key":   item,
-		}).Error("SQL Error in PlayerHasACL")
+		}).Error("SQL Error in GetString")
 		return "", err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var value string
-
-		err = rows.Scan(
-			&value,
-		)
+		err = rows.Scan(&value)
 		return value, nil
 	}
 
@@ -43,7 +41,6 @@ func WriteString(item string, value string) error {
 			      SET value = $2`
 	phoelib.LogSQL(query, item, value)
 	_, err := db.DB.Exec(query, item, value)
-	fmt.Println(err)
 	return err
 }
 
@@ -53,6 +50,9 @@ func GetTime(item string, defaultValue time.Time) (t time.Time, err error) {
 		return t, err
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"valueString": valueString,
+	}).Trace("GetTime processing")
 	epoch, err := strconv.ParseInt(valueString, 10, 64)
 	if err != nil {
 		return t, err
