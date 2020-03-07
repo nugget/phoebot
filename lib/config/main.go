@@ -40,9 +40,10 @@ func GetString(item string, defaultValue string) (string, error) {
 func WriteString(item string, value string) error {
 	query := `INSERT INTO config (key, value) VALUES ($1, $2)
 	          ON CONFLICT (key) DO UPDATE
-			      SET value = $2 WHERE key = $1`
+			      SET value = $2`
 	phoelib.LogSQL(query, item, value)
 	_, err := db.DB.Exec(query, item, value)
+	fmt.Println(err)
 	return err
 }
 

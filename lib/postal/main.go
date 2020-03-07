@@ -19,12 +19,15 @@ func NewSignScan() error {
 
 	lastScan, err := config.GetTime("lastSignScan", time.Unix(1, 0))
 
-	l, err := coreprotect.ScanSigns("mailbox", lastScan)
+	ll, err := coreprotect.ScanSigns("mailbox", lastScan)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%+v\n", l)
+	for _, l := range ll {
+		fmt.Printf("%+v\n", l)
+		config.WriteTime("lastSignScan", l.Timestamp)
+	}
 
 	return nil
 
