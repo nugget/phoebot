@@ -2,7 +2,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["main.go"],
+    srcs = [
+        "block.go",
+        "blockdata.go",
+        "main.go",
+    ],
     importpath = "github.com/nugget/phoebot/lib/coreprotect",
     visibility = ["//visibility:public"],
     deps = [

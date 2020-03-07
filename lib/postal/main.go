@@ -25,8 +25,12 @@ func NewSignScan() error {
 	}
 
 	for _, l := range ll {
-		fmt.Printf("%+v\n", l)
 		config.WriteTime("lastSignScan", l.Timestamp)
+
+		// {User:MacNugget Wid:1 X:-192 Y:73 Z:-182 Line1:MacNugget Line2:Mailbox Line3: Line4:}
+		b, err := coreprotect.GetBlock(l.Wid, l.X, l.Y, l.Z)
+
+		fmt.Printf("%+v\n%v\n", b, err)
 	}
 
 	return nil

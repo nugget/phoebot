@@ -51,7 +51,7 @@ type SignLog struct {
 	Epoch     int64
 	Timestamp time.Time
 	User      string
-	Wid       int64
+	Wid       int
 	X         int
 	Y         int
 	Z         int
