@@ -16,7 +16,9 @@ import (
 )
 
 var Containers = map[string]bool{
-	"minecraft:barrel": true,
+	"minecraft:barrel":      true,
+	"minecraft:chest":       true,
+	"minecraft:shulker_box": true,
 }
 
 type Mailbox struct {
