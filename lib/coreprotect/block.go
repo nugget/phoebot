@@ -10,7 +10,9 @@ import (
 )
 
 var Actions = map[int]string{
-	0: "unknown",
+	0: "destroyed",
+	1: "placed",
+	2: "toggled",
 }
 
 type Block struct {

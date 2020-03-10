@@ -2,9 +2,11 @@ package postal
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
 
 	"github.com/google/uuid"
@@ -14,7 +16,6 @@ type Mailbox struct {
 	ID       uuid.UUID
 	Added    time.Time
 	Changed  time.Time
-	Deleted  time.Time
 	LastScan time.Time
 	Enabled  bool
 	Class    string
@@ -27,16 +28,15 @@ type Mailbox struct {
 	Z        int
 }
 
-func (b *Mailbox) Fields() string {
-	return "mailboxid, added, changed, deleted, lastscan, enabled, class, owner, signtext, material, world, x, y, z"
+func MailboxFields() string {
+	return "mailboxid, added, changed, lastscan, enabled, class, owner, signtext, material, world, x, y, z"
 }
 
 func (b *Mailbox) RowScan(rows *sql.Rows) error {
-	rows.Scan(
+	return rows.Scan(
 		&b.ID,
 		&b.Added,
 		&b.Changed,
-		&b.Deleted,
 		&b.LastScan,
 		&b.Enabled,
 		&b.Class,
@@ -48,6 +48,19 @@ func (b *Mailbox) RowScan(rows *sql.Rows) error {
 		&b.Y,
 		&b.Z,
 	)
+}
+
+func (b *Mailbox) Rename() error {
+
+	fmt.Printf("Rename! %+v\n", b)
+
+	customName := b.Owner + `\'s Mailbox`
+	command := fmt.Sprintf(`/data modify block %d %d %d CustomName set value '{"text":"%s"}'`, b.X, b.Y, b.Z, customName)
+
+	if ipc.ServerSayStream != nil {
+		ipc.ServerSayStream <- command
+	}
+
 	return nil
 }
 
@@ -58,11 +71,12 @@ func NewMailbox(b Mailbox) (Mailbox, error) {
 	}
 
 	if existingBox.ID != uuid.Nil {
+		fmt.Printf("existingBox! %+v\n", existingBox)
 		return existingBox, nil
 	}
 
 	query := `INSERT INTO mailbox (class, owner, signtext, material, world, x, y, z)
-			  SELECT $1, $2, $3, $4, $5, $6, $7, $8 RETURNING ` + b.Fields()
+			  SELECT $1, $2, $3, $4, $5, $6, $7, $8 RETURNING ` + MailboxFields()
 
 	rows, err := db.DB.Query(query, b.Class, b.Owner, b.Signtext, b.Material, b.World, b.X, b.Y, b.Z)
 	if err != nil {
@@ -82,9 +96,7 @@ func NewMailbox(b Mailbox) (Mailbox, error) {
 }
 
 func GetMailboxByOwnerAndLocation(owner, world string, x, y, z int) (Mailbox, error) {
-	b := Mailbox{}
-
-	query := `SELECT ` + b.Fields() + ` FROM mailbox WHERE deleted IS NULL AND owner = $1 AND world = $2
+	query := `SELECT ` + MailboxFields() + ` FROM mailbox WHERE deleted IS NULL AND owner = $1 AND world = $2
 	AND x = $3 AND y = $4 AND z = $5`
 
 	phoelib.LogSQL(query, owner, world, x, y, z)
@@ -96,6 +108,7 @@ func GetMailboxByOwnerAndLocation(owner, world string, x, y, z int) (Mailbox, er
 	defer rows.Close()
 
 	for rows.Next() {
+		b := Mailbox{}
 		err = b.RowScan(rows)
 		if err != nil {
 			return Mailbox{}, err
@@ -103,4 +116,40 @@ func GetMailboxByOwnerAndLocation(owner, world string, x, y, z int) (Mailbox, er
 		return b, nil
 	}
 	return Mailbox{}, nil
+}
+
+func PollMailboxes() error {
+	ll, err := GetMailboxes()
+	if err != nil {
+		return err
+	}
+
+	for _, b := range ll {
+		// Check for destruction
+		fmt.Printf("%+v\n", b)
+	}
+
+	return nil
+}
+
+func GetMailboxes() (ll []Mailbox, err error) {
+	query := `SELECT ` + MailboxFields() + ` from mailbox WHERE deleted IS NULL AND enabled IS TRUE`
+
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return ll, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		b := Mailbox{}
+		err = b.RowScan(rows)
+		if err != nil {
+			return ll, err
+		}
+
+		ll = append(ll, b)
+	}
+
+	return ll, nil
 }

@@ -347,12 +347,20 @@ func housekeeping(interval int) error {
 	}
 }
 
-func SignLoop(mc *mcserver.Server, interval int) error {
+func SignLoop(interval int) error {
 	for {
+		// Look for new tagging signs
 		err := postal.NewSignScan()
 		if err != nil {
 			logrus.WithError(err).Error("postal.NewSignScan failed")
 		}
+
+		// Look for mailbox updates
+		err = postal.PollMailboxes()
+		if err != nil {
+			logrus.WithError(err).Error("postal.PollMailboxes failed")
+		}
+
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }
@@ -691,9 +699,10 @@ func main() {
 	go processAnnounceStream()
 	go processMojangStream()
 
-	// go serverpro.Poller(interval)
-	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
-	go mojang.Poller(interval)
+	if false {
+		go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
+		go mojang.Poller(interval)
+	}
 
 	go housekeeping(600)
 
@@ -738,18 +747,19 @@ func main() {
 
 	}
 
-	config.WriteString("lastSignScan", "1")
-	SignLoop(&mc, 5)
-
-	os.Exit(0)
-
 	go processChatStream(&mc)
 	go processWhisperStream(&mc)
 	go processSayStream(&mc)
 	go StatsUpdate(&mc)
+	go mc.Handler()
+
+	config.WriteString("lastSignScan", "1")
+
+	mc.WaitForServer(5)
+
+	go SignLoop(5)
 	go MailboxLoop(&mc, vc.GetInt("MAILBOX_POLL_INTERVAL"))
 	go MerchantLoop(&mc, vc.GetInt("MERCHANT_POLL_INTERVAL"))
-	go mc.Handler()
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)

@@ -86,6 +86,19 @@ func NewSignScan() error {
 					"world":    b.World,
 					"owner":    b.User,
 				}).Info("New mailbox recorded")
+
+				fmt.Printf("newBox: %+v\n", newBox)
+
+				err = newBox.Rename()
+				if err != nil {
+					logrus.WithError(err).Error("Unable to set customName on mailbox")
+				}
+
+				message := fmt.Sprintf("I'll let you know if anyone puts items in your mailbox at %d %d %d.  Feel free to update the text on the sign, that I won't get confused.", c.X, c.Y, c.Z)
+				err = player.SendMessage(b.User, message)
+				if err != nil {
+					logrus.WithError(err).Error("Unable to send message to player")
+				}
 			}
 		}
 

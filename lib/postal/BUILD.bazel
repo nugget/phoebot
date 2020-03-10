@@ -15,6 +15,7 @@ go_library(
         "//lib/containers:go_default_library",
         "//lib/coreprotect:go_default_library",
         "//lib/db:go_default_library",
+        "//lib/ipc:go_default_library",
         "//lib/phoelib:go_default_library",
         "//lib/player:go_default_library",
         "@com_github_google_uuid//:go_default_library",
