@@ -12,6 +12,7 @@ import (
 	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/player"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,8 +32,6 @@ func NewSignScan() error {
 	}
 
 	for _, l := range ll {
-		config.WriteTime("lastSignScan", l.Timestamp)
-
 		// {User:MacNugget Wid:1 X:-192 Y:73 Z:-182 Line1:MacNugget Line2:Mailbox Line3: Line4:}
 		b, err := coreprotect.GetBlock(l.WorldID, l.X, l.Y, l.Z)
 		if err != nil {
@@ -41,12 +40,18 @@ func NewSignScan() error {
 
 		if strings.Contains(b.Material, "wall_sign") {
 			// This is a wall sign, not a floor-standing sign
+			//
+			signText := fmt.Sprintf("%s|%s|%s|%s", l.Line1, l.Line2, l.Line3, l.Line4)
+
 			logrus.WithFields(logrus.Fields{
+				"epoch":      l.Epoch,
+				"time":       l.Timestamp,
 				"player":     b.User,
 				"world":      b.World,
 				"item":       b.Material,
 				"action":     b.Action,
 				"actionCode": b.ActionCode,
+				"text":       signText,
 				"x":          b.X,
 				"y":          b.Y,
 				"z":          b.Z,
@@ -58,18 +63,36 @@ func NewSignScan() error {
 				return err
 			}
 
-			// test is at -186 72 -181
-			logrus.WithFields(logrus.Fields{
-				"x":        c.X,
-				"y":        c.Y,
-				"z":        c.Z,
-				"material": c.Material,
-				"world":    b.World,
-				"owner":    b.User,
-			}).Info("New mailbox tagged")
+			newBox, err := NewMailbox(Mailbox{
+				Class:    "mailbox",
+				Owner:    b.User,
+				Signtext: signText,
+				World:    b.World,
+				X:        c.X,
+				Y:        c.Y,
+				Z:        c.Z,
+			})
+			if err != nil {
+				return err
+			}
 
+			if newBox.ID != uuid.Nil {
+				logrus.WithFields(logrus.Fields{
+					"ID":       newBox.ID,
+					"x":        c.X,
+					"y":        c.Y,
+					"z":        c.Z,
+					"material": c.Material,
+					"world":    b.World,
+					"owner":    b.User,
+				}).Info("New mailbox recorded")
+			}
 		}
 
+		err = config.WriteTime("lastSignScan", l.Timestamp)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

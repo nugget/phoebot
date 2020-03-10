@@ -54,9 +54,9 @@ func ScanSigns(matchString string, lastScan time.Time) (l []SignLog, err error) 
 		"match":    matchString,
 	}).Trace("Looking for sign activity")
 
-	phoelib.LogSQL(query, lastScan, matchString)
+	phoelib.LogSQL(query, epoch, matchString)
 
-	rows, err := DB.Query(query, lastScan, matchString, matchString, matchString, matchString)
+	rows, err := DB.Query(query, epoch, matchString, matchString, matchString, matchString)
 	if err != nil {
 		return nil, err
 	}

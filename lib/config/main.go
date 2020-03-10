@@ -39,7 +39,14 @@ func WriteString(item string, value string) error {
 	query := `INSERT INTO config (key, value) VALUES ($1, $2)
 	          ON CONFLICT (key) DO UPDATE
 			      SET value = $2`
+
 	phoelib.LogSQL(query, item, value)
+
+	logrus.WithFields(logrus.Fields{
+		"item":  item,
+		"value": value,
+	}).Trace("config.WriteString")
+
 	_, err := db.DB.Exec(query, item, value)
 	return err
 }
@@ -50,15 +57,20 @@ func GetTime(item string, defaultValue time.Time) (t time.Time, err error) {
 		return t, err
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"valueString": valueString,
-	}).Trace("GetTime processing")
 	epoch, err := strconv.ParseInt(valueString, 10, 64)
 	if err != nil {
 		return t, err
 	}
 
-	return time.Unix(epoch, 0), nil
+	tT := time.Unix(epoch, 0)
+
+	logrus.WithFields(logrus.Fields{
+		"valueString": valueString,
+		"epoch":       epoch,
+		"time":        tT,
+	}).Trace("GetTime processing")
+
+	return tT, nil
 }
 
 func WriteTime(item string, value time.Time) error {
