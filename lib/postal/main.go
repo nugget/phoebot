@@ -10,6 +10,7 @@ import (
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/containers"
 	"github.com/nugget/phoebot/lib/coreprotect"
+	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/player"
 
 	"github.com/google/uuid"
@@ -109,6 +110,11 @@ func NewSignScan() error {
 						logrus.WithError(err).Error("Unable to set customName on mailbox")
 					}
 
+					err = ReSign(l, b.User)
+					if err != nil {
+						logrus.WithError(err).Error("Unable to set text on mailbox sign")
+					}
+
 					message := fmt.Sprintf("I'll let you know if anyone puts items in your mailbox at %d %d %d.  Feel free to update the text on the sign, I won't get confused by that.", c.X, c.Y, c.Z)
 					err = player.SendMessage(b.User, message)
 					if err != nil {
@@ -130,7 +136,15 @@ func NewSignScan() error {
 	}
 
 	return nil
+}
 
+func ReSign(l coreprotect.SignLog, player string) error {
+	command := fmt.Sprintf(`/data merge block %d %d %d {Text1:"",Text2:'{"text":"%s"}',Text3:"",Text4:'{"text":"\\u2709"}'}`, l.X, l.Y, l.Z, player)
+	if ipc.ServerSayStream != nil {
+		ipc.ServerSayStream <- command
+	}
+
+	return nil
 }
 
 func ScanMailboxes() error {
