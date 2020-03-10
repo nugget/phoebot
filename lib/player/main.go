@@ -1,6 +1,8 @@
 package player
 
 import (
+	"fmt"
+
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
@@ -105,5 +107,13 @@ func SendMessage(playerName, message string) error {
 		"discord": sentDiscord,
 	}).Debug("Sent message to player")
 
+	return nil
+}
+
+func Advancement(playerName, advancement string) error {
+	command := fmt.Sprintf("/advancement grant %s only %s", playerName, advancement)
+	if ipc.ServerSayStream != nil {
+		ipc.ServerSayStream <- command
+	}
 	return nil
 }

@@ -114,6 +114,11 @@ func NewSignScan() error {
 					if err != nil {
 						logrus.WithError(err).Error("Unable to send message to player")
 					}
+
+					err = player.Advancement(b.User, "phoenixcraft:phoenixcraft/gone_postal")
+					if err != nil {
+						logrus.WithError(err).Warn("Unable to grant advancement")
+					}
 				}
 			}
 		}
