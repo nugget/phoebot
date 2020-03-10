@@ -16,7 +16,6 @@ import (
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
-	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
@@ -753,7 +752,7 @@ func main() {
 	go StatsUpdate(&mc)
 	go mc.Handler()
 
-	config.WriteString("lastSignScan", "1")
+	// postal.Reset()
 
 	mc.WaitForServer(5)
 

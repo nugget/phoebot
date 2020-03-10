@@ -15,6 +15,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var Containers = map[string]bool{
+	"minecraft:barrel": true,
+}
+
 type Mailbox struct {
 	ID       uuid.UUID
 	Added    time.Time
@@ -29,6 +33,7 @@ type Mailbox struct {
 	X        int
 	Y        int
 	Z        int
+	New      bool
 }
 
 func MailboxFields() string {
@@ -53,15 +58,26 @@ func (b *Mailbox) RowScan(rows *sql.Rows) error {
 	)
 }
 
+func (b *Mailbox) IsContainer() bool {
+	return Containers[b.Material]
+}
+
 func (b *Mailbox) Rename() error {
-
-	fmt.Printf("Rename! %+v\n", b)
-
 	customName := b.Owner + `\'s Mailbox`
 	command := fmt.Sprintf(`/data modify block %d %d %d CustomName set value '{"text":"%s"}'`, b.X, b.Y, b.Z, customName)
 
 	if ipc.ServerSayStream != nil {
 		ipc.ServerSayStream <- command
+
+		logrus.WithFields(logrus.Fields{
+			"world":    b.World,
+			"x":        b.X,
+			"y":        b.Y,
+			"z":        b.Z,
+			"owner":    b.Owner,
+			"material": b.Material,
+			"name":     customName,
+		}).Info("Renamed mailbox container")
 	}
 
 	return nil
@@ -69,8 +85,26 @@ func (b *Mailbox) Rename() error {
 
 func (b *Mailbox) Delete() error {
 	query := `UPDATE mailbox SET deleted = current_timestamp at time zone 'utc' WHERE mailboxID = $1`
+	phoelib.LogSQL(query, b.ID)
 	_, err := db.DB.Exec(query, b.ID)
-	return err
+	if err != nil {
+		return err
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"world":    b.World,
+		"x":        b.X,
+		"y":        b.Y,
+		"z":        b.Z,
+		"owner":    b.Owner,
+		"material": b.Material,
+	}).Info("deleted mailbox record")
+
+	return nil
+}
+
+func IsContainer(material string) bool {
+	return Containers[material]
 }
 
 func NewMailbox(b Mailbox) (Mailbox, error) {
@@ -80,13 +114,21 @@ func NewMailbox(b Mailbox) (Mailbox, error) {
 	}
 
 	if existingBox.ID != uuid.Nil {
-		fmt.Printf("existingBox! %+v\n", existingBox)
+		logrus.WithFields(logrus.Fields{
+			"id":       existingBox.ID,
+			"material": existingBox.Material,
+			"x":        existingBox.X,
+			"y":        existingBox.Y,
+			"z":        existingBox.Z,
+			"owner":    existingBox.Owner,
+		}).Info("NewMailbox called for existing mailbox")
 		return existingBox, nil
 	}
 
 	query := `INSERT INTO mailbox (class, owner, signtext, material, world, x, y, z)
 			  SELECT $1, $2, $3, $4, $5, $6, $7, $8 RETURNING ` + MailboxFields()
 
+	phoelib.LogSQL(query, b.Class, b.Owner, b.Signtext, b.Material, b.World, b.X, b.Y, b.Z)
 	rows, err := db.DB.Query(query, b.Class, b.Owner, b.Signtext, b.Material, b.World, b.X, b.Y, b.Z)
 	if err != nil {
 		return Mailbox{}, err
@@ -98,6 +140,7 @@ func NewMailbox(b Mailbox) (Mailbox, error) {
 		if err != nil {
 			return Mailbox{}, err
 		}
+		b.New = true
 		return b, nil
 	}
 
@@ -146,7 +189,7 @@ func PollMailboxes() error {
 
 func PollMailbox(l Mailbox) error {
 	// Check for destruction
-	fmt.Printf("Poll Mailbox: %+v\n", l)
+	//fmt.Printf("Poll Mailbox: %+v\n", l)
 	b, err := coreprotect.GetBlock(1, l.X, l.Y, l.Z)
 	if err != nil {
 		return err
@@ -156,20 +199,21 @@ func PollMailbox(l Mailbox) error {
 		err := l.Delete()
 		if err != nil {
 			logrus.WithError(err).Error("Mailbox was destroyed, unable to remove record")
-		} else {
-			logrus.Warn("Mailbox was destroyed, removed record")
+			return err
+		}
 
-			message := fmt.Sprintf("Your mailbox at %d %d %d seems to be gone, so I will stop checking it.", l.X, l.Y, l.Z)
-			err = player.SendMessage(l.Owner, message)
-			if err != nil {
-				logrus.WithError(err).Error("Unable to send message to player")
-			}
+		logrus.Warn("Mailbox was destroyed, removed record")
+
+		message := fmt.Sprintf("Your mailbox at %d %d %d seems to be gone, so I will stop checking it.", l.X, l.Y, l.Z)
+		err = player.SendMessage(l.Owner, message)
+		if err != nil {
+			logrus.WithError(err).Error("Unable to send message to player")
 		}
 
 		return nil
 	}
 
-	fmt.Printf("Poll Mailboxesd:  %+v\n", b)
+	//fmt.Printf("Poll Mailboxesd:  %+v\n", b)
 
 	return nil
 }
@@ -177,6 +221,7 @@ func PollMailbox(l Mailbox) error {
 func GetMailboxes() (ll []Mailbox, err error) {
 	query := `SELECT ` + MailboxFields() + ` from mailbox WHERE deleted IS NULL AND enabled IS TRUE`
 
+	phoelib.LogSQL(query)
 	rows, err := db.DB.Query(query)
 	if err != nil {
 		return ll, err

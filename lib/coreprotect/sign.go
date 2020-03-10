@@ -35,7 +35,6 @@ func ScanSigns(matchString string, lastScan time.Time) (l []SignLog, err error) 
 	epoch := lastScan.Unix()
 
 	matchString = "%" + matchString + "%" // SQL wildcard syntax
-
 	query := `SELECT s.time, s.user as userid, u.user, s.wid, w.world, s.x, s.y, s.z, s.color, s.line_1, s.line_2, s.line_3, s.line_4
 	          FROM co_sign s
 			  LEFT JOIN (co_user u, co_world w) on (s.user = u.rowid AND w.rowid = s.wid)
@@ -55,7 +54,6 @@ func ScanSigns(matchString string, lastScan time.Time) (l []SignLog, err error) 
 	}).Trace("Looking for sign activity")
 
 	phoelib.LogSQL(query, epoch, matchString)
-
 	rows, err := DB.Query(query, epoch, matchString, matchString, matchString, matchString)
 	if err != nil {
 		return nil, err

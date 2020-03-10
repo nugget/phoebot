@@ -16,6 +16,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func Reset() {
+	config.WriteString("lastSignScan", "1")
+}
+
 func NewSignScan() error {
 	lastScan, err := config.GetTime("lastSignScan", time.Unix(1, 0))
 	if err != nil {
@@ -63,41 +67,53 @@ func NewSignScan() error {
 				return err
 			}
 
-			newBox, err := NewMailbox(Mailbox{
-				Class:    "mailbox",
-				Owner:    b.User,
-				Signtext: signText,
-				World:    b.World,
-				X:        c.X,
-				Y:        c.Y,
-				Z:        c.Z,
-			})
-			if err != nil {
-				return err
-			}
-
-			if newBox.ID != uuid.Nil {
+			if !IsContainer(c.Material) {
 				logrus.WithFields(logrus.Fields{
-					"ID":       newBox.ID,
 					"x":        c.X,
 					"y":        c.Y,
 					"z":        c.Z,
 					"material": c.Material,
 					"world":    b.World,
 					"owner":    b.User,
-				}).Info("New mailbox recorded")
-
-				fmt.Printf("newBox: %+v\n", newBox)
-
-				err = newBox.Rename()
+				}).Warn("Ignoring non-container mailbox request")
+			} else {
+				newBox, err := NewMailbox(Mailbox{
+					Class:    "mailbox",
+					Owner:    b.User,
+					Signtext: signText,
+					World:    b.World,
+					X:        c.X,
+					Y:        c.Y,
+					Z:        c.Z,
+					Material: c.Material,
+				})
 				if err != nil {
-					logrus.WithError(err).Error("Unable to set customName on mailbox")
+					return err
 				}
 
-				message := fmt.Sprintf("I'll let you know if anyone puts items in your mailbox at %d %d %d.  Feel free to update the text on the sign, that I won't get confused.", c.X, c.Y, c.Z)
-				err = player.SendMessage(b.User, message)
-				if err != nil {
-					logrus.WithError(err).Error("Unable to send message to player")
+				if newBox.ID != uuid.Nil && newBox.New {
+					logrus.WithFields(logrus.Fields{
+						"ID":       newBox.ID,
+						"x":        c.X,
+						"y":        c.Y,
+						"z":        c.Z,
+						"material": c.Material,
+						"world":    b.World,
+						"owner":    b.User,
+					}).Info("New mailbox recorded")
+
+					fmt.Printf("newBox: %+v\n", newBox)
+
+					err = newBox.Rename()
+					if err != nil {
+						logrus.WithError(err).Error("Unable to set customName on mailbox")
+					}
+
+					message := fmt.Sprintf("I'll let you know if anyone puts items in your mailbox at %d %d %d.  Feel free to update the text on the sign, I won't get confused by that.", c.X, c.Y, c.Z)
+					err = player.SendMessage(b.User, message)
+					if err != nil {
+						logrus.WithError(err).Error("Unable to send message to player")
+					}
 				}
 			}
 		}

@@ -25,7 +25,6 @@ go_library(
     deps = [
         "//hooks:go_default_library",
         "//lib/builddata:go_default_library",
-        "//lib/config:go_default_library",
         "//lib/console:go_default_library",
         "//lib/coreprotect:go_default_library",
         "//lib/db:go_default_library",

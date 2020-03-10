@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nugget/phoebot/lib/phoelib"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -109,9 +111,10 @@ func GetBlock(wid, x, y, z int) (b Block, err error) {
 	query := `SELECT b.rowid, b.time, u.user, b.user as userid, b.wid, w.world, b.x, b.y, b.z, b.type, m.material, b.data, b.meta, b.blockdata, b.action, b.rolled_back
 			  FROM co_block b
 			  LEFT JOIN (co_user u, co_material_map m, co_world w) on (b.type = m.rowid and b.user = u.rowid and w.rowid = b.wid)
-			  WHERE b.wid = ? AND b.x = ? AND b.y = ? AND b.z = ? AND 
+			  WHERE b.wid = ? AND b.x = ? AND b.y = ? AND b.z = ?
 			  ORDER BY b.time DESC LIMIT 1`
 
+	phoelib.LogSQL(query, wid, x, y, z)
 	rows, err := DB.Query(query, wid, x, y, z)
 	if err != nil {
 		return Block{}, err
