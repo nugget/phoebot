@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/player"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type Mailbox struct {
@@ -62,6 +65,12 @@ func (b *Mailbox) Rename() error {
 	}
 
 	return nil
+}
+
+func (b *Mailbox) Delete() error {
+	query := `UPDATE mailbox SET deleted = current_timestamp at time zone 'utc' WHERE mailboxID = $1`
+	_, err := db.DB.Exec(query, b.ID)
+	return err
 }
 
 func NewMailbox(b Mailbox) (Mailbox, error) {
@@ -124,10 +133,43 @@ func PollMailboxes() error {
 		return err
 	}
 
-	for _, b := range ll {
-		// Check for destruction
-		fmt.Printf("%+v\n", b)
+	for _, l := range ll {
+		err := PollMailbox(l)
+		if err != nil {
+			logrus.WithError(err).Error("PollMailbox Failure")
+			continue
+		}
 	}
+
+	return nil
+}
+
+func PollMailbox(l Mailbox) error {
+	// Check for destruction
+	fmt.Printf("Poll Mailbox: %+v\n", l)
+	b, err := coreprotect.GetBlock(1, l.X, l.Y, l.Z)
+	if err != nil {
+		return err
+	}
+
+	if b.Action == "destroyed" {
+		err := l.Delete()
+		if err != nil {
+			logrus.WithError(err).Error("Mailbox was destroyed, unable to remove record")
+		} else {
+			logrus.Warn("Mailbox was destroyed, removed record")
+
+			message := fmt.Sprintf("Your mailbox at %d %d %d seems to be gone, so I will stop checking it.", l.X, l.Y, l.Z)
+			err = player.SendMessage(l.Owner, message)
+			if err != nil {
+				logrus.WithError(err).Error("Unable to send message to player")
+			}
+		}
+
+		return nil
+	}
+
+	fmt.Printf("Poll Mailboxesd:  %+v\n", b)
 
 	return nil
 }
