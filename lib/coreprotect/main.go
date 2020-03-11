@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/nugget/phoebot/lib/phoelib"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
 )
@@ -58,13 +60,21 @@ func WorldFromWid(id int) (world string) {
 	}
 
 	query := `SELECT world FROM co_world WHERE id = ? LIMIT 1`
-	row := DB.QueryRow(query)
+	phoelib.LogSQL(query, id)
+	row := DB.QueryRow(query, id)
 	err := row.Scan(&world)
 	if err != nil {
+		logrus.WithError(err).Error("WorldFromWid error")
 		return ""
 	}
 
 	World[id] = world
+
+	logrus.WithFields(logrus.Fields{
+		"wid":   World[id],
+		"world": world,
+	}).Trace("WorldFromWid")
+
 	return World[id]
 }
 
@@ -76,12 +86,20 @@ func WidFromWorld(world string) (wid int) {
 	}
 
 	query := `SELECT id FROM co_world WHERE world = ? LIMIT 1`
-	row := DB.QueryRow(query)
+	phoelib.LogSQL(query, world)
+	row := DB.QueryRow(query, world)
 	err := row.Scan(&wid)
 	if err != nil {
+		logrus.WithError(err).Error("WidFromWorld error")
 		return 0
 	}
 
 	World[wid] = world
+
+	logrus.WithFields(logrus.Fields{
+		"wid":   wid,
+		"world": World[wid],
+	}).Trace("WidFromWorld")
+
 	return wid
 }

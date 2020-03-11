@@ -32,14 +32,16 @@ type Mailbox struct {
 	Signtext string
 	Material string
 	World    string
+	WorldID  int
 	X        int
 	Y        int
 	Z        int
+	Flag     bool
 	New      bool
 }
 
 func MailboxFields() string {
-	return "mailboxid, added, changed, lastscan, enabled, class, owner, signtext, material, world, x, y, z"
+	return "mailboxid, added, changed, lastscan, enabled, class, owner, signtext, material, world, x, y, z, flag"
 }
 
 func (b *Mailbox) RowScan(rows *sql.Rows) error {
@@ -57,11 +59,41 @@ func (b *Mailbox) RowScan(rows *sql.Rows) error {
 		&b.X,
 		&b.Y,
 		&b.Z,
+		&b.Flag,
 	)
+}
+
+func (b *Mailbox) Parse() error {
+	b.WorldID = coreprotect.WidFromWorld(b.World)
+
+	return nil
 }
 
 func (b *Mailbox) IsContainer() bool {
 	return Containers[b.Material]
+}
+
+func (b *Mailbox) SetFlag(flag bool) error {
+	query := `UPDATE mailbox SET flag = $1 WHERE mailboxid = $2 AND flag <> $1`
+	phoelib.LogSQL(query, flag, b.ID)
+	_, err := db.DB.Exec(query, flag, b.ID)
+	if err != nil {
+		return err
+	}
+	b.Flag = flag
+
+	return nil
+}
+
+func (b *Mailbox) Scanned() error {
+	query := `UPDATE mailbox SET lastscan = current_timestamp at time zone 'utc'  WHERE mailboxid = $1`
+	phoelib.LogSQL(query, b.ID)
+	_, err := db.DB.Exec(query, b.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (b *Mailbox) Rename() error {
@@ -142,6 +174,7 @@ func NewMailbox(b Mailbox) (Mailbox, error) {
 		if err != nil {
 			return Mailbox{}, err
 		}
+		b.Parse()
 		b.New = true
 		return b, nil
 	}
@@ -167,6 +200,7 @@ func GetMailboxByOwnerAndLocation(owner, world string, x, y, z int) (Mailbox, er
 		if err != nil {
 			return Mailbox{}, err
 		}
+		b.Parse()
 		return b, nil
 	}
 	return Mailbox{}, nil
@@ -191,12 +225,30 @@ func PollMailboxes() error {
 
 func PollMailbox(l Mailbox) error {
 	// Check for destruction
-	b, err := coreprotect.GetBlock(1, l.X, l.Y, l.Z)
+	b, err := coreprotect.GetBlock(l.WorldID, l.X, l.Y, l.Z)
 	if err != nil {
 		return err
 	}
 
+	destroyed := false
+
 	if b.Action == "destroyed" {
+		// block log action is literally destroyed
+		destroyed = true
+	}
+
+	if b.Material != "" && b.Material != l.Material {
+		// New block material is not the same as old block material
+		destroyed = true
+	}
+
+	if destroyed {
+		logrus.WithFields(logrus.Fields{
+			"action":      b.Action,
+			"material":    b.Material,
+			"oldMaterial": l.Material,
+		}).Trace("Mailbox dstruction detection")
+
 		err := l.Delete()
 		if err != nil {
 			logrus.WithError(err).Error("Mailbox was destroyed, unable to remove record")
@@ -214,13 +266,15 @@ func PollMailbox(l Mailbox) error {
 		return nil
 	}
 
-	fmt.Printf("Poll Mailbox: %+v\n", l)
-	fmt.Printf("Poll Container:  %+v\n", b)
+	//fmt.Printf("Poll Mailbox: %+v\n", l)
+	//fmt.Printf("Poll Container:  %+v\n", b)
 
 	ll, err := coreprotect.ContainerActivity(l.World, l.LastScan, l.X, l.Y, l.Z)
 	if err != nil {
 		return err
 	}
+
+	l.Scanned()
 
 	for i, t := range ll {
 		logrus.WithFields(logrus.Fields{
@@ -237,13 +291,23 @@ func PollMailbox(l Mailbox) error {
 		}).Info("Mailbox activity")
 
 		if l.Owner != "" {
-			if t.User != l.Owner {
+			if t.User == l.Owner {
+				if t.Action == "took" && l.Flag {
+					err = player.Advancement(b.User, "phoenixcraft:phoenixcraft/ygm")
+					if err != nil {
+						logrus.WithError(err).Warn("Unable to grant advancement")
+					}
+				}
+				l.SetFlag(false)
+			} else {
 				message := fmt.Sprintf("Someone %s items %s your mailbox at (%d, %d, %d)",
 					t.Action, t.Preposition, t.X, t.Y, t.Z)
 
+				l.SetFlag(true)
+
 				err = player.SendMessage(l.Owner, message)
 				if err != nil {
-					return err
+					logrus.WithError(err).Warn("Unable to SendMessage player")
 				}
 			}
 		}
@@ -267,6 +331,7 @@ func GetMailboxes() (ll []Mailbox, err error) {
 		if err != nil {
 			return ll, err
 		}
+		b.Parse()
 
 		ll = append(ll, b)
 	}
