@@ -1,0 +1,21 @@
+{
+    "display": {
+        "icon": {
+            "item": "minecraft:paper"
+        },
+        "title": {
+            "text": "Gone Postal!"
+        },
+        "description": {
+            "text": "Create your own mailbox on the server"
+        },
+        "show_toast": true,
+        "announce_to_chat": true
+    },
+    "parent": "phoenixcraft:phoenixcraft/root",
+    "criteria": {
+        "trust_phoebot": {
+            "trigger": "minecraft:impossible"
+        }
+    }
+}
