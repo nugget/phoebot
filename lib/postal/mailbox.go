@@ -191,7 +191,6 @@ func PollMailboxes() error {
 
 func PollMailbox(l Mailbox) error {
 	// Check for destruction
-	//fmt.Printf("Poll Mailbox: %+v\n", l)
 	b, err := coreprotect.GetBlock(1, l.X, l.Y, l.Z)
 	if err != nil {
 		return err
@@ -215,8 +214,40 @@ func PollMailbox(l Mailbox) error {
 		return nil
 	}
 
-	//fmt.Printf("Poll Mailboxesd:  %+v\n", b)
+	fmt.Printf("Poll Mailbox: %+v\n", l)
+	fmt.Printf("Poll Container:  %+v\n", b)
 
+	ll, err := coreprotect.ContainerActivity(l.World, l.LastScan, l.X, l.Y, l.Z)
+	if err != nil {
+		return err
+	}
+
+	for i, t := range ll {
+		logrus.WithFields(logrus.Fields{
+			"i":          i,
+			"player":     l.Owner,
+			"owner":      l.Owner,
+			"item":       t.Material,
+			"quantity":   t.Amount,
+			"action":     t.Action,
+			"actionCode": t.ActionCode,
+			"x":          t.X,
+			"y":          t.Y,
+			"z":          t.Z,
+		}).Info("Mailbox activity")
+
+		if l.Owner != "" {
+			if t.User != l.Owner {
+				message := fmt.Sprintf("Someone %s items %s your mailbox at (%d, %d, %d)",
+					t.Action, t.Preposition, t.X, t.Y, t.Z)
+
+				err = player.SendMessage(l.Owner, message)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 	return nil
 }
 

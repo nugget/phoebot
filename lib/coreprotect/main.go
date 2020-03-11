@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	DB *sql.DB
+	DB    *sql.DB
+	World map[int]string
 )
 
 func Connect(URIstring string) error {
@@ -44,5 +45,43 @@ func Connect(URIstring string) error {
 
 	logrus.WithField("version", version).Debug("CoreProtect database version")
 
+	if World == nil {
+		World = make(map[int]string)
+	}
+
 	return nil
+}
+
+func WorldFromWid(id int) (world string) {
+	if World[id] != "" {
+		return World[id]
+	}
+
+	query := `SELECT world FROM co_world WHERE id = ? LIMIT 1`
+	row := DB.QueryRow(query)
+	err := row.Scan(&world)
+	if err != nil {
+		return ""
+	}
+
+	World[id] = world
+	return World[id]
+}
+
+func WidFromWorld(world string) (wid int) {
+	for k, v := range World {
+		if v == world {
+			return k
+		}
+	}
+
+	query := `SELECT id FROM co_world WHERE world = ? LIMIT 1`
+	row := DB.QueryRow(query)
+	err := row.Scan(&wid)
+	if err != nil {
+		return 0
+	}
+
+	World[wid] = world
+	return wid
 }

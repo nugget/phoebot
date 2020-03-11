@@ -389,7 +389,7 @@ func MerchantLoop(mc *mcserver.Server, interval int) error {
 	}
 }
 
-func MailboxLoop(mc *mcserver.Server, interval int) error {
+func ScanRangeLoop(mc *mcserver.Server, interval int) error {
 	for {
 		if !mc.Connected {
 			logrus.WithFields(logrus.Fields{
@@ -403,7 +403,7 @@ func MailboxLoop(mc *mcserver.Server, interval int) error {
 				"connected": mc.Connected,
 			}).Trace("MailboxLoop starting")
 
-			err := postal.ScanMailboxes()
+			err := postal.ScanRanges()
 
 			if err != nil {
 				logrus.WithError(err).Error("postal.PollContainers failure")
@@ -757,7 +757,7 @@ func main() {
 	mc.WaitForServer(5)
 
 	go SignLoop(5)
-	go MailboxLoop(&mc, vc.GetInt("MAILBOX_POLL_INTERVAL"))
+	go ScanRangeLoop(&mc, vc.GetInt("MAILBOX_POLL_INTERVAL"))
 	go MerchantLoop(&mc, vc.GetInt("MERCHANT_POLL_INTERVAL"))
 
 	sc := make(chan os.Signal, 1)

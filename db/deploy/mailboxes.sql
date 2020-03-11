@@ -17,6 +17,7 @@ BEGIN;
         x int,
         y int,
         z int,
+        empty boolean NOT NULL DEFAULT TRUE,
         PRIMARY KEY(mailboxID)
     );
     CREATE TRIGGER onupdate BEFORE UPDATE ON mailbox FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();

@@ -147,7 +147,7 @@ func ReSign(l coreprotect.SignLog, player string) error {
 	return nil
 }
 
-func ScanMailboxes() error {
+func ScanRanges() error {
 	ranges, err := containers.GetRanges("mailboxes")
 	if err != nil {
 		return err
