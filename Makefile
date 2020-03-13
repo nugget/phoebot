@@ -4,7 +4,7 @@ deps: go-mc modules gazelle
 
 gazelle:
 	@echo Running gazelle to process BUILD.bazel files for Go
-	bazel run :gazelle -- update-repos -from_file=go.mod
+	bazel run :gazelle -- update-repos -from_file=go.mod --prune=true
 	bazel run :gazelle
 
 go-mc:
