@@ -22,7 +22,6 @@ import (
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/mcserver"
-	"github.com/nugget/phoebot/lib/merchant"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/postal"
@@ -330,8 +329,6 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegLinkRequest())
 	triggers = append(triggers, hooks.RegLinkVerify())
 
-	triggers = append(triggers, hooks.RegMerchantContainer())
-
 	return nil
 }
 
@@ -360,56 +357,6 @@ func SignLoop(interval int) error {
 			logrus.WithError(err).Error("postal.PollMailboxes failed")
 		}
 
-		time.Sleep(time.Duration(interval) * time.Second)
-	}
-}
-
-func MerchantLoop(mc *mcserver.Server, interval int) error {
-	for {
-		if !mc.Connected {
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Warn("Skipping MerchantLoop")
-		} else {
-			merchantMux.Lock()
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Trace("MerchantLoop starting")
-
-			err := merchant.ScanStock()
-
-			if err != nil {
-				logrus.WithError(err).Error("merchant.ScanStock failure")
-			}
-			merchantMux.Unlock()
-		}
-		time.Sleep(time.Duration(interval) * time.Second)
-	}
-}
-
-func ScanRangeLoop(mc *mcserver.Server, interval int) error {
-	for {
-		if !mc.Connected {
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Warn("Skipping MailboxLoop")
-		} else {
-			postalMux.Lock()
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Trace("MailboxLoop starting")
-
-			err := postal.ScanRanges()
-
-			if err != nil {
-				logrus.WithError(err).Error("postal.PollContainers failure")
-			}
-			postalMux.Unlock()
-		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }
@@ -757,8 +704,6 @@ func main() {
 	mc.WaitForServer(5)
 
 	go SignLoop(5)
-	go ScanRangeLoop(&mc, vc.GetInt("MAILBOX_POLL_INTERVAL"))
-	go MerchantLoop(&mc, vc.GetInt("MERCHANT_POLL_INTERVAL"))
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
