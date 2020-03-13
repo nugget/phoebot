@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
@@ -160,6 +161,13 @@ func Poller(class string, name string, interval int, fn models.LatestVersionFunc
 	}).Info("New Poller waiting for version")
 
 	for {
+		enabled, _ := config.GetBool("enable_product_poller", false)
+		if !enabled {
+			logrus.Trace("enable_product_poller config is false")
+			time.Sleep(time.Duration(300) * time.Second)
+			continue
+		}
+
 		maxVer, err := fn(p.Name)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{

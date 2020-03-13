@@ -52,7 +52,8 @@ func WriteString(item string, value string) error {
 }
 
 func GetTime(item string, defaultValue time.Time) (t time.Time, err error) {
-	valueString, err := GetString(item, "1")
+	defaultString := fmt.Sprintf("%d", defaultValue.Unix())
+	valueString, err := GetString(item, defaultString)
 	if err != nil {
 		return t, err
 	}
@@ -79,13 +80,14 @@ func WriteTime(item string, value time.Time) error {
 	return WriteString(item, valueString)
 }
 
-func GetInt(item string, defaultValue int) (i int, err error) {
-	valueString, err := GetString(item, "1")
+func GetInt(item string, defaultValue int64) (i int64, err error) {
+	defaultString := fmt.Sprintf("%d", defaultValue)
+	valueString, err := GetString(item, defaultString)
 	if err != nil {
 		return 0, err
 	}
 
-	i, err = strconv.Atoi(valueString)
+	i, err = strconv.ParseInt(valueString, 10, 64)
 	if err != nil {
 		return 0, err
 	}
@@ -93,8 +95,29 @@ func GetInt(item string, defaultValue int) (i int, err error) {
 	return i, nil
 }
 
-func WriteInt(item string, value int) error {
-	valueString := strconv.Itoa(value)
+func WriteInt(item string, value int64) error {
+	valueString := strconv.FormatInt(value, 10)
+
+	return WriteString(item, valueString)
+}
+
+func GetBool(item string, defaultValue bool) (b bool, err error) {
+	defaultString := strconv.FormatBool(defaultValue)
+	valueString, err := GetString(item, defaultString)
+	if err != nil {
+		return false, err
+	}
+
+	b, err = strconv.ParseBool(valueString)
+	if err != nil {
+		return false, err
+	}
+
+	return b, nil
+}
+
+func WriteBool(item string, value bool) error {
+	valueString := strconv.FormatBool(value)
 
 	return WriteString(item, valueString)
 }
