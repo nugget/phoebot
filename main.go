@@ -441,22 +441,11 @@ func processChatStream(s *mcserver.Server) {
 			}).Trace("onChatMsg Debug With")
 		}
 
-		class := mcserver.ChatMsgClass(c)
-
 		f := s.LogFields(logrus.Fields{
 			"event":     "processChatStream",
 			"translate": c.Translate,
-			"class":     class,
+			"class":     mcserver.ChatMsgClass(c),
 		})
-
-		switch class {
-		case "join":
-			si := console.ServerInfo{}
-			err := si.GetPlayers()
-			if err != nil {
-				logrus.WithError(err).Error("GetPlayers failure")
-			}
-		}
 
 		// Process in-game triggers
 		//
@@ -665,10 +654,8 @@ func main() {
 	go processAnnounceStream()
 	go processMojangStream()
 
-	if false {
-		go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
-		go mojang.Poller(interval)
-	}
+	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
+	go mojang.Poller(interval)
 
 	go housekeeping(600)
 
