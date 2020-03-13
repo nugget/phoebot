@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/ipc"
 
 	"github.com/Tnze/go-mc/bot"
@@ -243,6 +244,8 @@ func (s *Server) Status() (ps PingStats, err error) {
 	ps.Protocol = gjson.Get(json, "verison.protocol").Int()
 
 	ps.PlayersOnline--
+
+	config.WriteInt("players", ps.PlayersOnline)
 
 	return ps, nil
 }
