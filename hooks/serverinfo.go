@@ -27,17 +27,40 @@ func ProcServerInfo(dm *discordgo.MessageCreate) error {
 		return err
 	}
 
-	resp := fmt.Sprintf(
-		"%s\nTPS from last 1m, 5m, 15m: %2.2f, %2.2f, %2.2f\n%d/%d players online",
-		si.Version,
-		si.Tps1,
-		si.Tps5,
-		si.Tps15,
-		len(si.Players),
-		si.MaxPlayers,
-	)
+	mS := discordgo.MessageSend{}
+	mE := discordgo.MessageEmbed{}
 
-	discord.Session.ChannelMessageSend(dm.ChannelID, resp)
+	mF := discordgo.MessageEmbedFooter{}
+	mF.Text = fmt.Sprintf("%s", console.Hostname())
+	mE.Footer = &mF
+
+	mE.Fields = make([]*discordgo.MessageEmbedField, 0)
+
+	mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
+		Name: fmt.Sprintf("Players (%d/%d)",
+			len(si.Players),
+			si.MaxPlayers,
+		),
+		Value:  strings.Join(si.Players, ", "),
+		Inline: false,
+	})
+
+	mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
+		Name:   "Version",
+		Value:  si.Version,
+		Inline: false,
+	})
+
+	mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
+		Name:   "Performance (1m, 5m, 15m)",
+		Value:  fmt.Sprintf("%2.2f, %2.2f, %2.2f TPS", si.Tps1, si.Tps5, si.Tps15),
+		Inline: false,
+	})
+
+	mS.Embed = &mE
+
+	discord.Session.ChannelMessageSendComplex(dm.ChannelID, &mS)
+
 	return nil
 }
 
@@ -56,13 +79,27 @@ func ProcServerList(dm *discordgo.MessageCreate) error {
 		return err
 	}
 
-	resp := fmt.Sprintf(
-		"%d/%d players online:\n> %s",
-		len(si.Players),
-		si.MaxPlayers,
-		strings.Join(si.Players, ", "),
-	)
+	mS := discordgo.MessageSend{}
+	mE := discordgo.MessageEmbed{}
 
-	discord.Session.ChannelMessageSend(dm.ChannelID, resp)
+	mF := discordgo.MessageEmbedFooter{}
+	mF.Text = fmt.Sprintf("%s", console.Hostname())
+	mE.Footer = &mF
+
+	mE.Fields = make([]*discordgo.MessageEmbedField, 0)
+
+	mE.Fields = append(mE.Fields, &discordgo.MessageEmbedField{
+		Name: fmt.Sprintf("Players (%d/%d)",
+			len(si.Players),
+			si.MaxPlayers,
+		),
+		Value:  strings.Join(si.Players, ", "),
+		Inline: false,
+	})
+
+	mS.Embed = &mE
+
+	discord.Session.ChannelMessageSendComplex(dm.ChannelID, &mS)
+
 	return nil
 }
