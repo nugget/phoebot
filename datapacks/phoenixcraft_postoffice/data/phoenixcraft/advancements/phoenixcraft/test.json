@@ -1,0 +1,8 @@
+{
+  "parent": "phoenixcraft:phoenixcraft/root",
+  "criteria": {
+     "findme": {
+        "trigger": "minecraft:location"
+     }
+  }
+}

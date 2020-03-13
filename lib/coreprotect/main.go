@@ -4,48 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
-	"strings"
-	"time"
+
+	"github.com/nugget/phoebot/lib/phoelib"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/sirupsen/logrus"
 )
 
 var (
-	DB *sql.DB
+	DB    *sql.DB
+	World map[int]string
 )
-
-type ContainerLog struct {
-	Epoch       int64
-	Timestamp   time.Time
-	User        string
-	X           int
-	Y           int
-	Z           int
-	Material    string
-	Amount      int
-	Action      string
-	ActionCode  int
-	RolledBack  int
-	Preposition string
-}
-
-func (c *ContainerLog) Parse() error {
-	c.Timestamp = time.Unix(c.Epoch, 0)
-
-	if c.ActionCode == 1 {
-		c.Action = "placed"
-		c.Preposition = "into"
-	} else {
-		c.Action = "took"
-		c.Preposition = "from"
-	}
-
-	c.Material = strings.Title(strings.TrimPrefix(c.Material, "minecraft:"))
-
-	return nil
-}
 
 func Connect(URIstring string) error {
 	u, err := url.Parse(URIstring)
@@ -78,64 +47,59 @@ func Connect(URIstring string) error {
 
 	logrus.WithField("version", version).Debug("CoreProtect database version")
 
+	if World == nil {
+		World = make(map[int]string)
+	}
+
 	return nil
 }
 
-func ScanContainers(dimension string, lastScan time.Time, sx, sy, sz, fx, fy, fz int) (l []ContainerLog, err error) {
-	wid := 1
-	epoch := lastScan.Unix()
+func WorldFromWid(id int) (world string) {
+	if World[id] != "" {
+		return World[id]
+	}
 
-	sx, sy, sz, fx, fy, fz = phoelib.Rebound(sx, sy, sz, fx, fy, fz)
+	query := `SELECT world FROM co_world WHERE id = ? LIMIT 1`
+	phoelib.LogSQL(query, id)
+	row := DB.QueryRow(query, id)
+	err := row.Scan(&world)
+	if err != nil {
+		logrus.WithError(err).Error("WorldFromWid error")
+		return ""
+	}
 
-	query := `SELECT
-				u.user, x, y, z, m.material, c.action, c.rolled_back, max(c.time), sum(c.amount)
-		   	  FROM co_container c 
-			  LEFT JOIN (co_user u, co_material_map m) on (c.type = m.rowid and c.user = u.rowid)
-			  WHERE c.rolled_back = 0 
-			    AND c.wid = ?
-			    AND c.x >= ? AND c.x <= ? 
-				AND c.y >= ? AND c.y <= ? 
-				AND c.z >= ? AND c.z <= ?
-				AND c.time > ?
-			  GROUP BY u.user, x, y, z, m.material, c.action, c.rolled_back
-			  ORDER BY max(c.time)`
+	World[id] = world
 
 	logrus.WithFields(logrus.Fields{
-		"lastScan":  lastScan,
-		"epoch":     epoch,
-		"dimension": dimension,
-		"wid":       wid,
-		"start":     fmt.Sprintf("(%d, %d, %d)", sx, sy, sz),
-		"finish":    fmt.Sprintf("(%d, %d, %d)", fx, fy, fz),
-	}).Trace("Looking for container activity")
+		"wid":   World[id],
+		"world": world,
+	}).Trace("WorldFromWid")
 
-	rows, err := DB.Query(query, wid, sx, fx, sy, fy, sz, fz, epoch)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	return World[id]
+}
 
-	for rows.Next() {
-		c := ContainerLog{}
-
-		err = rows.Scan(
-			&c.User,
-			&c.X,
-			&c.Y,
-			&c.Z,
-			&c.Material,
-			&c.ActionCode,
-			&c.RolledBack,
-			&c.Epoch,
-			&c.Amount,
-		)
-		if err != nil {
-			return nil, err
+func WidFromWorld(world string) (wid int) {
+	for k, v := range World {
+		if v == world {
+			return k
 		}
-		c.Parse()
-
-		l = append(l, c)
 	}
 
-	return l, nil
+	query := `SELECT id FROM co_world WHERE world = ? LIMIT 1`
+	phoelib.LogSQL(query, world)
+	row := DB.QueryRow(query, world)
+	err := row.Scan(&wid)
+	if err != nil {
+		logrus.WithError(err).Error("WidFromWorld error")
+		return 0
+	}
+
+	World[wid] = world
+
+	logrus.WithFields(logrus.Fields{
+		"wid":   wid,
+		"world": World[wid],
+	}).Trace("WidFromWorld")
+
+	return wid
 }

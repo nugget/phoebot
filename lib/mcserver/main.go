@@ -164,6 +164,18 @@ func (s *Server) TestConnection() error {
 	return nil
 }
 
+func (s *Server) WaitForServer(secs int) {
+	for {
+		err := s.TestConnection()
+		if err != nil {
+			logrus.Trace("mc.WaitForServer Loop")
+		} else {
+			break
+		}
+		time.Sleep(time.Duration(secs) * time.Second)
+	}
+}
+
 func (s *Server) LogFields(f logrus.Fields) logrus.Fields {
 	if f == nil {
 		f = logrus.Fields{}

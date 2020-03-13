@@ -4,3 +4,4 @@ bazel*
 .DS_Store
 coverage.txt
 phoebot
+output

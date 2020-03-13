@@ -1,0 +1,21 @@
+{
+    "display": {
+        "icon": {
+            "item": "minecraft:diamond"
+        },
+        "title": {
+            "text": "Entrepreneur"
+        },
+        "description": {
+            "text": "Create a store on the server"
+        },
+        "show_toast": true,
+        "announce_to_chat": true
+    },
+    "parent": "phoenixcraft:phoenixcraft/root",
+    "criteria": {
+        "trust_phoebot": {
+            "trigger": "minecraft:impossible"
+        }
+    }
+}

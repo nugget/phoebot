@@ -3,10 +3,11 @@ module github.com/nugget/phoebot
 go 1.12
 
 require (
-	github.com/Tnze/go-mc v1.15.1
+	github.com/Tnze/go-mc v1.15.2-0.20200306023236-c0f3f3f8d4cf
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.20.2
 	github.com/go-sql-driver/mysql v1.4.1
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lib/pq v1.3.0

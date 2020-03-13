@@ -24,4 +24,6 @@ BEGIN;
     CREATE TRIGGER onupdate BEFORE UPDATE ON postal_scan FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
     GRANT SELECT, INSERT, UPDATE ON postal_scan TO phoebot;
 
+    GRANT SELECT, INSERT, UPDATE ON config TO phoebot;
+
 COMMIT;

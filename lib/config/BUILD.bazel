@@ -3,13 +3,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/nugget/phoebot/lib/merchant",
+    importpath = "github.com/nugget/phoebot/lib/config",
     visibility = ["//visibility:public"],
     deps = [
-        "//lib/containers:go_default_library",
-        "//lib/coreprotect:go_default_library",
         "//lib/db:go_default_library",
-        "//lib/player:go_default_library",
+        "//lib/phoelib:go_default_library",
         "@com_github_sirupsen_logrus//:go_default_library",
     ],
 )

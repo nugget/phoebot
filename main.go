@@ -10,19 +10,18 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/discord"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/mcserver"
-	"github.com/nugget/phoebot/lib/merchant"
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/postal"
@@ -38,9 +37,7 @@ import (
 )
 
 var (
-	triggers    []hooks.Trigger
-	postalMux   sync.Mutex
-	merchantMux sync.Mutex
+	triggers []hooks.Trigger
 )
 
 func shutdown() {
@@ -48,7 +45,7 @@ func shutdown() {
 	os.Exit(0)
 }
 
-func setupConfig() *viper.Viper {
+func setupvc() *viper.Viper {
 	c := viper.New()
 	c.AutomaticEnv()
 	c.SetDefault("MC_CHECK_INTERVAL", 600)
@@ -330,8 +327,6 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegLinkRequest())
 	triggers = append(triggers, hooks.RegLinkVerify())
 
-	triggers = append(triggers, hooks.RegMerchantContainer())
-
 	return nil
 }
 
@@ -344,62 +339,35 @@ func housekeeping(interval int) error {
 
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-
-	return nil
 }
 
-func MerchantLoop(mc *mcserver.Server, interval int) error {
+func SignLoop(interval int) error {
 	for {
-		if !mc.Connected {
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Warn("Skipping MerchantLoop")
-		} else {
-			merchantMux.Lock()
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Trace("MerchantLoop starting")
+		playerCount, err := config.GetInt("players", 0)
 
-			err := merchant.ScanStock()
+		if playerCount <= 1 {
+			logrus.WithFields(logrus.Fields{
+				"players": playerCount,
+			}).Trace("Skipping SignLoop")
 
-			if err != nil {
-				logrus.WithError(err).Error("merchant.ScanStock failure")
-			}
-			merchantMux.Unlock()
+			time.Sleep(time.Duration(interval*2) * time.Second)
+
+			continue
 		}
+		// Look for new tagging signs
+		err = postal.NewSignScan()
+		if err != nil {
+			logrus.WithError(err).Error("postal.NewSignScan failed")
+		}
+
+		// Look for mailbox updates
+		err = postal.PollMailboxes()
+		if err != nil {
+			logrus.WithError(err).Error("postal.PollMailboxes failed")
+		}
+
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-
-	return nil
-}
-
-func MailboxLoop(mc *mcserver.Server, interval int) error {
-	for {
-		if !mc.Connected {
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Warn("Skipping MailboxLoop")
-		} else {
-			postalMux.Lock()
-			logrus.WithFields(logrus.Fields{
-				"interval":  interval,
-				"connected": mc.Connected,
-			}).Trace("MailboxLoop starting")
-
-			err := postal.ScanMailboxes()
-
-			if err != nil {
-				logrus.WithError(err).Error("postal.PollContainers failure")
-			}
-			postalMux.Unlock()
-		}
-		time.Sleep(time.Duration(interval) * time.Second)
-	}
-
-	return nil
 }
 
 func processWhisperStream(s *mcserver.Server) {
@@ -473,11 +441,22 @@ func processChatStream(s *mcserver.Server) {
 			}).Trace("onChatMsg Debug With")
 		}
 
+		class := mcserver.ChatMsgClass(c)
+
 		f := s.LogFields(logrus.Fields{
 			"event":     "processChatStream",
 			"translate": c.Translate,
-			"class":     mcserver.ChatMsgClass(c),
+			"class":     class,
 		})
+
+		switch class {
+		case "join":
+			si := console.ServerInfo{}
+			err := si.GetPlayers()
+			if err != nil {
+				logrus.WithError(err).Error("GetPlayers failure")
+			}
+		}
 
 		// Process in-game triggers
 		//
@@ -628,21 +607,21 @@ func StatsUpdate(s *mcserver.Server) error {
 }
 
 func main() {
-	config := setupConfig()
+	vc := setupvc()
 	builddata.LogConversational()
 
 	for _, f := range []string{"DISCORD_BOT_TOKEN", "DATABASE_URI"} {
-		tV := config.GetString(f)
+		tV := vc.GetString(f)
 		if tV == "" {
 			logrus.WithField("variable", f).Fatal("Missing environment variable")
 		}
 	}
 
-	interval := config.GetInt("MC_CHECK_INTERVAL")
-	discordBotToken := config.GetString("DISCORD_BOT_TOKEN")
-	debugLevel := config.GetString("PHOEBOT_DEBUG")
-	dbURI := config.GetString("DATABASE_URI")
-	cpURI := config.GetString("COREPROTECT_URI")
+	interval := vc.GetInt("MC_CHECK_INTERVAL")
+	discordBotToken := vc.GetString("DISCORD_BOT_TOKEN")
+	debugLevel := vc.GetString("PHOEBOT_DEBUG")
+	dbURI := vc.GetString("DATABASE_URI")
+	cpURI := vc.GetString("COREPROTECT_URI")
 
 	if debugLevel != "" {
 		_, err := phoelib.LogLevel(debugLevel)
@@ -686,9 +665,10 @@ func main() {
 	go processAnnounceStream()
 	go processMojangStream()
 
-	// go serverpro.Poller(interval)
-	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
-	go mojang.Poller(interval)
+	if false {
+		go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
+		go mojang.Poller(interval)
+	}
 
 	go housekeeping(600)
 
@@ -698,19 +678,19 @@ func main() {
 	}
 
 	err = mc.Authenticate(
-		config.GetString("MINECRAFT_SERVER"),
-		config.GetInt("MINECRAFT_PORT"),
-		config.GetString("MOJANG_EMAIL"),
-		config.GetString("MOJANG_PASSWORD"),
+		vc.GetString("MINECRAFT_SERVER"),
+		vc.GetInt("MINECRAFT_PORT"),
+		vc.GetString("MOJANG_EMAIL"),
+		vc.GetString("MOJANG_PASSWORD"),
 	)
 	if err != nil {
 		logrus.WithError(err).Error("Error with mcserver Connect")
 	}
 
 	err = console.Initialize(
-		config.GetString("RCON_HOSTNAME"),
-		config.GetInt("RCON_PORT"),
-		config.GetString("RCON_PASSWORD"),
+		vc.GetString("RCON_HOSTNAME"),
+		vc.GetInt("RCON_PORT"),
+		vc.GetString("RCON_PASSWORD"),
 	)
 	if err != nil {
 		logrus.WithError(err).Error("RCON Initialization Failure")
@@ -737,9 +717,13 @@ func main() {
 	go processWhisperStream(&mc)
 	go processSayStream(&mc)
 	go StatsUpdate(&mc)
-	go MailboxLoop(&mc, config.GetInt("MAILBOX_POLL_INTERVAL"))
-	go MerchantLoop(&mc, config.GetInt("MERCHANT_POLL_INTERVAL"))
 	go mc.Handler()
+
+	// postal.Reset()
+
+	mc.WaitForServer(5)
+
+	go SignLoop(5)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)

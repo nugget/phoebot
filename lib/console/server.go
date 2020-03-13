@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nugget/phoebot/lib/config"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -93,6 +95,8 @@ func (si *ServerInfo) GetPlayers() error {
 			si.Players = append(si.Players, strings.TrimSpace(p))
 		}
 	}
+
+	config.WriteInt("players", len(si.Players))
 
 	return nil
 }

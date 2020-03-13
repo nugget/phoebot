@@ -1,0 +1,21 @@
+{
+    "display": {
+        "icon": {
+            "item": "minecraft:redstone"
+        },
+        "title": {
+            "text": "Discordant"
+        },
+        "description": {
+            "text": "Link your Minecraft account to the Discord server"
+        },
+        "show_toast": true,
+        "announce_to_chat": true
+    },
+    "parent": "phoenixcraft:phoenixcraft/root",
+    "criteria": {
+        "trust_phoebot": {
+            "trigger": "minecraft:impossible"
+        }
+    }
+}
