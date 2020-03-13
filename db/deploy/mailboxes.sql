@@ -23,4 +23,6 @@ BEGIN;
     CREATE TRIGGER onupdate BEFORE UPDATE ON mailbox FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
     GRANT SELECT, INSERT, UPDATE ON mailbox TO phoebot;
 
+    DROP TABLE scanrange;
+
 COMMIT;
