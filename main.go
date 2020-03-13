@@ -16,6 +16,7 @@ import (
 
 	"github.com/nugget/phoebot/hooks"
 	"github.com/nugget/phoebot/lib/builddata"
+	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/coreprotect"
 	"github.com/nugget/phoebot/lib/db"
@@ -345,8 +346,19 @@ func housekeeping(interval int) error {
 
 func SignLoop(interval int) error {
 	for {
+		playerCount, err := config.GetInt("players", 0)
+
+		if playerCount <= 1 {
+			logrus.WithFields(logrus.Fields{
+				"players": playerCount,
+			}).Trace("Skipping SignLoop")
+
+			time.Sleep(time.Duration(interval*2) * time.Second)
+
+			continue
+		}
 		// Look for new tagging signs
-		err := postal.NewSignScan()
+		err = postal.NewSignScan()
 		if err != nil {
 			logrus.WithError(err).Error("postal.NewSignScan failed")
 		}
@@ -432,11 +444,22 @@ func processChatStream(s *mcserver.Server) {
 			}).Trace("onChatMsg Debug With")
 		}
 
+		class := mcserver.ChatMsgClass(c)
+
 		f := s.LogFields(logrus.Fields{
 			"event":     "processChatStream",
 			"translate": c.Translate,
-			"class":     mcserver.ChatMsgClass(c),
+			"class":     class,
 		})
+
+		switch class {
+		case "join":
+			si := console.ServerInfo{}
+			err := si.GetPlayers()
+			if err != nil {
+				logrus.WithError(err).Error("GetPlayers failure")
+			}
+		}
 
 		// Process in-game triggers
 		//

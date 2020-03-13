@@ -78,3 +78,23 @@ func WriteTime(item string, value time.Time) error {
 
 	return WriteString(item, valueString)
 }
+
+func GetInt(item string, defaultValue int) (i int, err error) {
+	valueString, err := GetString(item, "1")
+	if err != nil {
+		return 0, err
+	}
+
+	i, err = strconv.Atoi(valueString)
+	if err != nil {
+		return 0, err
+	}
+
+	return i, nil
+}
+
+func WriteInt(item string, value int) error {
+	valueString := strconv.Itoa(value)
+
+	return WriteString(item, valueString)
+}
