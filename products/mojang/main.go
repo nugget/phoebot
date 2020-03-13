@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/db"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
@@ -234,12 +235,21 @@ func Poller(interval int) {
 	slew := rand.Intn(10)
 	interval = interval + slew
 
+	configFlag := fmt.Sprintf("enable_%s_poller", CLASS)
+
 	for {
-		logrus.WithField("interval", interval).Trace(fmt.Sprintf("Looping %s Poller", CLASS))
+		enabled, _ := config.GetBool(configFlag, false)
+		if !enabled {
+			logrus.Tracef("%s config is false", configFlag)
+			time.Sleep(time.Duration(300) * time.Second)
+			continue
+		}
+
+		logrus.WithField("interval", interval).Tracef("Looping %s Poller", CLASS)
 
 		err := SeekReleases()
 		if err != nil {
-			logrus.WithError(err).Error(fmt.Sprintf("%s SeekReleases failed", CLASS))
+			logrus.WithError(err).Errorf("%s SeekReleases failed", CLASS)
 		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
