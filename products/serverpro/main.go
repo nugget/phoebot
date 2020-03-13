@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/models"
@@ -191,7 +192,16 @@ func Poller(interval int) {
 	slew := rand.Intn(10)
 	interval = interval + slew
 
+	configFlag := fmt.Sprintf("enable_%s_poller", CLASS)
+
 	for {
+		enabled, _ := config.GetBool(configFlag, false)
+		if !enabled {
+			logrus.Tracef("%s config is false", configFlag)
+			time.Sleep(time.Duration(300) * time.Second)
+			continue
+		}
+
 		logrus.WithField("interval", interval).Debug(fmt.Sprintf("Looping %s Poller", CLASS))
 
 		err := UpdateAllProducts()

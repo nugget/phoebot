@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -212,6 +213,39 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		if err != nil {
 			logrus.WithError(err).Error("Unable to update PM channel owner")
 		}
+	} else {
+		// Not a PM, so let's evaluate the channel whitelist
+		discordWhitelist, err := config.GetString("whitelist_channel_regexp", ".*")
+		if err != nil {
+			logrus.WithError(err).Error("config.GetString failed")
+			return
+		}
+
+		re := regexp.MustCompile(discordWhitelist)
+		if !re.MatchString(channel.Name) {
+			logrus.WithFields(logrus.Fields{
+				"channel": channel.Name,
+				"regexp":  discordWhitelist,
+			}).Trace("Ignoring channel not in whitelist")
+
+			return
+		}
+
+		discordBlacklist, err := config.GetString("blacklist_channel_regexp", "this-channel-does-not-exist")
+		if err != nil {
+			logrus.WithError(err).Error("config.GetString failed")
+			return
+		}
+
+		re = regexp.MustCompile(discordBlacklist)
+		if re.MatchString(channel.Name) {
+			logrus.WithFields(logrus.Fields{
+				"channel": channel.Name,
+				"regexp":  discordWhitelist,
+			}).Trace("Ignoring channel in blacklist")
+
+			return
+		}
 	}
 
 	logMsg := fmt.Sprintf("<%s> %s", dm.Author.Username, dm.Content)
@@ -345,7 +379,7 @@ func SignLoop(interval int) error {
 	for {
 		playerCount, err := config.GetInt("players", 0)
 
-		if playerCount <= 1 {
+		if playerCount == 0 {
 			logrus.WithFields(logrus.Fields{
 				"players": playerCount,
 			}).Trace("Skipping SignLoop")
@@ -441,22 +475,11 @@ func processChatStream(s *mcserver.Server) {
 			}).Trace("onChatMsg Debug With")
 		}
 
-		class := mcserver.ChatMsgClass(c)
-
 		f := s.LogFields(logrus.Fields{
 			"event":     "processChatStream",
 			"translate": c.Translate,
-			"class":     class,
+			"class":     mcserver.ChatMsgClass(c),
 		})
-
-		switch class {
-		case "join":
-			si := console.ServerInfo{}
-			err := si.GetPlayers()
-			if err != nil {
-				logrus.WithError(err).Error("GetPlayers failure")
-			}
-		}
 
 		// Process in-game triggers
 		//
@@ -665,10 +688,8 @@ func main() {
 	go processAnnounceStream()
 	go processMojangStream()
 
-	if false {
-		go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
-		go mojang.Poller(interval)
-	}
+	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
+	go mojang.Poller(interval)
 
 	go housekeeping(600)
 
