@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -211,6 +212,39 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		err := discord.SetPMOwner(dm)
 		if err != nil {
 			logrus.WithError(err).Error("Unable to update PM channel owner")
+		}
+	} else {
+		// Not a PM, so let's evaluate the channel whitelist
+		discordWhitelist, err := config.GetString("whitelist_channel_regexp", ".*")
+		if err != nil {
+			logrus.WithError(err).Error("config.GetString failed")
+			return
+		}
+
+		re := regexp.MustCompile(discordWhitelist)
+		if !re.MatchString(channel.Name) {
+			logrus.WithFields(logrus.Fields{
+				"channel": channel.Name,
+				"regexp":  discordWhitelist,
+			}).Trace("Ignoring channel not in whitelist")
+
+			return
+		}
+
+		discordBlacklist, err := config.GetString("blacklist_channel_regexp", "this-channel-does-not-exist")
+		if err != nil {
+			logrus.WithError(err).Error("config.GetString failed")
+			return
+		}
+
+		re = regexp.MustCompile(discordBlacklist)
+		if re.MatchString(channel.Name) {
+			logrus.WithFields(logrus.Fields{
+				"channel": channel.Name,
+				"regexp":  discordWhitelist,
+			}).Trace("Ignoring channel in blacklist")
+
+			return
 		}
 	}
 
