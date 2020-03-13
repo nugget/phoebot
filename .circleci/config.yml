@@ -2,7 +2,7 @@ version: 2
 jobs:
   build-go-modules:
     docker:
-    - image: circleci/golang
+    - image: circleci/golang:1.14.0
     working_directory: ~/src/phoebot
     steps:
     - checkout
