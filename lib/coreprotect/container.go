@@ -14,7 +14,7 @@ import (
 type ContainerLog struct {
 	Epoch       int64
 	Timestamp   time.Time
-	User        string
+	Player      string
 	WorldID     int
 	World       string
 	X           int
@@ -30,7 +30,7 @@ type ContainerLog struct {
 
 func (c *ContainerLog) Scan(rows *sql.Rows) error {
 	return rows.Scan(
-		&c.User,
+		&c.Player,
 		&c.WorldID,
 		&c.X,
 		&c.Y,

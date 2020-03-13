@@ -224,6 +224,8 @@ func PollMailboxes() error {
 }
 
 func PollMailbox(l Mailbox) error {
+	var message string
+
 	// Check for destruction
 	b, err := coreprotect.GetBlock(l.WorldID, l.X, l.Y, l.Z)
 	if err != nil {
@@ -257,7 +259,12 @@ func PollMailbox(l Mailbox) error {
 
 		logrus.Warn("Mailbox was destroyed, removed record")
 
-		message := fmt.Sprintf("Your mailbox at %d %d %d seems to be gone, so I will stop checking it.", l.X, l.Y, l.Z)
+		switch l.Class {
+		case "mailbox":
+			message = fmt.Sprintf("Your mailbox at %d %d %d seems to be gone, so I will stop checking it.", l.X, l.Y, l.Z)
+		case "shop":
+			message = fmt.Sprintf("Your display case at %d %d %d seems to be gone, so I will stop checking it.", l.X, l.Y, l.Z)
+		}
 		err = player.SendMessage(l.Owner, message)
 		if err != nil {
 			logrus.WithError(err).Error("Unable to send message to player")
@@ -291,8 +298,8 @@ func PollMailbox(l Mailbox) error {
 		}).Info("Mailbox activity")
 
 		if l.Owner != "" {
-			if t.User == l.Owner {
-				if t.Action == "took" && l.Flag {
+			if t.Player == l.Owner {
+				if l.Class == "mailbox" && t.Action == "took" && l.Flag {
 					err = player.Advancement(b.User, "phoenixcraft:phoenixcraft/ygm")
 					if err != nil {
 						logrus.WithError(err).Warn("Unable to grant advancement")
@@ -300,8 +307,14 @@ func PollMailbox(l Mailbox) error {
 				}
 				l.SetFlag(false)
 			} else {
-				message := fmt.Sprintf("Someone %s items %s your mailbox at (%d, %d, %d)",
-					t.Action, t.Preposition, t.X, t.Y, t.Z)
+				switch l.Class {
+				case "mailbox":
+					message = fmt.Sprintf("Someone %s items %s your mailbox at (%d, %d, %d)",
+						t.Action, t.Preposition, t.X, t.Y, t.Z)
+				case "shop":
+					message = fmt.Sprintf("%s %s %d %s %s your display case at (%d, %d, %d)",
+						t.Player, t.Action, t.Amount, t.Material, t.Preposition, t.X, t.Y, t.Z)
+				}
 
 				l.SetFlag(true)
 

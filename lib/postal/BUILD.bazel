@@ -11,8 +11,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//lib/config:go_default_library",
-        "//lib/console:go_default_library",
-        "//lib/containers:go_default_library",
         "//lib/coreprotect:go_default_library",
         "//lib/db:go_default_library",
         "//lib/ipc:go_default_library",

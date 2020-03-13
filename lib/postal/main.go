@@ -32,9 +32,16 @@ func NewSignScan() error {
 	if err != nil {
 		return err
 	}
-
 	for _, l := range ll {
 		processSign(l, "mailbox")
+	}
+
+	ll, err = coreprotect.ScanSigns("shop", lastScan)
+	if err != nil {
+		return err
+	}
+	for _, l := range ll {
+		processSign(l, "shop")
 	}
 
 	return nil
@@ -143,7 +150,7 @@ func processSign(l coreprotect.SignLog, class string) error {
 						logrus.WithError(err).Error("Unable to send message to player")
 					}
 
-					err = player.Advancement(b.User, "phoenixcraft:phoenixcraft/shopkeep")
+					err = player.Advancement(b.User, "phoenixcraft:phoenixcraft/entrepreneur")
 					if err != nil {
 						logrus.WithError(err).Warn("Unable to grant advancement")
 					}
