@@ -80,14 +80,14 @@ func WriteTime(item string, value time.Time) error {
 	return WriteString(item, valueString)
 }
 
-func GetInt(item string, defaultValue int) (i int, err error) {
-	defaultString := strconv.Itoa(defaultValue)
+func GetInt(item string, defaultValue int64) (i int64, err error) {
+	defaultString := fmt.Sprintf("%d", defaultValue)
 	valueString, err := GetString(item, defaultString)
 	if err != nil {
 		return 0, err
 	}
 
-	i, err = strconv.Atoi(valueString)
+	i, err = strconv.ParseInt(valueString, 10, 64)
 	if err != nil {
 		return 0, err
 	}
@@ -95,8 +95,8 @@ func GetInt(item string, defaultValue int) (i int, err error) {
 	return i, nil
 }
 
-func WriteInt(item string, value int) error {
-	valueString := strconv.Itoa(value)
+func WriteInt(item string, value int64) error {
+	valueString := strconv.FormatInt(value, 10)
 
 	return WriteString(item, valueString)
 }

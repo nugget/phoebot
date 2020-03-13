@@ -345,7 +345,7 @@ func SignLoop(interval int) error {
 	for {
 		playerCount, err := config.GetInt("players", 0)
 
-		if playerCount <= 1 {
+		if playerCount == 0 {
 			logrus.WithFields(logrus.Fields{
 				"players": playerCount,
 			}).Trace("Skipping SignLoop")
