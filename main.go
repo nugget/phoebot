@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -38,9 +37,7 @@ import (
 )
 
 var (
-	triggers    []hooks.Trigger
-	postalMux   sync.Mutex
-	merchantMux sync.Mutex
+	triggers []hooks.Trigger
 )
 
 func shutdown() {
