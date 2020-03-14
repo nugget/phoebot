@@ -24,11 +24,3 @@ spec:
             name: phoebot-config
         - secretRef:
             name: phoebot-secret
-        volumeMounts:
-        - mountPath: /phoebot
-          name: phoebot-data
-      volumes:
-      - name: phoebot-data
-        nfs:
-          server: 172.28.20.8
-          path: "/volume1/rancher/phoebot"

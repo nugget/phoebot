@@ -1,6 +1,11 @@
-.PHONY:	gazelle phoebot run deploy
+$(eval VERSION=$(shell git describe --always --tags --abbrev=1))
+
+.PHONY:	gazelle phoebot run deploy datapacks clean
 
 deps: go-mc modules gazelle
+
+clean:
+	rm output/*
 
 gazelle:
 	@echo Running gazelle to process BUILD.bazel files for Go
@@ -43,6 +48,10 @@ cptest: gazelle
 	clear
 	bazel run //cmd/cptest
 
+datapacks:
+	cd datapacks/phoenixcraft_postoffice &&  zip -r ../../output/phoenixcraft-postoffice-$(VERSION).zip *
+	cd datapacks/phoenixcraft_elytra_crafting &&  zip -r ../../output/phoenixcraft-elytra-$(VERSION).zip *
+	
 dbpb:
 	psql ${DATABASE_URI}
 

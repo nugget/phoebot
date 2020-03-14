@@ -106,9 +106,33 @@ container_push(
 )
 
 k8s_object(
-    name = "deploy",
+    name = "main_deploy",
     kind = "deployment",
-    template = ":k8s/deployment.yaml",
+    template = ":k8s/main-deployment.yaml",
+    cluster = "nuggethaus",
+    namespace = "phoebot",
+    user = "user-hcfd8",
+    images = {
+        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
+    },
+)
+
+k8s_object(
+    name = "smp_deploy",
+    kind = "deployment",
+    template = ":k8s/smp-deployment.yaml",
+    cluster = "nuggethaus",
+    namespace = "phoebot",
+    user = "user-hcfd8",
+    images = {
+        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
+    },
+)
+
+k8s_object(
+    name = "legacy_deploy",
+    kind = "deployment",
+    template = ":k8s/legacy-deployment.yaml",
     cluster = "nuggethaus",
     namespace = "phoebot",
     user = "user-hcfd8",

@@ -231,8 +231,8 @@ go_repository(
 go_repository(
     name = "com_github_go_sql_driver_mysql",
     importpath = "github.com/go-sql-driver/mysql",
-    sum = "h1:g24URVg0OFbNUTx9qqY1IRZ9D9z3iPyi5zKhQZpNwpA=",
-    version = "v1.4.1",
+    sum = "h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gGcHOs=",
+    version = "v1.5.0",
 )
 
 go_repository(
@@ -567,8 +567,8 @@ go_repository(
 go_repository(
     name = "com_github_spf13_viper",
     importpath = "github.com/spf13/viper",
-    sum = "h1:VPZzIkznI1YhVMRi6vNFLHSwhnhReBfgTxIPccpfdZk=",
-    version = "v1.6.1",
+    sum = "h1:7aKfF+e8/k68gda3LOjo5RxiUqddoFxVq4BKBPrxk5E=",
+    version = "v1.6.2",
 )
 
 go_repository(
@@ -595,8 +595,8 @@ go_repository(
 go_repository(
     name = "com_github_tidwall_gjson",
     importpath = "github.com/tidwall/gjson",
-    sum = "h1:2oW9FBNu8qt9jy5URgrzsVx/T/KSn3qn/smJQ0crlDQ=",
-    version = "v1.3.5",
+    sum = "h1:9VEQWz6LLMUsUl6PueE49ir4Ka6CzLymOAZDxpFsTDc=",
+    version = "v1.6.0",
 )
 
 go_repository(
