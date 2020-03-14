@@ -21,8 +21,8 @@ BEGIN;
         fz int,
         PRIMARY KEY(scanrangeID)
     );
-    CREATE TRIGGER onupdate BEFORE UPDATE ON postal_scan FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
-    GRANT SELECT, INSERT, UPDATE ON postal_scan TO phoebot;
+    CREATE TRIGGER onupdate BEFORE UPDATE ON scanrange FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
+    GRANT SELECT, INSERT, UPDATE ON scanrange TO phoebot;
 
     GRANT SELECT, INSERT, UPDATE ON config TO phoebot;
 
