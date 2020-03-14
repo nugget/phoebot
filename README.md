@@ -3,81 +3,10 @@
 ## Phoebot Phoenixcraft SMP Assistant
 
 Phoebot is an autonomous assistant that hangs out in the Phoenixcraft SMP
-Minecraft [Discord server] and helps out with various tasks.  
+Minecraft [Discord server] and helps out with various tasks.
 
-### Functions
-
-There are two types of commands/functions that Phoebot supports.  Some commands
-are "targeted" and you need to tag `@Phoebot` in your request on a public
-channel, or you need to make the request in a direct message to Phoebot
-privately for it to work.  Without a tag or DM, the command will be ignored.
-
-Other commands operate on any relevant line spoken in a public channel or in
-a DM session to Phoebot.  These commands do not need to be tagged with an "@"
-in order to work.
-
-#### Version Announcement Subscriptions
-
-Phoebot will notify individual users or channels whenever a new release of
-Minecraft or PaperMC is released or made available on our [hosting provider].
-You can control this behavior by subscribing or unsubscribing in a channel or
-private message window.  This tagged command works like this:
-
-```
-subscribe <source> <product> [ optional recipient ]
-```
-
-So, for example, in the `#chatter` window you could say:
-
-```
-@Phoebot subscribe server.pro paper @here
-
-@Phoebot subscribe papermc paper
-
-@Phoebot subscribe server.pro vanilla
-```
-
-This would add a subscription to that specific channel, and whenever a new
-version is detected Phoebot will send a message to the channel tagged to the
-optional recipient `@here`
-
-You can turn this off by issuing an `unsubscribe` command.
-
-You can see what subscriptions exist for a channel by using the `list
-subscriptions` command.
-
-We will be adding more sources and products over time, including things like
-popular data packs and add-ons.
-
-#### Linking Discord and Minecraft accounts
-
-These instructions have moved to [this document](docs/discord.md).
-
-#### Version Report
-
-Asking Phoebot for a `version report` will provide a list of the most popular
-versions that are being tracked by the bot.
-
-#### Time Conversion Helper
-
-Any time you write a date/time string in Discord, if it follows this strict
-format, Phoebot will helpfully follow up with time conversions to several other
-time zones which are relevant to our server users.  This makes it easier and
-less error-prone to announce upcoming server events.
-
-Just include a date-time in this form in your Discord message:
-
-```
-2019-05-25 14:45 CDT
-```
-
-The time must be in 24-hour "military" form.  Most popular time zones are
-supported. If yours is not, please open an issue here on Github describing what
-you need.  The time does not need to be alone on a line, it can be contained
-within a longer message and the conversion will still work.
-
-Phoebot also has support for the custom time zones "SYDNEY" and "BRISBANE" to
-allow for special-handling of our favorite Australian users.
+For user documentaton and more information, please see [The
+Wiki](https://github.com/nugget/phoebot/wiki).
 
 ### Installation and Operation
 
