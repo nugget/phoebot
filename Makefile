@@ -5,7 +5,8 @@ $(eval VERSION=$(shell git describe --always --tags --abbrev=1))
 deps: go-mc modules gazelle
 
 clean:
-	rm output/*
+	@echo Cleaning build artifacts and output files
+	@rm output/*
 
 gazelle:
 	@echo Running gazelle to process BUILD.bazel files for Go
@@ -48,9 +49,11 @@ cptest: gazelle
 	clear
 	bazel run //cmd/cptest
 
-datapacks:
-	cd datapacks/phoenixcraft_postoffice &&  zip -r ../../output/phoenixcraft-postoffice-$(VERSION).zip *
-	cd datapacks/phoenixcraft_elytra_crafting &&  zip -r ../../output/phoenixcraft-elytra-$(VERSION).zip *
+datapacks: clean
+	@cd datapacks/phoenixcraft_postoffice &&  zip -qr ../../output/phoenixcraft-postoffice-$(VERSION).zip *
+	@cd datapacks/phoenixcraft_elytra_crafting &&  zip -qr ../../output/phoenixcraft-elytra-$(VERSION).zip *
+	@echo "Datapacks in output directory:"
+	@ls -la output/*.zip
 	
 dbpb:
 	psql ${DATABASE_URI}
