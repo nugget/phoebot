@@ -54,6 +54,8 @@ func smartLoc(tz string) (loc *time.Location) {
 		name = "Australia/Adelaide"
 	case "IST":
 		name = "Asia/Kolkata"
+	case "NZDT":
+		name = "Pacific/Auckland"
 	case "UTC":
 		name = "UTC"
 	default:
@@ -74,11 +76,14 @@ func smartLoc(tz string) (loc *time.Location) {
 func ProcTimezones(dm *discordgo.MessageCreate) error {
 	tzList := []string{
 		"America/Los_Angeles",
+		"America/Chicago",
 		"America/New_York",
 		"Europe/London",
 		"Europe/Amsterdam",
+		"Europe/Moscow",
 		"Asia/Kolkata",
 		"Australia/Brisbane",
+		"Pacific/Auckland",
 	}
 
 	t := RegTimezones()
