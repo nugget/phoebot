@@ -81,6 +81,7 @@ func (s *Server) Connect() (err error) {
 		}
 
 		if !ok {
+			s.auth.Invalidate()
 			return fmt.Errorf("Mojang accessToken is not valid")
 		}
 	}
@@ -215,6 +216,7 @@ func (s *Server) Handler() {
 				"backoffSeconds": backoffSeconds,
 				"backoffLimit":   backoffLimit,
 			}).Error("Unable to connect to Minecraft server")
+
 		}
 
 		time.Sleep(time.Duration(backoffSeconds) * time.Second)
