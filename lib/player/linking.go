@@ -9,6 +9,7 @@ import (
 
 	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/player"
 
 	"github.com/sirupsen/logrus"
 )
@@ -53,6 +54,12 @@ func OnJoinVerifyNag(joinMessage string) error {
 		logrus.WithFields(logrus.Fields{
 			"player": p.MinecraftName,
 		}).Trace("Player is already verified with Discord")
+
+		err = player.Advancement(minecraftName, "phoenixcraft:phoenixcraft/discord")
+		if err != nil {
+			logrus.WithError(err).Warn("Unable to grant advancement")
+		}
+
 		return nil
 	}
 
