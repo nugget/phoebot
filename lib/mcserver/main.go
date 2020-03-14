@@ -27,6 +27,7 @@ type Server struct {
 	password    string
 	Connected   bool
 	ConnectTime time.Time
+	MyName      string
 	auth        *yggdrasil.Access
 }
 
@@ -34,7 +35,7 @@ type PingStats struct {
 	Delay         time.Duration
 	PlayersOnline int64
 	PlayersMax    int64
-	Description   string
+	MOTD          string
 	Version       string
 	Protocol      int64
 }
@@ -163,6 +164,11 @@ func (s *Server) TestConnection() error {
 		return fmt.Errorf("Can't swing my arm: %v", err)
 	}
 
+	if s.Client.Auth.Name != s.MyName {
+		s.MyName = s.Client.Auth.Name
+		config.WriteString("minecraftName", s.Client.Auth.Name)
+	}
+
 	return nil
 }
 
@@ -241,7 +247,7 @@ func (s *Server) Status() (ps PingStats, err error) {
 
 	ps.PlayersOnline = gjson.Get(json, "players.online").Int()
 	ps.PlayersMax = gjson.Get(json, "players.max").Int()
-	ps.Description = gjson.Get(json, "description.text").String()
+	ps.MOTD = gjson.Get(json, "description.text").String()
 	ps.Version = gjson.Get(json, "version.name").String()
 	ps.Protocol = gjson.Get(json, "verison.protocol").Int()
 

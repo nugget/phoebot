@@ -15,3 +15,4 @@ containers 2019-11-06T17:46:50Z David McNett <nugget@activestate.com> # Adding t
 postal-tables 2019-11-27T22:12:00Z David McNett <nugget@activestate.com> # Tables for improved postal system
 drop-containers 2019-12-10T02:29:32Z David McNett <nugget@kubo.nuggethaus.net> # Drop the container table
 mailboxes 2020-03-07T04:44:00Z David McNett <nugget@kubo.local> # New style tracking of individual mailboxes
+verify-nags 2020-03-14T19:20:13Z David McNett <nugget@kubo.nuggethaus.net> # Restructure the player database

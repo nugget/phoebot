@@ -550,6 +550,10 @@ func processChatStream(s *mcserver.Server) {
 				go StatsUpdate(s)
 				logrus.WithFields(f).Info(noColorsMessage)
 				matchingSubs, err = subscriptions.GetMatching("mcserver", "joins")
+				nagErr := player.OnJoinVerifyNag(noColorsMessage)
+				if nagErr != nil {
+					logrus.WithError(nagErr).Warn("OnJoinVerifyNag Failed")
+				}
 			case "announcement":
 				logrus.WithFields(f).Warn(noColorsMessage)
 			case "ignore":
@@ -589,14 +593,14 @@ func StatsUpdate(s *mcserver.Server) error {
 		logrus.WithError(err).Error("PingAndList Failure")
 	} else {
 		logrus.WithFields(logrus.Fields{
-			"delay":      ps.Delay,
-			"online":     ps.PlayersOnline,
-			"max":        ps.PlayersMax,
-			"version":    ps.Version,
-			"serverName": ps.Description,
+			"delay":   ps.Delay,
+			"online":  ps.PlayersOnline,
+			"max":     ps.PlayersMax,
+			"version": ps.Version,
+			"motd":    ps.MOTD,
 		}).Debug("PingAndList")
 
-		newTopic := fmt.Sprintf("%s (%d/%d players online)", ps.Description, ps.PlayersOnline, ps.PlayersMax)
+		newTopic := fmt.Sprintf("%s (%d/%d players online)", ps.MOTD, ps.PlayersOnline, ps.PlayersMax)
 
 		matchingSubs, err := subscriptions.GetMatching("mcserver", "topic")
 		if err != nil {
