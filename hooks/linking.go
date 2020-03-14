@@ -103,6 +103,11 @@ func ProcLinkVerify(dm *discordgo.MessageCreate) error {
 			"minecraftName": minecraftName,
 		}).Info("Linked Minecraft Account")
 
+		err = player.Advancement(minecraftName, "phoenixcraft:phoenixcraft/discord")
+		if err != nil {
+			logrus.WithError(err).Warn("Unable to grant advancement")
+		}
+
 		msg := fmt.Sprintf("You are successfully linked with Minecraft user %s", minecraftName)
 		discord.Session.ChannelMessageSend(dm.ChannelID, msg)
 	}
