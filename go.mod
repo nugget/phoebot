@@ -6,7 +6,7 @@ require (
 	github.com/Tnze/go-mc v1.15.2-0.20200306023236-c0f3f3f8d4cf
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.20.2
-	github.com/go-sql-driver/mysql v1.4.1
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
@@ -18,9 +18,9 @@ require (
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.6.1
+	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.3.0 // indirect
-	github.com/tidwall/gjson v1.3.5
+	github.com/tidwall/gjson v1.6.0
 	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876 // indirect
 	golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
