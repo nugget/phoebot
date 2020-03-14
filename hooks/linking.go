@@ -83,8 +83,8 @@ func ProcLinkVerify(dm *discordgo.MessageCreate) error {
 			"code": code,
 		}).Warn("Unrecognized verify code")
 
-		msg := "I don't recognize that code, sorry."
-		discord.Session.ChannelMessageSend(dm.ChannelID, msg)
+		// msg := "I don't recognize that code, sorry."
+		// discord.Session.ChannelMessageSend(dm.ChannelID, msg)
 		return nil
 	}
 
