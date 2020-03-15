@@ -322,6 +322,13 @@ func PollMailbox(l Mailbox) error {
 				case "shop":
 					message = fmt.Sprintf("%s %s %d %s %s your display case at (%d, %d, %d)",
 						t.Player, t.Action, t.Amount, t.Material, t.Preposition, t.X, t.Y, t.Z)
+
+					if t.Action == "placed" && t.Material == "Diamond" {
+						err = player.Advancement(b.User, "phoenixcraft:phoenixcraft/spendthrift")
+						if err != nil {
+							logrus.WithError(err).Warn("Unable to grant advancement")
+						}
+					}
 				}
 
 				l.SetFlag(true)

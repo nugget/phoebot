@@ -1,18 +1,18 @@
 {
     "display": {
         "icon": {
-            "item": "minecraft:diamond_block"
+            "item": "minecraft:diamond"
         },
         "title": {
-            "text": "Entrepreneur"
+            "text": "Spendthrift"
         },
         "description": {
-            "text": "Create a store on the server"
+            "text": "Make a purchase from another player's store"
         },
         "show_toast": true,
         "announce_to_chat": true
     },
-    "parent": "phoenixcraft:phoenixcraft/spendthrift",
+    "parent": "phoenixcraft:phoenixcraft/root",
     "criteria": {
         "trust_phoebot": {
             "trigger": "minecraft:impossible"
