@@ -11,6 +11,7 @@ BEGIN;
         maxrowid int NOT NULL DEFAULT 1,
         enabled boolean NOT NULL DEFAULT TRUE,
         class varchar NOT NULL DEFAULT 'mailbox',
+        description varchar NOT NULL DEFAULT '',
         owner varchar NOT NULL DEFAULT '',
         signtext varchar NOT NULL DEFAULT '',
         material varchar NOT NULL DEFAULT '',
