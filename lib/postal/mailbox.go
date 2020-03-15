@@ -286,7 +286,7 @@ func PollMailbox(l Mailbox) error {
 	for i, t := range ll {
 		logrus.WithFields(logrus.Fields{
 			"i":          i,
-			"player":     l.Owner,
+			"player":     t.Player,
 			"owner":      l.Owner,
 			"item":       t.Material,
 			"quantity":   t.Amount,
