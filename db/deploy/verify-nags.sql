@@ -16,7 +16,6 @@ BEGIN;
         PRIMARY KEY(minecraftname)
     );
 
-    CREATE TRIGGER onupdate BEFORE UPDATE ON verify FOR EACH ROW EXECUTE PROCEDURE onupdate_changed();
     GRANT SELECT, INSERT, UPDATE ON verify TO phoebot;
 
 COMMIT;
