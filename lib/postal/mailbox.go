@@ -249,7 +249,7 @@ func PollMailbox(l Mailbox) error {
 			"action":      b.Action,
 			"material":    b.Material,
 			"oldMaterial": l.Material,
-		}).Trace("Mailbox dstruction detection")
+		}).Trace("Mailbox destruction detection")
 
 		err := l.Delete()
 		if err != nil {
@@ -295,7 +295,7 @@ func PollMailbox(l Mailbox) error {
 			"x":          t.X,
 			"y":          t.Y,
 			"z":          t.Z,
-		}).Info("Mailbox activity")
+		}).Warn("Mailbox activity")
 
 		if l.Owner != "" {
 			if t.Player == l.Owner {

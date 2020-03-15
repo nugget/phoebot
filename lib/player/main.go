@@ -164,10 +164,27 @@ func PlayerIDFromGameNick(gameNick string) (string, error) {
 
 func SendMessage(minecraftName, message string) error {
 	p, err := GetPlayerFromMinecraftName(minecraftName)
-	if err != nil {
-		return err
+	if err == nil {
+		// This user has a discord link, let's do it properly
+		return p.SendMessage(message)
 	}
-	return p.SendMessage(message)
+	logrus.WithError(err).Info("minecraftName with no player record")
+
+	w := models.Whisper{minecraftName, message}
+
+	sentWhisper := false
+
+	if ipc.ServerWhisperStream != nil {
+		ipc.ServerWhisperStream <- w
+		sentWhisper = true
+	}
+	logrus.WithFields(logrus.Fields{
+		"Player":  minecraftName,
+		"whisper": sentWhisper,
+		"discord": false,
+	}).Debug("Sent message to player")
+
+	return nil
 }
 
 func Advancement(playerName, advancement string) error {
