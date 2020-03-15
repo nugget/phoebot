@@ -1,6 +1,6 @@
 $(eval VERSION=$(shell git describe --always --tags --abbrev=1))
 
-.PHONY:	gazelle phoebot run deploy datapacks clean
+.PHONY:	gazelle phoebot run deploy datapacks clean deployall phoenixcraft ashecraft legacy nuggethaus
 
 deps: go-mc modules gazelle
 
@@ -54,6 +54,25 @@ datapacks: clean
 	@cd datapacks/phoenixcraft_elytra_crafting &&  zip -qr ../../output/phoenixcraft-elytra-$(VERSION).zip *
 	@echo "Datapacks in output directory:"
 	@ls -la output/*.zip
+
+deployall: phoenixcraft ashecraft legacy
+	cd db && sqitch deploy dev
+
+nuggethaus:
+	cd db && sqitch deploy prod
+	bazel run :main_deploy.apply
+
+phoenixcraft:
+	cd db && sqitch deploy prod
+	bazel run :main_deploy.apply
+
+ashecraft:
+	cd db && sqitch deploy smp
+	bazel run :smp_deploy.apply
+
+legacy:
+	cd db && sqitch deploy legacy
+	bazel run :legacy_deploy.apply
 	
 dbpb:
 	psql ${DATABASE_URI}
