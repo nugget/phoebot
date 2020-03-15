@@ -5,7 +5,7 @@
     },
     "title": "Phoenixcraft",
     "description": "Season 3",
-    "background": "minecraft:textures/block/gravel.png",
+    "background": "minecraft:textures/block/orange_wool.png",
     "show_toast": false,
     "announce_to_chat": false
   },
