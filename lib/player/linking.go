@@ -46,7 +46,7 @@ func OnJoinVerifyNag(joinMessage string) error {
 
 	p, err := GetPlayerFromMinecraftName(minecraftName)
 	if err != nil {
-		return err
+		logrus.WithError(err).Warn("Unlinked player")
 	}
 
 	if p.Verified {
