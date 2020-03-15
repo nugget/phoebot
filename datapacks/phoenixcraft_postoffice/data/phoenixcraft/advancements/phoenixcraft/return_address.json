@@ -1,13 +1,13 @@
 {
     "display": {
         "icon": {
-            "item": "minecraft:knowledge_book"
+            "item": "minecraft:writable_book"
         },
         "title": {
-            "text": "Postmarked"
+            "text": "Return Address"
         },
         "description": {
-            "text": "Receive mail from another player"
+            "text": "Send mail to another player"
         },
         "show_toast": true,
         "announce_to_chat": true
