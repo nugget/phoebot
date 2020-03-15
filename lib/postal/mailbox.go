@@ -26,6 +26,7 @@ type Mailbox struct {
 	Added    time.Time
 	Changed  time.Time
 	LastScan time.Time
+	MaxRowID int64
 	Enabled  bool
 	Class    string
 	Owner    string
@@ -41,7 +42,7 @@ type Mailbox struct {
 }
 
 func MailboxFields() string {
-	return "mailboxid, added, changed, lastscan, enabled, class, owner, signtext, material, world, x, y, z, flag"
+	return "mailboxid, added, changed, lastscan, maxrowid, enabled, class, owner, signtext, material, world, x, y, z, flag"
 }
 
 func (b *Mailbox) RowScan(rows *sql.Rows) error {
@@ -50,6 +51,7 @@ func (b *Mailbox) RowScan(rows *sql.Rows) error {
 		&b.Added,
 		&b.Changed,
 		&b.LastScan,
+		&b.MaxRowID,
 		&b.Enabled,
 		&b.Class,
 		&b.Owner,
@@ -85,10 +87,10 @@ func (b *Mailbox) SetFlag(flag bool) error {
 	return nil
 }
 
-func (b *Mailbox) Scanned() error {
-	query := `UPDATE mailbox SET lastscan = current_timestamp at time zone 'utc'  WHERE mailboxid = $1`
-	phoelib.LogSQL(query, b.ID)
-	_, err := db.DB.Exec(query, b.ID)
+func (b *Mailbox) Scanned(maxRowID int64) error {
+	query := `UPDATE mailbox SET maxrowid = $2, lastscan = current_timestamp at time zone 'utc'  WHERE mailboxid = $1`
+	phoelib.LogSQL(query, b.ID, maxRowID)
+	_, err := db.DB.Exec(query, b.ID, maxRowID)
 	if err != nil {
 		return err
 	}
@@ -276,12 +278,10 @@ func PollMailbox(l Mailbox) error {
 	//fmt.Printf("Poll Mailbox: %+v\n", l)
 	//fmt.Printf("Poll Container:  %+v\n", b)
 
-	ll, err := coreprotect.ContainerActivity(l.World, l.LastScan, l.X, l.Y, l.Z)
+	ll, err := coreprotect.ContainerActivity(l.World, l.MaxRowID, l.X, l.Y, l.Z)
 	if err != nil {
 		return err
 	}
-
-	l.Scanned()
 
 	for i, t := range ll {
 		logrus.WithFields(logrus.Fields{
@@ -295,6 +295,7 @@ func PollMailbox(l Mailbox) error {
 			"x":          t.X,
 			"y":          t.Y,
 			"z":          t.Z,
+			"maxRow":     t.MaxRowID,
 		}).Warn("Mailbox activity")
 
 		if l.Owner != "" {
@@ -323,6 +324,11 @@ func PollMailbox(l Mailbox) error {
 					logrus.WithError(err).Warn("Unable to SendMessage player")
 				}
 			}
+		}
+
+		err = l.Scanned(t.MaxRowID)
+		if err != nil {
+			return err
 		}
 	}
 	return nil

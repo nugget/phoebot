@@ -8,6 +8,7 @@ BEGIN;
         changed timestamp(0) NOT NULL DEFAULT current_timestamp,
         deleted timestamp(0),
         lastscan timestamp(0) NOT NULL DEFAULT current_timestamp,
+        maxrowid int NOT NULL DEFAULT 1,
         enabled boolean NOT NULL DEFAULT TRUE,
         class varchar NOT NULL DEFAULT 'mailbox',
         owner varchar NOT NULL DEFAULT '',

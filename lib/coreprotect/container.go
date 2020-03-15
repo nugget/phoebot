@@ -26,6 +26,7 @@ type ContainerLog struct {
 	ActionCode  int
 	RolledBack  int
 	Preposition string
+	MaxRowID    int64
 }
 
 func (c *ContainerLog) Scan(rows *sql.Rows) error {
@@ -40,6 +41,7 @@ func (c *ContainerLog) Scan(rows *sql.Rows) error {
 		&c.RolledBack,
 		&c.Epoch,
 		&c.Amount,
+		&c.MaxRowID,
 	)
 }
 
@@ -60,12 +62,11 @@ func (c *ContainerLog) Parse() error {
 	return nil
 }
 
-func ContainerActivity(world string, lastScan time.Time, x, y, z int) (l []ContainerLog, err error) {
+func ContainerActivity(world string, fromRow int64, x, y, z int) (l []ContainerLog, err error) {
 	wid := WidFromWorld(world)
-	epoch := lastScan.Unix()
 
 	query := `SELECT
-				u.user, wid, x, y, z, m.material, c.action, c.rolled_back, max(c.time), sum(c.amount)
+				u.user, wid, x, y, z, m.material, c.action, c.rolled_back, max(c.time), sum(c.amount), max(c.rowid)
 		   	  FROM co_container c 
 			  LEFT JOIN (co_user u, co_material_map m) on (c.type = m.rowid and c.user = u.rowid)
 			  WHERE c.rolled_back = 0 
@@ -73,21 +74,21 @@ func ContainerActivity(world string, lastScan time.Time, x, y, z int) (l []Conta
 			    AND c.x = ?
 				AND c.y = ?
 				AND c.z >= ?
-				AND c.time > ?
+				AND c.rowid > ?
 			  GROUP BY u.user, wid, x, y, z, m.material, c.action, c.rolled_back
-			  ORDER BY max(c.time)`
+			  ORDER BY max(c.rowid)`
 
 	logrus.WithFields(logrus.Fields{
-		"lastScan": lastScan,
-		"epoch":    epoch,
-		"world":    world,
-		"wid":      wid,
-		"x":        x,
-		"y":        y,
-		"z":        z,
-	}).Trace("Inspecting container activity")
+		"fromRow": fromRow,
+		"world":   world,
+		"wid":     wid,
+		"x":       x,
+		"y":       y,
+		"z":       z,
+	}).Info("Inspecting container activity")
 
-	rows, err := DB.Query(query, wid, x, y, z, epoch)
+	phoelib.LogSQL(query, wid, x, y, z, fromRow)
+	rows, err := DB.Query(query, wid, x, y, z, fromRow)
 	if err != nil {
 		return nil, err
 	}
