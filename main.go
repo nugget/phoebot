@@ -215,36 +215,40 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		}
 	} else {
 		// Not a PM, so let's evaluate the channel whitelist
-		discordWhitelist, err := config.GetString("whitelist_channel_regexp", ".*")
+		discordWhitelist, err := config.GetString("whitelist_channel_regexp", "")
 		if err != nil {
 			logrus.WithError(err).Error("config.GetString failed")
 			return
 		}
 
-		re := regexp.MustCompile(discordWhitelist)
-		if !re.MatchString(channel.Name) {
-			logrus.WithFields(logrus.Fields{
-				"channel": channel.Name,
-				"regexp":  discordWhitelist,
-			}).Trace("Ignoring channel not in whitelist")
+		if discordWhitelist != "" {
+			re := regexp.MustCompile(discordWhitelist)
+			if !re.MatchString(channel.Name) {
+				logrus.WithFields(logrus.Fields{
+					"channel": channel.Name,
+					"regexp":  discordWhitelist,
+				}).Trace("Ignoring channel not in whitelist")
 
-			return
+				return
+			}
 		}
 
-		discordBlacklist, err := config.GetString("blacklist_channel_regexp", "this-channel-does-not-exist")
+		discordBlacklist, err := config.GetString("blacklist_channel_regexp", "")
 		if err != nil {
 			logrus.WithError(err).Error("config.GetString failed")
 			return
 		}
 
-		re = regexp.MustCompile(discordBlacklist)
-		if re.MatchString(channel.Name) {
-			logrus.WithFields(logrus.Fields{
-				"channel": channel.Name,
-				"regexp":  discordWhitelist,
-			}).Trace("Ignoring channel in blacklist")
+		if discordBlacklist != "" {
+			re := regexp.MustCompile(discordBlacklist)
+			if re.MatchString(channel.Name) {
+				logrus.WithFields(logrus.Fields{
+					"channel": channel.Name,
+					"regexp":  discordBlacklist,
+				}).Trace("Ignoring channel in blacklist")
 
-			return
+				return
+			}
 		}
 	}
 
