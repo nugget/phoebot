@@ -106,7 +106,7 @@ func LoadIgnores() error {
 		logrus.WithFields(logrus.Fields{
 			"count":    len(newIgnores),
 			"listHash": fmt.Sprintf("%x", newHash.Sum(nil)),
-		}).Debug("Updated ignores list from database")
+		}).Trace("Updated ignores list from database")
 
 		Ignores = newIgnores
 		ignoresHash = newHash
