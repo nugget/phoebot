@@ -85,7 +85,7 @@ func ContainerActivity(world string, fromRow int64, x, y, z int) (l []ContainerL
 		"x":       x,
 		"y":       y,
 		"z":       z,
-	}).Debug("Inspecting container activity")
+	}).Trace("Inspecting container activity")
 
 	phoelib.LogSQL(query, wid, x, y, z, fromRow)
 	rows, err := DB.Query(query, wid, x, y, z, fromRow)
