@@ -83,7 +83,7 @@ func (s *Server) Connect() (err error) {
 
 		if !ok {
 			s.auth.Invalidate()
-			return fmt.Errorf("Mojang accessToken is not valid")
+			logrus.Error("Mojang accessToken is not valid")
 		}
 	}
 
