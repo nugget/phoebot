@@ -223,6 +223,10 @@ func (s *Server) Handler() {
 				"backoffLimit":   backoffLimit,
 			}).Error("Unable to connect to Minecraft server")
 
+			if retries > 50 {
+				logrus.Fatal("Retry count exceeded, restarting service")
+			}
+
 		}
 
 		time.Sleep(time.Duration(backoffSeconds) * time.Second)
@@ -400,6 +404,10 @@ func ChatMsgClass(m chat.Message) string {
 	}
 
 	if strings.Contains(text, "Expected whitespace") {
+		return "ignore"
+	}
+
+	if strings.Contains(text, "Couldn't grant advancement") {
 		return "ignore"
 	}
 
