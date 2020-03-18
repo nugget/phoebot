@@ -411,6 +411,10 @@ func ChatMsgClass(m chat.Message) string {
 		return "ignore"
 	}
 
+	if strings.Contains(text, "Granted the advancement") {
+		return "ignore"
+	}
+
 	if strings.HasPrefix(text, "[") {
 		return "ignore"
 	}
