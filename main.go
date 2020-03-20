@@ -578,7 +578,7 @@ func processChatStream(s *mcserver.Server) {
 					logrus.WithFields(logrus.Fields{
 						"channel": sub.ChannelID,
 						"message": message,
-					}).Debug("ChannelMessageSend")
+					}).Trace("ChannelMessageSend")
 
 					discord.Session.ChannelMessageSend(sub.ChannelID, style+message+style)
 				}
@@ -627,10 +627,9 @@ func StatsUpdate(s *mcserver.Server) error {
 					logrus.WithFields(logrus.Fields{
 						"channelID": sub.ChannelID,
 						"topic":     newTopic,
-					}).Info("Set Channel Topic")
+					}).Trace("Set Channel Topic")
 				}
 			}
-
 		}
 	}
 
