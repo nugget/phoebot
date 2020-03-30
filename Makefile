@@ -9,7 +9,7 @@ clean:
 	@rm output/*
 
 gazelle:
-	@echo Running gazelle to process BUILD.bazel files for Go
+	@echo Running gazelle to process BUILD.bazelisk files for Go
 	bazelisk run :gazelle -- update-repos -from_file=go.mod --prune=true
 	bazelisk run :gazelle
 
@@ -60,19 +60,19 @@ deployall: phoenixcraft ashecraft legacy
 
 nuggethaus:
 	cd db && sqitch deploy prod
-	bazel run :main_deploy.apply
+	bazelisk run :main_deploy.apply
 
 phoenixcraft:
 	cd db && sqitch deploy prod
-	bazel run :main_deploy.apply
+	bazelisk run :main_deploy.apply
 
 ashecraft:
 	cd db && sqitch deploy smp
-	bazel run :smp_deploy.apply
+	bazelisk run :smp_deploy.apply
 
 legacy:
 	cd db && sqitch deploy legacy
-	bazel run :legacy_deploy.apply
+	bazelisk run :legacy_deploy.apply
 	
 dbpb:
 	psql ${DATABASE_URI}
