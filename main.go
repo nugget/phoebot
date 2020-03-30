@@ -643,8 +643,8 @@ func main() {
 	logServer := vc.GetString("GELF_SERVER")
 	if logServer != "" {
 		fixedFields := map[string]interface{}{
-			"service": "phoebot",
-			"server":  vc.GetString("MINECRAFT_SERVER"),
+			"service":         "phoebot",
+			"minecraftServer": vc.GetString("MINECRAFT_SERVER"),
 		}
 
 		gelf := graylog.NewAsyncGraylogHook(logServer, fixedFields)
