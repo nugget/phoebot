@@ -41,6 +41,7 @@ go_library(
         "//products/mojang:go_default_library",
         "//products/papermc:go_default_library",
         "@com_github_bwmarrin_discordgo//:go_default_library",
+        "@com_github_gemnasium_logrus_graylog_hook_v3//:go_default_library",
         "@com_github_sirupsen_logrus//:go_default_library",
         "@com_github_spf13_viper//:go_default_library",
     ],
