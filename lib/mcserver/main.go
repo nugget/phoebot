@@ -345,6 +345,10 @@ func ChatMsgClass(m chat.Message) string {
 		return "ignore"
 	}
 
+	if m.Translate == "commands.give.success.single" {
+		return "ignore"
+	}
+
 	if m.Translate == "commands.data.block.modified" {
 		return "ignore"
 	}

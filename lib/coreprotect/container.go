@@ -73,7 +73,7 @@ func ContainerActivity(world string, fromRow int64, x, y, z int) (l []ContainerL
 			    AND c.wid = ?
 			    AND c.x = ?
 				AND c.y = ?
-				AND c.z >= ?
+				AND c.z = ?
 				AND c.rowid > ?
 			  GROUP BY u.user, wid, x, y, z, m.material, c.action, c.rolled_back
 			  ORDER BY max(c.rowid)`
