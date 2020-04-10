@@ -141,3 +141,15 @@ k8s_object(
         DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
     },
 )
+
+k8s_object(
+    name = "dev_deploy",
+    kind = "deployment",
+    template = ":k8s/dev-deployment.yaml",
+    cluster = "nuggethaus",
+    namespace = "phoebot",
+    user = "user-hcfd8",
+    images = {
+        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
+    },
+) 

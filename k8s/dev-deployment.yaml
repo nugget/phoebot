@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-phoebot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dev-phoebot
+  template:
+    metadata:
+      name: dev-phoebot
+      labels:
+        app: dev-phoebot
+    spec:
+      imagePullSecrets:
+      - name: docker
+      containers:
+      - name: dev-phoebot
+        image: index.docker.io/nugget/phoebot
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: dev-phoebot-config
+        - secretRef:
+            name: dev-phoebot-secret
