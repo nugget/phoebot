@@ -4,6 +4,8 @@ metadata:
   name: legacy-phoebot
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: legacy-phoebot
