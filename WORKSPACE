@@ -203,8 +203,8 @@ go_repository(
 go_repository(
     name = "com_github_fsnotify_fsnotify",
     importpath = "github.com/fsnotify/fsnotify",
-    sum = "h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=",
-    version = "v1.4.7",
+    sum = "h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=",
+    version = "v1.4.9",
 )
 
 go_repository(
@@ -301,8 +301,8 @@ go_repository(
 go_repository(
     name = "com_github_gorilla_websocket",
     importpath = "github.com/gorilla/websocket",
-    sum = "h1:q7AeDBpnBk8AogcD4DSag/Ukw/KV+YhzLj2bP5HvKCM=",
-    version = "v1.4.1",
+    sum = "h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=",
+    version = "v1.4.2",
 )
 
 go_repository(
@@ -420,8 +420,8 @@ go_repository(
 go_repository(
     name = "com_github_mitchellh_mapstructure",
     importpath = "github.com/mitchellh/mapstructure",
-    sum = "h1:fmNYVwqnSfB9mZU6OS2O6GsXM+wcskZDuKQzvN1EDeE=",
-    version = "v1.1.2",
+    sum = "h1:dxe5oCinTXiTIcfgmZecdCzPmAJKd46KsCWc35r0TV4=",
+    version = "v1.2.2",
 )
 
 go_repository(
@@ -455,8 +455,8 @@ go_repository(
 go_repository(
     name = "com_github_pkg_errors",
     importpath = "github.com/pkg/errors",
-    sum = "h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=",
-    version = "v0.8.0",
+    sum = "h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=",
+    version = "v0.9.1",
 )
 
 go_repository(
@@ -518,8 +518,8 @@ go_repository(
 go_repository(
     name = "com_github_sirupsen_logrus",
     importpath = "github.com/sirupsen/logrus",
-    sum = "h1:SPIRibHv4MatM3XXNO2BJeFLZwZ2LvZgfQ5+UNI2im4=",
-    version = "v1.4.2",
+    sum = "h1:1N5EYkVAPEywqZRJd7cwnRtCb6xJx7NH3T3WUTF980Q=",
+    version = "v1.5.0",
 )
 
 go_repository(
@@ -609,8 +609,8 @@ go_repository(
 go_repository(
     name = "com_github_tidwall_pretty",
     importpath = "github.com/tidwall/pretty",
-    sum = "h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=",
-    version = "v1.0.0",
+    sum = "h1:WE4RBSZ1x6McVVC8S/Md+Qse8YUv6HRObAx6ke00NY8=",
+    version = "v1.0.1",
 )
 
 go_repository(
@@ -679,8 +679,8 @@ go_repository(
 go_repository(
     name = "in_gopkg_yaml_v2",
     importpath = "gopkg.in/yaml.v2",
-    sum = "h1:VUgggvou5XRW9mHwD/yXxIYSMtY0zoKQf/v226p2nyo=",
-    version = "v2.2.7",
+    sum = "h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10=",
+    version = "v2.2.8",
 )
 
 go_repository(
@@ -714,8 +714,8 @@ go_repository(
 go_repository(
     name = "org_golang_x_crypto",
     importpath = "golang.org/x/crypto",
-    sum = "h1:sKJQZMuxjOAR/Uo2LBfU90onWEf1dF4C+0hPJCc9Mpc=",
-    version = "v0.0.0-20191227163750-53104e6ec876",
+    sum = "h1:3zb4D3T4G8jdExgVU/95+vQXfpEPiMdCaZgmGVxjNHM=",
+    version = "v0.0.0-20200323165209-0ec3e9974c59",
 )
 
 go_repository(
@@ -749,8 +749,8 @@ go_repository(
 go_repository(
     name = "org_golang_x_sys",
     importpath = "golang.org/x/sys",
-    sum = "h1:JA8d3MPx/IToSyXZG/RhwYEtfrKO1Fxrqe8KrkiLXKM=",
-    version = "v0.0.0-20191228213918-04cbcbbfeed8",
+    sum = "h1:TC0v2RSO1u2kn1ZugjrFXkRZAEaqMN/RW+OTZkBzmLE=",
+    version = "v0.0.0-20200327173247-9dae0f8f5775",
 )
 
 go_repository(
@@ -826,6 +826,20 @@ go_repository(
 go_repository(
     name = "in_gopkg_ini_v1",
     importpath = "gopkg.in/ini.v1",
-    sum = "h1:GyboHr4UqMiLUybYjd22ZjQIKEJEpgtLXtuGbR21Oho=",
-    version = "v1.51.1",
+    sum = "h1:E8yzL5unfpW3M6fz/eB7Cb5MQAYSZ7GKo4Qth+N2sgQ=",
+    version = "v1.55.0",
+)
+
+go_repository(
+    name = "com_github_landru29_ovh_logrus_hook_graylog",
+    importpath = "github.com/landru29/ovh-logrus-hook-graylog",
+    sum = "h1:AJ9Zfk1V/SiegWToydOTvbN2CdEoSp/0O8+9eCxISJI=",
+    version = "v0.0.0-20180206091244-32898acfb165",
+)
+
+go_repository(
+    name = "com_github_gemnasium_logrus_graylog_hook_v3",
+    importpath = "github.com/gemnasium/logrus-graylog-hook/v3",
+    sum = "h1:K9u07HPH47zt+6NVDtk1Fhvsk3JtNyExsul600ColWo=",
+    version = "v3.0.2",
 )

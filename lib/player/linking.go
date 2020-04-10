@@ -9,6 +9,7 @@ import (
 
 	"github.com/nugget/phoebot/lib/config"
 	"github.com/nugget/phoebot/lib/db"
+	"github.com/nugget/phoebot/lib/ipc"
 
 	"github.com/sirupsen/logrus"
 )
@@ -33,6 +34,15 @@ func OnJoinVerifyNag(joinMessage string) error {
 	if action == "left" {
 		// Ignore departures
 		return nil
+	}
+
+	if minecraftName == "MrBouzouki" {
+		logrus.Info("MrB Joined!")
+		command := fmt.Sprintf(`/give %s minecraft:lily_pad`, minecraftName)
+
+		if ipc.ServerSayStream != nil {
+			ipc.ServerSayStream <- command
+		}
 	}
 
 	me, err := config.GetString("minecraftName", minecraftName)

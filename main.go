@@ -33,6 +33,7 @@ import (
 	"github.com/nugget/phoebot/products/papermc"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/gemnasium/logrus-graylog-hook/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -638,6 +639,22 @@ func StatsUpdate(s *mcserver.Server) error {
 
 func main() {
 	vc := setupvc()
+
+	logServer := vc.GetString("GELF_SERVER")
+	if logServer != "" {
+		fixedFields := map[string]interface{}{
+			"service":         "phoebot",
+			"minecraftServer": vc.GetString("MINECRAFT_SERVER"),
+		}
+
+		gelf := graylog.NewAsyncGraylogHook(logServer, fixedFields)
+		defer gelf.Flush()
+		logrus.AddHook(gelf)
+		logrus.WithFields(logrus.Fields{
+			"logServer": logServer,
+		}).Info("Enabling Graylog GELF logging")
+	}
+
 	builddata.LogConversational()
 
 	for _, f := range []string{"DISCORD_BOT_TOKEN", "DATABASE_URI"} {

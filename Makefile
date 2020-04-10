@@ -9,9 +9,9 @@ clean:
 	@rm output/*
 
 gazelle:
-	@echo Running gazelle to process BUILD.bazel files for Go
-	bazel run :gazelle -- update-repos -from_file=go.mod --prune=true
-	bazel run :gazelle
+	@echo Running gazelle to process BUILD.bazelisk files for Go
+	bazelisk run :gazelle -- update-repos -from_file=go.mod --prune=true
+	bazelisk run :gazelle
 
 go-mc:
 	go get github.com/Tnze/go-mc@master
@@ -24,22 +24,22 @@ modules:
 
 phoebot: gazelle
 	clear
-	bazel build :phoebot
+	bazelisk build :phoebot
 
 run: gazelle phoebot
 	clear
-	bazel run :phoebot
+	bazelisk run :phoebot
 
 mojang: gazelle
 	clear
-	bazel run //cmd/mojangtest
+	bazelisk run //cmd/mojangtest
 
 mapper: gazelle
 	clear
-	bazel run //cmd/mapper
+	bazelisk run //cmd/mapper
 
 deploy:
-	bazel run :deploy.apply
+	bazelisk run :deploy.apply
 
 log:
 	kubectx nuggethaus
@@ -47,7 +47,7 @@ log:
 
 cptest: gazelle
 	clear
-	bazel run //cmd/cptest
+	bazelisk run //cmd/cptest
 
 datapacks: clean
 	@cd datapacks/phoenixcraft_postoffice &&  zip -qr ../../output/phoenixcraft-postoffice-$(VERSION).zip *
@@ -60,19 +60,23 @@ deployall: phoenixcraft ashecraft legacy
 
 nuggethaus:
 	cd db && sqitch deploy prod
-	bazel run :main_deploy.apply
+	bazelisk run :main_deploy.apply
 
 phoenixcraft:
 	cd db && sqitch deploy prod
-	bazel run :main_deploy.apply
+	bazelisk run :main_deploy.apply
 
 ashecraft:
 	cd db && sqitch deploy smp
-	bazel run :smp_deploy.apply
+	bazelisk run :smp_deploy.apply
 
 legacy:
 	cd db && sqitch deploy legacy
-	bazel run :legacy_deploy.apply
+	bazelisk run :legacy_deploy.apply
+
+activestate:
+	cd db && sqitch deploy legacy
+	bazelisk run :legacy_deploy.apply
 	
 dbpb:
 	psql ${DATABASE_URI}

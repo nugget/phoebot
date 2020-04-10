@@ -296,7 +296,26 @@ func PollMailbox(l Mailbox) error {
 			"y":          t.Y,
 			"z":          t.Z,
 			"maxRow":     t.MaxRowID,
-		}).Warn("Mailbox activity")
+		}).Info("Mailbox activity")
+
+		if l.X != t.X || l.Y != t.Y || l.Z != t.Z {
+			logrus.WithFields(logrus.Fields{
+				"i":          i,
+				"player":     t.Player,
+				"owner":      l.Owner,
+				"item":       t.Material,
+				"quantity":   t.Amount,
+				"action":     t.Action,
+				"actionCode": t.ActionCode,
+				"cpX":        t.X,
+				"cpY":        t.Y,
+				"cpZ":        t.Z,
+				"pbX":        l.X,
+				"pbY":        l.Y,
+				"pbZ":        l.Z,
+				"maxRow":     t.MaxRowID,
+			}).Error("Bad result from ContainerActivity")
+		}
 
 		if l.Owner != "" {
 			if t.Player == l.Owner {
