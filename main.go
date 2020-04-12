@@ -215,7 +215,24 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 			logrus.WithError(err).Error("Unable to update PM channel owner")
 		}
 	} else {
-		// Not a PM, so let's evaluate the channel whitelist
+		// Not a PM, so let's evaluate the guild/channel channel whitelists
+
+		guildID, err := config.GetString("guildID", "")
+		if err != nil {
+			logrus.WithError(err).Error("config.GetString failed")
+			return
+		}
+
+		if guildID != "" {
+			if dm.GuildID != guildID {
+				logrus.WithFields(logrus.Fields{
+					"channel": channel.Name,
+					"guildID": dm.GuildID,
+				}).Trace("Ignoring message from different guild")
+				return
+			}
+		}
+
 		discordWhitelist, err := config.GetString("whitelist_channel_regexp", "")
 		if err != nil {
 			logrus.WithError(err).Error("config.GetString failed")
@@ -270,6 +287,7 @@ func messageCreate(ds *discordgo.Session, dm *discordgo.MessageCreate) {
 		"channel":   channel.Name,
 		"username":  dm.Author.Username,
 		"channelID": dm.ChannelID,
+		"guildID":   dm.GuildID,
 	}).Debug(logMsg)
 
 	logrus.WithFields(logrus.Fields{

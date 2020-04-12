@@ -152,4 +152,4 @@ k8s_object(
     images = {
         DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
     },
-) 
+)
