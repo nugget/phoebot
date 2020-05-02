@@ -126,8 +126,8 @@ go_repository(
 go_repository(
     name = "com_github_bwmarrin_discordgo",
     importpath = "github.com/bwmarrin/discordgo",
-    sum = "h1:nA7jiTtqUA9lT93WL2jPjUp8ZTEInRujBdx1C9gkr20=",
-    version = "v0.20.2",
+    sum = "h1:AxjcHGbyBFSC0a3Zx5nDQwbOjU7xai5dXjRnZ0YB7nU=",
+    version = "v0.20.3",
 )
 
 go_repository(
@@ -154,8 +154,8 @@ go_repository(
 go_repository(
     name = "com_github_coreos_etcd",
     importpath = "github.com/coreos/etcd",
-    sum = "h1:jFneRYjIvLMLhDLCzuTuU4rSJUjRplcJQ7pD7MnhC04=",
-    version = "v3.3.10+incompatible",
+    sum = "h1:8F3hqu9fGYLBifCmRCJsicFqDx/D68Rt3q1JMazcgBQ=",
+    version = "v3.3.13+incompatible",
 )
 
 go_repository(
@@ -399,8 +399,8 @@ go_repository(
 go_repository(
     name = "com_github_lib_pq",
     importpath = "github.com/lib/pq",
-    sum = "h1:/qkRGz8zljWiDcFvgpwUpwIAPu3r07TDvs3Rws+o/pU=",
-    version = "v1.3.0",
+    sum = "h1:TmtCFbH+Aw0AixwyttznSMQDgbR5Yed/Gg6S8Funrhc=",
+    version = "v1.4.0",
 )
 
 go_repository(
@@ -567,8 +567,8 @@ go_repository(
 go_repository(
     name = "com_github_spf13_viper",
     importpath = "github.com/spf13/viper",
-    sum = "h1:7aKfF+e8/k68gda3LOjo5RxiUqddoFxVq4BKBPrxk5E=",
-    version = "v1.6.2",
+    sum = "h1:pDDu1OyEDTKzpJwdq4TiuLyMsUgRa/BT5cn5O62NoHs=",
+    version = "v1.6.3",
 )
 
 go_repository(
@@ -625,13 +625,6 @@ go_repository(
     importpath = "github.com/Tnze/go-mc",
     sum = "h1:2WL6eJC6rR2aQuBcAjolJ5a9Z5V+CON9uR1t+XpqUOw=",
     version = "v1.15.2-0.20200306023236-c0f3f3f8d4cf",
-)
-
-go_repository(
-    name = "com_github_ugorji_go",
-    importpath = "github.com/ugorji/go",
-    sum = "h1:j4s+tAvLfL3bZyefP2SEWmhBzmuIlH/eqNuPdFPgngw=",
-    version = "v1.1.4",
 )
 
 go_repository(
@@ -842,4 +835,32 @@ go_repository(
     importpath = "github.com/gemnasium/logrus-graylog-hook/v3",
     sum = "h1:K9u07HPH47zt+6NVDtk1Fhvsk3JtNyExsul600ColWo=",
     version = "v3.0.2",
+)
+
+go_repository(
+    name = "com_github_google_gofuzz",
+    importpath = "github.com/google/gofuzz",
+    sum = "h1:A8PeW59pxE9IoFRqBp37U+mSNaQoZ46F1f0f863XSXw=",
+    version = "v1.0.0",
+)
+
+go_repository(
+    name = "com_github_json_iterator_go",
+    importpath = "github.com/json-iterator/go",
+    sum = "h1:9yzud/Ht36ygwatGx56VwCZtlI/2AD15T1X2sjSuGns=",
+    version = "v1.1.9",
+)
+
+go_repository(
+    name = "com_github_modern_go_concurrent",
+    importpath = "github.com/modern-go/concurrent",
+    sum = "h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=",
+    version = "v0.0.0-20180228061459-e0a39a4cb421",
+)
+
+go_repository(
+    name = "com_github_modern_go_reflect2",
+    importpath = "github.com/modern-go/reflect2",
+    sum = "h1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9AWI=",
+    version = "v1.0.1",
 )
