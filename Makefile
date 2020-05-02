@@ -55,12 +55,12 @@ datapacks: clean
 	@echo "Datapacks in output directory:"
 	@ls -la output/*.zip
 
-deployall: phoenixcraft ashecraft legacy
+deployall: nuggethaus phoenixcraft ashecraft legacy
 	cd db && sqitch deploy dev
 
 nuggethaus:
 	cd db && sqitch deploy prod
-	bazelisk run :main_deploy.apply
+	bazelisk run :dev_deploy.apply
 
 phoenixcraft:
 	cd db && sqitch deploy prod
