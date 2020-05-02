@@ -54,7 +54,7 @@ func smartLoc(tz string) (loc *time.Location) {
 		name = "Australia/Adelaide"
 	case "IST":
 		name = "Asia/Kolkata"
-	case "NZDT":
+	case "NZDT", "NZST":
 		name = "Pacific/Auckland"
 	case "UTC":
 		name = "UTC"

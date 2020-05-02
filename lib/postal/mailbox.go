@@ -3,6 +3,7 @@ package postal
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nugget/phoebot/lib/coreprotect"
@@ -68,11 +69,26 @@ func (b *Mailbox) RowScan(rows *sql.Rows) error {
 func (b *Mailbox) Parse() error {
 	b.WorldID = coreprotect.WidFromWorld(b.World)
 
+	b.CaseName()
+
 	return nil
 }
 
+func (b *Mailbox) CaseName() string {
+	outbuf := b.Signtext
+	outbuf = strings.ReplaceAll(outbuf, "[mailbox]", "")
+	outbuf = strings.ReplaceAll(outbuf, "[shop]", "")
+	outbuf = strings.ReplaceAll(outbuf, "mailbox", "")
+	outbuf = strings.ReplaceAll(outbuf, "shop", "")
+	outbuf = strings.ReplaceAll(outbuf, "|", " ")
+	outbuf = strings.ReplaceAll(outbuf, "  ", " ")
+	outbuf = strings.TrimSpace(outbuf)
+
+	return outbuf
+}
+
 func (b *Mailbox) IsContainer() bool {
-	return Containers[b.Material]
+	return IsContainer(b.Material)
 }
 
 func (b *Mailbox) SetFlag(flag bool) error {
@@ -140,6 +156,9 @@ func (b *Mailbox) Delete() error {
 }
 
 func IsContainer(material string) bool {
+	if strings.Contains(material, "shulker_box") {
+		return true
+	}
 	return Containers[material]
 }
 
@@ -149,7 +168,23 @@ func NewMailbox(b Mailbox) (Mailbox, error) {
 		return Mailbox{}, err
 	}
 
+	logAction := "unknown Mailbox operation"
+
 	if existingBox.ID != uuid.Nil {
+		if b.Owner == existingBox.Owner {
+			existingBox.Signtext = b.Signtext
+			existingBox.New = true
+
+			query := `UPDATE mailbox SET signtext = $2 WHERE mailboxid = $1`
+			_, err := db.DB.Exec(query, existingBox.ID, existingBox.Signtext)
+			if err != nil {
+				return Mailbox{}, err
+			}
+			logAction = "Renamed existing mailbox"
+		} else {
+			logAction = "Ignored existing mailbox"
+		}
+
 		logrus.WithFields(logrus.Fields{
 			"id":       existingBox.ID,
 			"material": existingBox.Material,
@@ -157,7 +192,9 @@ func NewMailbox(b Mailbox) (Mailbox, error) {
 			"y":        existingBox.Y,
 			"z":        existingBox.Z,
 			"owner":    existingBox.Owner,
-		}).Info("NewMailbox called for existing mailbox")
+			"signtext": existingBox.Signtext,
+		}).Info(logAction)
+
 		return existingBox, nil
 	}
 
@@ -227,6 +264,8 @@ func PollMailboxes() error {
 
 func PollMailbox(l Mailbox) error {
 	var message string
+
+	l.Parse()
 
 	// Check for destruction
 	b, err := coreprotect.GetBlock(l.WorldID, l.X, l.Y, l.Z)
@@ -339,8 +378,8 @@ func PollMailbox(l Mailbox) error {
 						}
 					}
 				case "shop":
-					message = fmt.Sprintf("%s %s %d %s %s your display case at (%d, %d, %d)",
-						t.Player, t.Action, t.Amount, t.Material, t.Preposition, t.X, t.Y, t.Z)
+					message = fmt.Sprintf("%s %s %d %s %s your display case at (%d, %d, %d) [%s]",
+						t.Player, t.Action, t.Amount, t.Material, t.Preposition, t.X, t.Y, t.Z, l.CaseName())
 
 					if t.Action == "placed" && t.Material == "Diamond" {
 						err = player.Advancement(b.User, "phoenixcraft:phoenixcraft/spendthrift")
