@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: active-phoebot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: active-phoebot
+  template:
+    metadata:
+      name: active-phoebot
+      labels:
+        app: active-phoebot
+    spec:
+      imagePullSecrets:
+      - name: docker
+      containers:
+      - name: active-phoebot
+        image: index.docker.io/nugget/phoebot
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: active-phoebot-config
+        - secretRef:
+            name: active-phoebot-secret

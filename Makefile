@@ -75,8 +75,8 @@ legacy:
 	bazelisk run :legacy_deploy.apply
 
 activestate:
-	cd db && sqitch deploy legacy
-	bazelisk run :legacy_deploy.apply
+	cd db && sqitch deploy active
+	bazelisk run :active_deploy.apply
 	
 dbpb:
 	psql ${DATABASE_URI}
