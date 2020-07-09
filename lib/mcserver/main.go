@@ -13,6 +13,7 @@ import (
 	"github.com/Tnze/go-mc/bot"
 	"github.com/Tnze/go-mc/chat"
 	"github.com/Tnze/go-mc/yggdrasil"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
@@ -267,7 +268,7 @@ func (s *Server) OnGameStart() error {
 	return nil //if err isn't nil, HandleGame() will return it.
 }
 
-func (s *Server) OnChatMsg(c chat.Message, pos byte) error {
+func (s *Server) OnChatMsg(c chat.Message, pos byte, uuid uuid.UUID) error {
 	f := s.LogFields(logrus.Fields{
 		"pos":   pos,
 		"event": "chat",
