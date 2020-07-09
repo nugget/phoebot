@@ -621,13 +621,6 @@ go_repository(
 )
 
 go_repository(
-    name = "com_github_tnze_go_mc",
-    importpath = "github.com/Tnze/go-mc",
-    sum = "h1:2WL6eJC6rR2aQuBcAjolJ5a9Z5V+CON9uR1t+XpqUOw=",
-    version = "v1.15.2-0.20200306023236-c0f3f3f8d4cf",
-)
-
-go_repository(
     name = "com_github_xiang90_probing",
     importpath = "github.com/xiang90/probing",
     sum = "h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=",
@@ -863,4 +856,11 @@ go_repository(
     importpath = "github.com/modern-go/reflect2",
     sum = "h1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9AWI=",
     version = "v1.0.1",
+)
+
+go_repository(
+    name = "com_github_tnze_go_mc",
+    importpath = "github.com/Tnze/go-mc",
+    sum = "h1:ji9CIF3f/aExq0Rk0+OT9aU3liR92SBn256S9WqaJTc=",
+    version = "v1.15.3-0.20200709060710-ee23be105f05",
 )

@@ -3,7 +3,7 @@ module github.com/nugget/phoebot
 go 1.12
 
 require (
-	github.com/Tnze/go-mc v1.15.2-0.20200306023236-c0f3f3f8d4cf
+	github.com/Tnze/go-mc v1.15.3-0.20200709060710-ee23be105f05
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.20.3
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
