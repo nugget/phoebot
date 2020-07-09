@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/Tnze/go-mc v1.15.3-0.20200709060710-ee23be105f05
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/bwmarrin/discordgo v0.20.3
+	github.com/bwmarrin/discordgo v0.21.1
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.0.2
 	github.com/go-sql-driver/mysql v1.5.0
@@ -24,7 +24,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.6.3
-	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/tidwall/gjson v1.6.0
 	github.com/tidwall/pretty v1.0.1 // indirect
 	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59 // indirect
