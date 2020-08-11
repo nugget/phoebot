@@ -58,14 +58,6 @@ load(
     "container_pull",
 )
 
-container_pull(
-  name = "java_base",
-  registry = "gcr.io",
-  repository = "distroless/java",
-  # 'tag' is also supported, but digest is encouraged for reproducibility.
-  digest = "sha256:deadbeef",
-)
-
 load(
     "@io_bazel_rules_docker//go:image.bzl",
     _go_image_repos = "repositories",
