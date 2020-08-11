@@ -1,15 +1,16 @@
+load("//build_tools:k8s.bzl", "k8s_global", "bot")
+
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 load("@io_bazel_rules_docker//container:container.bzl", "container_push", "container_image", "container_bundle")
 load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@io_bazel_rules_k8s//k8s:object.bzl", "k8s_object")
+load("@io_bazel_rules_k8s//k8s:objects.bzl", "k8s_objects")
+
 
 DOCKER_REGISTRY = "index.docker.io"
-
 DOCKER_ORG = "nugget"
-
 NAME = "phoebot"
-
 DOCKER_REPO = DOCKER_ORG + "/" + NAME
 
 gazelle(
@@ -106,62 +107,15 @@ container_push(
     tag = "{STABLE_GIT_VERSION}",
 )
 
-k8s_object(
-    name = "main_deploy",
-    kind = "deployment",
-    template = ":k8s/main-deployment.yaml",
-    cluster = "nuggethaus",
-    namespace = "phoebot",
-    user = "user-hcfd8",
-    images = {
-        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
-    },
-)
+###
+### Kubernetes
+###
 
-k8s_object(
-    name = "smp_deploy",
-    kind = "deployment",
-    template = ":k8s/smp-deployment.yaml",
-    cluster = "nuggethaus",
-    namespace = "phoebot",
-    user = "user-hcfd8",
-    images = {
-        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
-    },
-)
+k8s_global()
 
-k8s_object(
-    name = "legacy_deploy",
-    kind = "deployment",
-    template = ":k8s/legacy-deployment.yaml",
-    cluster = "nuggethaus",
-    namespace = "phoebot",
-    user = "user-hcfd8",
-    images = {
-        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
-    },
-)
-
-k8s_object(
-    name = "dev_deploy",
-    kind = "deployment",
-    template = ":k8s/dev-deployment.yaml",
-    cluster = "nuggethaus",
-    namespace = "phoebot",
-    user = "user-hcfd8",
-    images = {
-        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
-    },
-)
-
-k8s_object(
-    name = "active_deploy",
-    kind = "deployment",
-    template = ":k8s/active-deployment.yaml",
-    cluster = "nuggethaus",
-    namespace = "phoebot",
-    user = "user-hcfd8",
-    images = {
-        DOCKER_REGISTRY + "/" + DOCKER_REPO: ":image",
-    },
-)
+# See build_tools/k8s.bzl for template information
+bot("legacy")
+bot("phoenixcraft")
+bot("ashecraft")
+bot("nuggetcraft")
+bot("activestate")
