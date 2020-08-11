@@ -2,20 +2,17 @@ $(eval VERSION=$(shell git describe --always --tags --abbrev=1))
 
 .PHONY:	gazelle phoebot run deploy datapacks clean deployall phoenixcraft ashecraft legacy nuggethaus
 
-deps: go-mc modules gazelle
+deps: modules gazelle
 
 clean:
 	@echo Cleaning build artifacts and output files
 	@rm output/*
+	@rm phoebot
 
 gazelle:
-	@echo Running gazelle to process BUILD.bazelisk files for Go
+	@echo Running gazelle to process BUILD.bazel files for Go
 	bazelisk run :gazelle -- update-repos -from_file=go.mod --prune=true
 	bazelisk run :gazelle
-
-go-mc:
-	go get github.com/Tnze/go-mc@master
-	go mod download
 
 modules: 
 	go get -u ./...
@@ -42,7 +39,7 @@ deploy:
 	bazelisk run :deploy.apply
 
 log:
-	kubectx nuggethaus
+	kubectx microk8s
 	stern --all-namespaces phoebot
 
 cptest: gazelle
@@ -55,28 +52,27 @@ datapacks: clean
 	@echo "Datapacks in output directory:"
 	@ls -la output/*.zip
 
-deployall: nuggethaus phoenixcraft ashecraft legacy
-	cd db && sqitch deploy dev
+deployall: nuggethaus phoenixcraft ashecraft legacy activestate
 
 nuggethaus:
-	cd db && sqitch deploy prod
-	bazelisk run :dev_deploy.apply
+	cd db && sqitch deploy nuggetcraft
+	bazelisk run :nuggetcraft.apply
 
 phoenixcraft:
-	cd db && sqitch deploy prod
-	bazelisk run :main_deploy.apply
+	cd db && sqitch deploy phoenixcraft
+	bazelisk run :phoenixcraft.apply
 
 ashecraft:
-	cd db && sqitch deploy smp
-	bazelisk run :smp_deploy.apply
+	cd db && sqitch deploy ashecraft
+	bazelisk run :ashecradt.apply
 
 legacy:
 	cd db && sqitch deploy legacy
-	bazelisk run :legacy_deploy.apply
+	bazelisk run :legacy.apply
 
 activestate:
-	cd db && sqitch deploy active
-	bazelisk run :active_deploy.apply
+	cd db && sqitch deploy activestate
+	bazelisk run :activestate.apply
 	
 dbpb:
 	psql ${DATABASE_URI}

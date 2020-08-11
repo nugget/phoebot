@@ -14,9 +14,12 @@ NAME = "phoebot"
 
 DOCKER_REPO = DOCKER_ORG + "/" + NAME
 
+# bazel run :gazelle -- update-repos -from_file=go.mod --prune=true
+# bazel run :gazelle
 gazelle(
     name = "gazelle",
     prefix = "github.com/nugget/phoebot",
+    command = "fix",
 )
 
 go_library(
