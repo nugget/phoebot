@@ -64,7 +64,7 @@ phoenixcraft:
 
 ashecraft:
 	cd db && sqitch deploy ashecraft
-	bazelisk run :ashecradt.apply
+	bazelisk run :ashecraft.apply
 
 legacy:
 	cd db && sqitch deploy legacy
