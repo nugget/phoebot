@@ -1,9 +1,14 @@
 module github.com/nugget/phoebot
 
-go 1.12
+go 1.15
+
+// Temporarily override for now, until Tnze merges my PR
+replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20200831164738-48dca250ed7e
+
+// replace github.com/Tnze/go-mc => /Users/nugget/src/go-mc
 
 require (
-	github.com/Tnze/go-mc v1.15.3-0.20200709060710-ee23be105f05
+	github.com/Tnze/go-mc v0.0.0-00010101000000-000000000000
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
@@ -26,5 +31,3 @@ require (
 	golang.org/x/sys v0.0.0-20200810151505-1b9f1253b3ed // indirect
 	gopkg.in/ini.v1 v1.57.0 // indirect
 )
-
-// replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20200122181758-beac876beb50
