@@ -31,9 +31,22 @@ load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 go_repository(
     name = "com_github_tnze_go_mc",
     importpath = "github.com/Tnze/go-mc",
-    replace = "github.com/nugget/go-mc",
-    sum = "h1:FTz2CRskRm+NRqnWJ7Y91tKzFN3Wbu5AeGuaAjYJ4z0=",
-    version = "v1.14.5-0.20200831164738-48dca250ed7e",
+    sum = "h1:Ho7QkY5dqouMj0M0VmYKqE7gjWXC0EPqPYb1x0szqM8=",
+    version = "v1.16.2-0.20201010233031-5120b2dd9a76",
+)
+
+go_repository(
+    name = "com_github_beefsack_go_astar",
+    importpath = "github.com/beefsack/go-astar",
+    sum = "h1:p4g4uok3+r6Tg6fxXEQUAcMAX/WdK6WhkQW9s0jaT7k=",
+    version = "v0.0.0-20200827232313-4ecf9e304482",
+)
+
+go_repository(
+    name = "com_github_iancoleman_strcase",
+    importpath = "github.com/iancoleman/strcase",
+    sum = "h1:2I+LRClyCYB7JgZb9U0k75VHUiQe9RfknRqDyUfzp7k=",
+    version = "v0.1.1",
 )
 
 gazelle_dependencies()
@@ -303,8 +316,8 @@ go_repository(
 go_repository(
     name = "com_github_google_uuid",
     importpath = "github.com/google/uuid",
-    sum = "h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=",
-    version = "v1.1.1",
+    sum = "h1:EVhdT+1Kseyi1/pUmXKaFxYsDNy9RQYkMWRH68J/W7Y=",
+    version = "v1.1.2",
 )
 
 go_repository(
@@ -604,8 +617,8 @@ go_repository(
 go_repository(
     name = "com_github_tidwall_gjson",
     importpath = "github.com/tidwall/gjson",
-    sum = "h1:9VEQWz6LLMUsUl6PueE49ir4Ka6CzLymOAZDxpFsTDc=",
-    version = "v1.6.0",
+    sum = "h1:LRbvNuNuvAiISWg6gxLEFuCe72UKy5hDqhxW/8183ws=",
+    version = "v1.6.1",
 )
 
 go_repository(
@@ -618,8 +631,8 @@ go_repository(
 go_repository(
     name = "com_github_tidwall_pretty",
     importpath = "github.com/tidwall/pretty",
-    sum = "h1:WE4RBSZ1x6McVVC8S/Md+Qse8YUv6HRObAx6ke00NY8=",
-    version = "v1.0.1",
+    sum = "h1:Z7S3cePv9Jwm1KwS0513MRaoUe3S01WPbLNV40pwWZU=",
+    version = "v1.0.2",
 )
 
 go_repository(
