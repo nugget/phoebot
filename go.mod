@@ -6,7 +6,7 @@ go 1.15
 //replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20201007225400-b2d316f6ed98
 
 require (
-	github.com/Tnze/go-mc v0.0.0-00010101000000-000000000000
+	github.com/Tnze/go-mc v1.16.2-0.20201010233031-5120b2dd9a76
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect

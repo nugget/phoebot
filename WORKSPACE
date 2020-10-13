@@ -31,9 +31,22 @@ load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 go_repository(
     name = "com_github_tnze_go_mc",
     importpath = "github.com/Tnze/go-mc",
-    replace = "github.com/nugget/go-mc",
-    sum = "h1:noHAf5u2iaJHc30gbFIuQWXJ7jfcakhoyn1YDSDGK5k=",
-    version = "v1.14.5-0.20201007225400-b2d316f6ed98",
+    sum = "h1:Ho7QkY5dqouMj0M0VmYKqE7gjWXC0EPqPYb1x0szqM8=",
+    version = "v1.16.2-0.20201010233031-5120b2dd9a76",
+)
+
+go_repository(
+    name = "com_github_beefsack_go_astar",
+    importpath = "github.com/beefsack/go-astar",
+    sum = "h1:p4g4uok3+r6Tg6fxXEQUAcMAX/WdK6WhkQW9s0jaT7k=",
+    version = "v0.0.0-20200827232313-4ecf9e304482",
+)
+
+go_repository(
+    name = "com_github_iancoleman_strcase",
+    importpath = "github.com/iancoleman/strcase",
+    sum = "h1:2I+LRClyCYB7JgZb9U0k75VHUiQe9RfknRqDyUfzp7k=",
+    version = "v0.1.1",
 )
 
 gazelle_dependencies()
