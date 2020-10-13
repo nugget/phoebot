@@ -3,9 +3,7 @@ module github.com/nugget/phoebot
 go 1.15
 
 // Temporarily override for now, until Tnze merges my PR
-replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20201007225400-b2d316f6ed98
-
-// replace github.com/Tnze/go-mc => /Users/nugget/src/go-mc
+//replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20201007225400-b2d316f6ed98
 
 require (
 	github.com/Tnze/go-mc v0.0.0-00010101000000-000000000000
