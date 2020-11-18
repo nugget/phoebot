@@ -52,7 +52,7 @@ datapacks: clean
 	@echo "Datapacks in output directory:"
 	@ls -la output/*.zip
 
-deployall: nuggetcraft phoenixcraft ashecraft legacy activestate
+deployall: nuggetcraft phoenixcraft legacy activestate
 
 nuggetcraft:
 	cd db && sqitch deploy nuggetcraft
