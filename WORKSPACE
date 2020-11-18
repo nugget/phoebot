@@ -2,15 +2,17 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# rules_go v0.24.7 (12-Nov-2020)
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "b725e6497741d7fc2d55fcc29a276627d10e43fa5d0bb692692890ae30d98d00",
+    sha256 = "207fad3e6689135c5d8713e5a17ba9d1290238f47b9ba545b63d9303406209c6",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.24.3/rules_go-v0.24.3.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.24.3/rules_go-v0.24.3.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.24.7/rules_go-v0.24.7.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.24.7/rules_go-v0.24.7.tar.gz",
     ],
 )
 
+# gazelle v0.22.2 (2-Oct-2020)
 http_archive(
     name = "bazel_gazelle",
     sha256 = "b85f48fa105c4403326e9525ad2b2cc437babaa6e15a3fc0b1dbab0ab064bc7c",
@@ -29,13 +31,6 @@ go_register_toolchains()
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 go_repository(
-    name = "com_github_tnze_go_mc",
-    importpath = "github.com/Tnze/go-mc",
-    sum = "h1:Ho7QkY5dqouMj0M0VmYKqE7gjWXC0EPqPYb1x0szqM8=",
-    version = "v1.16.2-0.20201010233031-5120b2dd9a76",
-)
-
-go_repository(
     name = "com_github_beefsack_go_astar",
     importpath = "github.com/beefsack/go-astar",
     sum = "h1:p4g4uok3+r6Tg6fxXEQUAcMAX/WdK6WhkQW9s0jaT7k=",
@@ -47,6 +42,21 @@ go_repository(
     importpath = "github.com/iancoleman/strcase",
     sum = "h1:2I+LRClyCYB7JgZb9U0k75VHUiQe9RfknRqDyUfzp7k=",
     version = "v0.1.1",
+)
+
+go_repository(
+    name = "com_github_tnze_go_mc",
+    importpath = "github.com/Tnze/go-mc",
+    replace = "github.com/nugget/go-mc",
+    sum = "h1:nh0JerOqBILizQtfbhUqZPZzHn+zmXH1oVdpEBuRfvQ=",
+    version = "v1.14.5-0.20201118172317-e9cb621f23ef",
+)
+
+go_repository(
+    name = "org_golang_x_term",
+    importpath = "golang.org/x/term",
+    sum = "h1:/ZHdbVpdR/jk3g30/d4yUL0JU9kksj8+F/bnQUVLGDM=",
+    version = "v0.0.0-20201117132131-f5c789dd3221",
 )
 
 gazelle_dependencies()
@@ -616,15 +626,15 @@ go_repository(
 go_repository(
     name = "com_github_tidwall_gjson",
     importpath = "github.com/tidwall/gjson",
-    sum = "h1:LRbvNuNuvAiISWg6gxLEFuCe72UKy5hDqhxW/8183ws=",
-    version = "v1.6.1",
+    sum = "h1:aHoiiem0dr7GHkW001T1SMTJ7X5PvyekH5WX0whWGnI=",
+    version = "v1.6.3",
 )
 
 go_repository(
     name = "com_github_tidwall_match",
     importpath = "github.com/tidwall/match",
-    sum = "h1:PnKP62LPNxHKTwvHHZZzdOAOCtsJTjo6dZLCwpKm5xc=",
-    version = "v1.0.1",
+    sum = "h1:uuqvHuBGSedK7awZ2YoAtpnimfwBGFjHuWLuLqQj+bU=",
+    version = "v1.0.2",
 )
 
 go_repository(
@@ -714,8 +724,8 @@ go_repository(
 go_repository(
     name = "org_golang_x_crypto",
     importpath = "golang.org/x/crypto",
-    sum = "h1:4yd7jl+vXjalO5ztz6Vc1VADv+S/80LGJmyl1ROJ2AI=",
-    version = "v0.0.0-20201012173705-84dcc777aaee",
+    sum = "h1:phUcVbl53swtrUN8kQEXFhUxPlIlWyBfKmidCu7P95o=",
+    version = "v0.0.0-20201117144127-c1f2f97bffc9",
 )
 
 go_repository(
@@ -749,15 +759,15 @@ go_repository(
 go_repository(
     name = "org_golang_x_sys",
     importpath = "golang.org/x/sys",
-    sum = "h1:HS9IzC4UFbpMBLQUDSQcU+ViVT1vdFCQVjdPVpTlZrs=",
-    version = "v0.0.0-20201013132646-2da7054afaeb",
+    sum = "h1:s330+6z/Ko3J0o6rvOcwXe5nzs7UT9tLKHoOXYn6uE0=",
+    version = "v0.0.0-20201117222635-ba5294a509c7",
 )
 
 go_repository(
     name = "org_golang_x_text",
     importpath = "golang.org/x/text",
-    sum = "h1:cokOdA+Jmi5PJGXLlLllQSgYigAEfHXJAERHVMaCc2k=",
-    version = "v0.3.3",
+    sum = "h1:0YWbFKbhXG/wIiuHDSKpS0Iy7FSA+u45VtBMfQcFTTc=",
+    version = "v0.3.4",
 )
 
 go_repository(

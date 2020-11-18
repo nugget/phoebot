@@ -3,7 +3,8 @@ module github.com/nugget/phoebot
 go 1.15
 
 // Temporarily override for now, until Tnze merges my PR
-//replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20201007225400-b2d316f6ed98
+// replace github.com/Tnze/go-mc => /Users/nugget/src/go-mc
+replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20201118172317-e9cb621f23ef
 
 require (
 	github.com/Tnze/go-mc v1.16.2-0.20201010233031-5120b2dd9a76
@@ -26,8 +27,10 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/tidwall/gjson v1.6.3
-	golang.org/x/crypto v0.0.0-20201012173705-84dcc777aaee // indirect
-	golang.org/x/sys v0.0.0-20201013132646-2da7054afaeb // indirect
+	github.com/tidwall/match v1.0.2 // indirect
+	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9 // indirect
+	golang.org/x/sys v0.0.0-20201117222635-ba5294a509c7 // indirect
+	golang.org/x/text v0.3.4 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
