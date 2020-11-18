@@ -25,7 +25,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.7.1
-	github.com/tidwall/gjson v1.6.1
+	github.com/tidwall/gjson v1.6.3
 	golang.org/x/crypto v0.0.0-20201012173705-84dcc777aaee // indirect
 	golang.org/x/sys v0.0.0-20201013132646-2da7054afaeb // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
