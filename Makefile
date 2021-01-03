@@ -11,7 +11,7 @@ clean:
 
 gazelle:
 	@echo Running gazelle to process BUILD.bazel files for Go
-	bazelisk run :gazelle -- update-repos -from_file=go.mod --prune=true
+	bazelisk run :gazelle -- update-repos -from_file=go.mod --prune=true -to_macro=deps.bzl%go_dependencies
 	bazelisk run :gazelle
 
 modules: 
