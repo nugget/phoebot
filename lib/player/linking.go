@@ -62,7 +62,7 @@ func OnJoinVerifyNag(joinMessage string) error {
 	if p.Verified {
 		logrus.WithFields(logrus.Fields{
 			"player": p.MinecraftName,
-		}).Trace("Player is already verified with Discord")
+		}).Debug("Player is already verified with Discord")
 
 		err = Advancement(minecraftName, "phoenixcraft:phoenixcraft/discord")
 		if err != nil {
@@ -81,21 +81,23 @@ func OnJoinVerifyNag(joinMessage string) error {
 
 	if lastNag.IsZero() || compareDate.Before(time.Now()) {
 		nagMessage := fmt.Sprintf(`It would be great if I knew your Discord account name!  Hop on Discord and send me a private message that says: !verify %s`, code)
-		p.SendMessage(nagMessage)
+		SendMessage(minecraftName, nagMessage)
 		logrus.WithFields(logrus.Fields{
-			"player":      p.MinecraftName,
+			"player":      minecraftName,
 			"lastNag":     lastNag,
 			"compareDate": compareDate,
-			"now":         time.Now(),
+			"now":         time.UTC(),
 		}).Info("Sent verification nag")
 	} else {
 		logrus.WithFields(logrus.Fields{
-			"player":      p.MinecraftName,
+			"player":      minecraftName,
 			"lastNag":     lastNag,
 			"compareDate": compareDate,
-			"now":         time.Now(),
-		}).Trace("Skipped verification nag")
+			"now":         time.UTC(),
+		}).Debug("Skipped verification nag")
 	}
+
+	logrus.Debug("Exiting onJoinVerifyNag")
 
 	return nil
 }
@@ -113,7 +115,7 @@ func GenerateCode(minecraftName string) (string, time.Time, error) {
 	query := `INSERT INTO verify (minecraftname, code)
 			  SELECT $1, $2
 			  ON CONFLICT (minecraftname) 
-			  DO UPDATE SET code = $2, deleted = NULL
+			  DO UPDATE SET code = $2, deleted = NULL, lastnag = current_timestamp at time zone 'utc'
 			  RETURNING lastnag`
 
 	rows, err := db.DB.Query(query, minecraftName, code)
