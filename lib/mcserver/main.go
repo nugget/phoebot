@@ -228,6 +228,11 @@ func (s *Server) Handler() {
 				logrus.Fatal("Retry count exceeded, restarting service")
 			}
 
+			if string.Contains(err, "encryption fail") ||
+				string.Contains(err, "read content of packet fail") {
+				logrus.Fatal("This is a fatal error, exiting.")
+			}
+
 		}
 
 		time.Sleep(time.Duration(backoffSeconds) * time.Second)
