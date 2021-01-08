@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nugget/phoebot/lib/discord"
+	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
 
 	"github.com/bwmarrin/discordgo"
@@ -34,7 +35,7 @@ func ProcSay(dm *discordgo.MessageCreate) error {
 	if len(res) == 5 {
 		targetType := strings.ToLower(res[2])
 		target := strings.ToLower(res[3])
-		message := strings.ToLower(res[4])
+		message := res[4]
 
 		switch targetType {
 		case "channel":
@@ -65,6 +66,11 @@ func sendToChannel(target, message string) error {
 	return err
 }
 
+// say server _ message goes here
 func sendToServer(target, message string) error {
+	if ipc.ServerSayStream != nil {
+		ipc.ServerSayStream <- message
+	}
+
 	return nil
 }
