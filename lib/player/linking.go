@@ -56,7 +56,7 @@ func OnJoinVerifyNag(joinMessage string) error {
 
 	p, err := GetPlayerFromMinecraftName(minecraftName)
 	if err != nil {
-		logrus.WithError(err).Warn("Unlinked player")
+		logrus.WithError(err).Trace("Unlinked player")
 	}
 
 	if p.Verified {
@@ -86,18 +86,16 @@ func OnJoinVerifyNag(joinMessage string) error {
 			"player":      minecraftName,
 			"lastNag":     lastNag,
 			"compareDate": compareDate,
-			"now":         time.UTC(),
+			"now":         time.Now().UTC(),
 		}).Info("Sent verification nag")
 	} else {
 		logrus.WithFields(logrus.Fields{
 			"player":      minecraftName,
 			"lastNag":     lastNag,
 			"compareDate": compareDate,
-			"now":         time.UTC(),
+			"now":         time.Now().UTC(),
 		}).Debug("Skipped verification nag")
 	}
-
-	logrus.Debug("Exiting onJoinVerifyNag")
 
 	return nil
 }

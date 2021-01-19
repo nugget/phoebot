@@ -6,8 +6,8 @@ deps: modules gazelle
 
 clean:
 	@echo Cleaning build artifacts and output files
-	@rm output/*
-	@rm phoebot
+	@rm -f output/*
+	@rm -f phoebot
 
 gazelle:
 	@echo Running gazelle to process BUILD.bazel files for Go

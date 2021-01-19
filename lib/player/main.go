@@ -70,9 +70,10 @@ func (p *Player) SendMessage(message string) error {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"Player":  p.MinecraftName,
-		"whisper": sentWhisper,
-		"discord": sentDiscord,
+		"Player":   p.MinecraftName,
+		"whisper":  sentWhisper,
+		"discord":  sentDiscord,
+		"function": "p.SendMessage",
 	}).Debug("Sent message to player")
 
 	return nil
@@ -150,18 +151,6 @@ func UpdateFromDiscord(u *discordgo.User) error {
 	return err
 }
 
-func GameNickFromPlayerID(playerID string) (string, error) {
-	logrus.Warn("Deprecated function call GameNickFromPlayerID")
-	p, err := GetPlayerFromDiscordID(playerID)
-	return p.MinecraftName, err
-}
-
-func PlayerIDFromGameNick(gameNick string) (string, error) {
-	logrus.Warn("Deprecated function call PlayerIDFromGameNick")
-	p, err := GetPlayerFromMinecraftName(gameNick)
-	return p.DiscordID, err
-}
-
 func SendMessage(minecraftName, message string) error {
 	p, err := GetPlayerFromMinecraftName(minecraftName)
 	if err == nil {
@@ -179,9 +168,10 @@ func SendMessage(minecraftName, message string) error {
 		sentWhisper = true
 	}
 	logrus.WithFields(logrus.Fields{
-		"Player":  minecraftName,
-		"whisper": sentWhisper,
-		"discord": false,
+		"Player":   minecraftName,
+		"whisper":  sentWhisper,
+		"discord":  false,
+		"function": "SendMessage",
 	}).Debug("Sent message to player")
 
 	return nil
