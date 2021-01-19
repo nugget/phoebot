@@ -22,6 +22,8 @@ github.com/Tnze/go-mc v1.16.2-0.20201010233031-5120b2dd9a76 h1:Ho7QkY5dqouMj0M0V
 github.com/Tnze/go-mc v1.16.2-0.20201010233031-5120b2dd9a76/go.mod h1:0zQrnAv2kiKDc3WKCdX+/S8F+x5tGeUXqhe9GiKL+nk=
 github.com/Tnze/go-mc v1.16.2-0.20201130062915-67806abcdb74 h1:oXhsbDW6St9l+hc0vUC/K2SLSRIaooxmjUrqsZpjIuw=
 github.com/Tnze/go-mc v1.16.2-0.20201130062915-67806abcdb74/go.mod h1:0zQrnAv2kiKDc3WKCdX+/S8F+x5tGeUXqhe9GiKL+nk=
+github.com/Tnze/go-mc v1.16.2-0.20210109052551-0e959dfbc000 h1:nFyEwW4mgkSshyGOFV91IsoP5ZAT4oni1StQK+irCpA=
+github.com/Tnze/go-mc v1.16.2-0.20210109052551-0e959dfbc000/go.mod h1:0zQrnAv2kiKDc3WKCdX+/S8F+x5tGeUXqhe9GiKL+nk=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
