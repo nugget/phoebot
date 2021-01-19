@@ -13,7 +13,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.0.2
 	github.com/go-sql-driver/mysql v1.5.0
-	github.com/google/uuid v1.1.4
+	github.com/google/uuid v1.1.5
 	github.com/lib/pq v1.9.0
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
