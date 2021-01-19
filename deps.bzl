@@ -82,8 +82,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_bwmarrin_discordgo",
         importpath = "github.com/bwmarrin/discordgo",
-        sum = "h1:uBxY1HmlVCsW1IuaPjpCGT6A2DBwRn0nvOguQIxDdFM=",
-        version = "v0.22.0",
+        sum = "h1:254fNYyfqJWKbPzO5g8j/nUvRgj4dNlI19EB8rnkpt8=",
+        version = "v0.22.1",
     )
     go_repository(
         name = "com_github_cespare_xxhash",
@@ -262,8 +262,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_google_uuid",
         importpath = "github.com/google/uuid",
-        sum = "h1:0ecGp3skIrHWPNGPJDaBIghfA6Sp7Ruo2Io8eLKzWm0=",
-        version = "v1.1.4",
+        sum = "h1:kxhtnfFVi+rYdOALN0B3k9UT86zVJKfBimRaciULW4I=",
+        version = "v1.1.5",
     )
     go_repository(
         name = "com_github_googleapis_gax_go_v2",
@@ -797,8 +797,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_tnze_go_mc",
         importpath = "github.com/Tnze/go-mc",
-        sum = "h1:oXhsbDW6St9l+hc0vUC/K2SLSRIaooxmjUrqsZpjIuw=",
-        version = "v1.16.2-0.20201130062915-67806abcdb74",
+        sum = "h1:nFyEwW4mgkSshyGOFV91IsoP5ZAT4oni1StQK+irCpA=",
+        version = "v1.16.2-0.20210109052551-0e959dfbc000",
     )
     go_repository(
         name = "com_github_xiang90_probing",
