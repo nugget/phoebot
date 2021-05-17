@@ -61,7 +61,7 @@ func UpdateChannel(c *discordgo.Channel) error {
 		}).Info("Unknown channel type")
 	}
 
-	phoelib.LogSQL(query, c.ID, c.GuildID, channelName, string(c.Type), c.Topic)
+	phoelib.LogSQL(query, c.ID, c.GuildID, channelName, fmt.Sprint(c.Type), c.Topic)
 	_, err := db.DB.Exec(query, c.ID, c.GuildID, channelName, c.Type, c.Topic)
 	return err
 }
