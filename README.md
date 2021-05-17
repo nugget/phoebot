@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/nugget/phoebot.svg?style=svg)](https://circleci.com/gh/nugget/phoebot)
+[![CI](https://github.com/nugget/phoebot/workflows/Go/badge.svg)](https://github.com/nugget/phoebot/actions)
 
 ## Phoebot Phoenixcraft SMP Assistant
 
