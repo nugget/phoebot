@@ -9,7 +9,7 @@ go 1.15
 require (
 	github.com/Tnze/go-mc v1.16.2-0.20210109052551-0e959dfbc000
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/bwmarrin/discordgo v0.22.1
+	github.com/bwmarrin/discordgo v0.23.2
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.0.2
 	github.com/go-sql-driver/mysql v1.5.0
