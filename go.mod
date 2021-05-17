@@ -14,7 +14,7 @@ require (
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.0.3
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/uuid v1.2.0
-	github.com/lib/pq v1.9.0
+	github.com/lib/pq v1.10.2
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
