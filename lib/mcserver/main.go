@@ -11,13 +11,17 @@ import (
 	"github.com/nugget/phoebot/lib/ipc"
 
 	"github.com/Tnze/go-mc/bot"
+	"github.com/Tnze/go-mc/bot/basic"
 	"github.com/Tnze/go-mc/chat"
+	"github.com/Tnze/go-mc/data/packetid"
 	"github.com/Tnze/go-mc/yggdrasil"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
 	_ "github.com/Tnze/go-mc/data/lang/en-au"
+
+	pk "github.com/Tnze/go-mc/net/packet"
 )
 
 type Server struct {
@@ -29,6 +33,7 @@ type Server struct {
 	Connected   bool
 	ConnectTime time.Time
 	MyName      string
+	Player      *basic.Player
 	auth        *yggdrasil.Access
 }
 
@@ -44,6 +49,8 @@ type PingStats struct {
 func New() (Server, error) {
 	s := Server{}
 	s.Client = bot.NewClient()
+	s.Player = basic.NewPlayer(s.Client, basic.DefaultSettings)
+
 	return s, nil
 }
 
@@ -94,15 +101,15 @@ func (s *Server) Connect() (err error) {
 	}
 
 	s.Client.Auth.UUID, s.Client.Name = s.auth.SelectedProfile()
-	s.Client.AsTk = s.auth.AccessToken()
+	s.Client.Auth.AsTk = s.auth.AccessToken()
 
 	logrus.WithFields(logrus.Fields{
 		"name":  s.Client.Name,
 		"uuid":  s.Client.Auth.UUID,
-		"token": s.Client.AsTk,
+		"token": s.Client.Auth.AsTk,
 	}).Info("Authenticated with mojang")
 
-	err = s.Client.JoinServer(s.Hostname, s.Port)
+	err = s.Client.JoinServer(fmt.Sprintf("%s:%s", s.Hostname, s.Port))
 	if err != nil {
 		s.Connected = false
 
@@ -124,11 +131,13 @@ func (s *Server) Connect() (err error) {
 	s.Connected = true
 	s.ConnectTime = time.Now()
 
-	s.Client.Events.GameStart = s.OnGameStart
-	s.Client.Events.ChatMsg = s.OnChatMsg
-	s.Client.Events.Disconnect = s.OnDisconnect
-	s.Client.Events.PluginMessage = s.OnPluginMessage
-	s.Client.Events.Die = s.OnDieMessage
+	basic.EventsListener{
+		GameStart:    s.OnGameStart,
+		ChatMsg:      s.OnChatMsg,
+		Disconnect:   s.OnDisconnect,
+		HealthChange: s.OnHealthChange,
+		Death:        s.OnDeath,
+	}.Attach(s.Client)
 
 	go s.HandleGame()
 
@@ -138,31 +147,6 @@ func (s *Server) Connect() (err error) {
 func (s *Server) TestConnection() error {
 	if s.Connected == false {
 		return fmt.Errorf("We are not connected")
-	}
-
-	err := s.Client.SwingArm(0)
-
-	//fmt.Printf("Client: %+v\n", Client)
-	//fmt.Printf("PlayInfo: %+v\n", Client.PlayInfo)
-	//fmt.Printf("Chunks: %d\n", len(Client.Wd.Chunks))
-
-	logrus.WithFields(logrus.Fields{
-		"chunkCount": len(s.Client.Wd.Chunks),
-		"gamemode":   s.Client.PlayInfo.Gamemode,
-		"dimension":  s.Client.PlayInfo.Dimension,
-		"difficulty": s.Client.PlayInfo.Difficulty,
-		"swingarm":   err,
-	}).Trace("TestConnection")
-
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"chunkCount": len(s.Client.Wd.Chunks),
-			"gamemode":   s.Client.PlayInfo.Gamemode,
-			"dimension":  s.Client.PlayInfo.Dimension,
-			"difficulty": s.Client.PlayInfo.Difficulty,
-			"swingarm":   err,
-		}).Debug("TestConnection")
-		return fmt.Errorf("Can't swing my arm: %v", err)
 	}
 
 	if s.Client.Auth.Name != s.MyName {
@@ -190,7 +174,7 @@ func (s *Server) LogFields(f logrus.Fields) logrus.Fields {
 		f = logrus.Fields{}
 	}
 
-	conn := s.Client.Conn()
+	conn := s.Client.Conn
 
 	f["name"] = s.Client.Auth.Name
 	f["server"] = conn.Socket.RemoteAddr()
@@ -248,7 +232,7 @@ func (s *Server) Handler() {
 func (s *Server) Status() (ps PingStats, err error) {
 	var resp []byte
 
-	resp, ps.Delay, err = bot.PingAndList(s.Hostname, s.Port)
+	resp, ps.Delay, err = bot.PingAndList(fmt.Sprintf("%s:%s", s.Hostname, s.Port))
 	if err != nil {
 		return ps, err
 	}
@@ -271,6 +255,13 @@ func (s *Server) Status() (ps PingStats, err error) {
 func (s *Server) OnGameStart() error {
 	logrus.WithFields(s.LogFields(nil)).Info("Minecraft start")
 	return nil //if err isn't nil, HandleGame() will return it.
+}
+
+func (s *Server) OnHealthChange(health float32) error {
+	logrus.WithFields(s.LogFields(logrus.Fields{
+		"health": health,
+	})).Info("Health change")
+	return nil
 }
 
 func (s *Server) OnChatMsg(c chat.Message, pos byte, uuid uuid.UUID) error {
@@ -307,12 +298,15 @@ func (s *Server) OnPluginMessage(channel string, data []byte) error {
 	return nil
 }
 
-func (s *Server) OnDieMessage() error {
+func (s *Server) OnDeath() error {
 	logrus.WithFields(s.LogFields(nil)).Info("Minecraft death, respawning")
-	err := s.Client.Respawn()
-	if err != nil {
-		logrus.WithError(err).Error("Respawn failed")
-	}
+	go func() {
+		time.Sleep(time.Second * 5)
+		err := s.Player.Respawn()
+		if err != nil {
+			logrus.WithError(err).Error("Respawn failed")
+		}
+	}()
 	return nil
 }
 
@@ -330,7 +324,12 @@ func (s *Server) Whisper(who, message string) error {
 		return fmt.Errorf("mcserver client connection is nil")
 	}
 
-	err := s.Client.Chat(command)
+	//err := s.Client.Chat(command)
+	err := s.Client.Conn.WritePacket(pk.Marshal(
+		packetid.ChatServerbound,
+		pk.String(command),
+	))
+
 	return err
 }
 
@@ -338,7 +337,13 @@ func (s *Server) Say(command string) error {
 	logrus.WithFields(logrus.Fields{
 		"command": command,
 	}).Debug("Say")
-	err := s.Client.Chat(command)
+
+	// err := s.Client.Chat(command)
+	err := s.Client.Conn.WritePacket(pk.Marshal(
+		packetid.ChatServerbound,
+		pk.String(command),
+	))
+
 	return err
 }
 

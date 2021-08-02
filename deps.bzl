@@ -797,8 +797,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_tnze_go_mc",
         importpath = "github.com/Tnze/go-mc",
-        sum = "h1:eux33waaSNAUJmnRjYjUmR3NgoHgQStFxHSBYg9I1WM=",
-        version = "v1.17.0",
+        sum = "h1:AKgUdru9c4xVOhQYTAJI6yfnClJRH3OcnikTsV7kqEw=",
+        version = "v1.17.1-0.20210802050337-ef89758ede27",
     )
     go_repository(
         name = "com_github_xiang90_probing",
