@@ -82,8 +82,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_bwmarrin_discordgo",
         importpath = "github.com/bwmarrin/discordgo",
-        sum = "h1:254fNYyfqJWKbPzO5g8j/nUvRgj4dNlI19EB8rnkpt8=",
-        version = "v0.22.1",
+        sum = "h1:BzrtTktixGHIu9Tt7dEE6diysEF9HWnXeHuoJEt2fH4=",
+        version = "v0.23.2",
     )
     go_repository(
         name = "com_github_cespare_xxhash",
@@ -160,8 +160,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_gemnasium_logrus_graylog_hook_v3",
         importpath = "github.com/gemnasium/logrus-graylog-hook/v3",
-        sum = "h1:K9u07HPH47zt+6NVDtk1Fhvsk3JtNyExsul600ColWo=",
-        version = "v3.0.2",
+        sum = "h1:YQHp/LxUTeZhgnXKbJASRii315h+HWtPd5ctewP4Pms=",
+        version = "v3.0.3",
     )
     go_repository(
         name = "com_github_ghodss_yaml",
@@ -190,8 +190,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_go_sql_driver_mysql",
         importpath = "github.com/go-sql-driver/mysql",
-        sum = "h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gGcHOs=",
-        version = "v1.5.0",
+        sum = "h1:BCTh4TKNUYmOmMUcQ3IipzF5prigylS7XXjEkfCHuOE=",
+        version = "v1.6.0",
     )
     go_repository(
         name = "com_github_go_stack_stack",
@@ -262,8 +262,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_google_uuid",
         importpath = "github.com/google/uuid",
-        sum = "h1:kxhtnfFVi+rYdOALN0B3k9UT86zVJKfBimRaciULW4I=",
-        version = "v1.1.5",
+        sum = "h1:qJYtXnJRWmpe7m/3XlyhrsLrEURqHRM2kxzoxXqyUDs=",
+        version = "v1.2.0",
     )
     go_repository(
         name = "com_github_googleapis_gax_go_v2",
@@ -412,8 +412,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_iancoleman_strcase",
         importpath = "github.com/iancoleman/strcase",
-        sum = "h1:2I+LRClyCYB7JgZb9U0k75VHUiQe9RfknRqDyUfzp7k=",
-        version = "v0.1.1",
+        sum = "h1:dJBk1m2/qjL1twPLf68JND55vvivMupZ4wIzE8CTdBw=",
+        version = "v0.1.3",
     )
     go_repository(
         name = "com_github_jonboulle_clockwork",
@@ -496,8 +496,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_lib_pq",
         importpath = "github.com/lib/pq",
-        sum = "h1:L8nSXQQzAYByakOFMTwpjRoHsMJklur4Gi59b6VivR8=",
-        version = "v1.9.0",
+        sum = "h1:AqzbZs4ZoCBp+GtejcpCpcxM3zlSMx29dXbUSeVtJb8=",
+        version = "v1.10.2",
     )
     go_repository(
         name = "com_github_magiconair_properties",
@@ -508,14 +508,14 @@ def go_dependencies():
     go_repository(
         name = "com_github_mattn_go_colorable",
         importpath = "github.com/mattn/go-colorable",
-        sum = "h1:UVL0vNpWh04HeJXV0KLcaT7r06gOH2l4OW6ddYRUIY4=",
-        version = "v0.0.9",
+        sum = "h1:c1ghPdyEDarC70ftn0y+A/Ee++9zz8ljHG1b13eJ0s8=",
+        version = "v0.1.8",
     )
     go_repository(
         name = "com_github_mattn_go_isatty",
         importpath = "github.com/mattn/go-isatty",
-        sum = "h1:ns/ykhmWi7G9O+8a448SecJU3nSMBXJfqQkl0upE1jI=",
-        version = "v0.0.3",
+        sum = "h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=",
+        version = "v0.0.12",
     )
     go_repository(
         name = "com_github_matttproud_golang_protobuf_extensions",
@@ -695,8 +695,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_sirupsen_logrus",
         importpath = "github.com/sirupsen/logrus",
-        sum = "h1:ShrD1U9pZB12TX0cVy0DtePoCH97K8EtX+mg7ZARUtM=",
-        version = "v1.7.0",
+        sum = "h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=",
+        version = "v1.8.1",
     )
     go_repository(
         name = "com_github_smartystreets_assertions",
@@ -773,8 +773,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_tidwall_gjson",
         importpath = "github.com/tidwall/gjson",
-        sum = "h1:Mb1M9HZCRWEcXQ8ieJo7auYyyiSux6w9XN3AdTpxJrE=",
-        version = "v1.6.7",
+        sum = "h1:Qt+orfosKn0rbNTZqHYDqBrmm3UDA4KRkv70fDzG+PQ=",
+        version = "v1.8.0",
     )
     go_repository(
         name = "com_github_tidwall_match",
@@ -785,8 +785,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_tidwall_pretty",
         importpath = "github.com/tidwall/pretty",
-        sum = "h1:Z7S3cePv9Jwm1KwS0513MRaoUe3S01WPbLNV40pwWZU=",
-        version = "v1.0.2",
+        sum = "h1:K3hMW5epkdAVwibsQEfR/7Zj0Qgt4DxtNumTq/VloO8=",
+        version = "v1.1.0",
     )
     go_repository(
         name = "com_github_tmc_grpc_websocket_proxy",
@@ -797,8 +797,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_tnze_go_mc",
         importpath = "github.com/Tnze/go-mc",
-        sum = "h1:nFyEwW4mgkSshyGOFV91IsoP5ZAT4oni1StQK+irCpA=",
-        version = "v1.16.2-0.20210109052551-0e959dfbc000",
+        sum = "h1:eux33waaSNAUJmnRjYjUmR3NgoHgQStFxHSBYg9I1WM=",
+        version = "v1.17.0",
     )
     go_repository(
         name = "com_github_xiang90_probing",
