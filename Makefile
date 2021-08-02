@@ -80,3 +80,7 @@ dbpb:
 # brew cask install mysql-shell
 dbcp:
 	mysqlsh --sql --uri ${COREPROTECT_URI}
+
+# Disable phoenixcraft bot for dev
+localrun:
+	kubectl scale --replicas=0 deployment phoenixcraft-phoebot
