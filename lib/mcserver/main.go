@@ -12,6 +12,7 @@ import (
 
 	"github.com/Tnze/go-mc/bot"
 	"github.com/Tnze/go-mc/bot/basic"
+	"github.com/Tnze/go-mc/bot/screen"
 	"github.com/Tnze/go-mc/chat"
 	"github.com/Tnze/go-mc/data/packetid"
 	"github.com/Tnze/go-mc/yggdrasil"
@@ -25,16 +26,17 @@ import (
 )
 
 type Server struct {
-	Client      *bot.Client
-	Hostname    string
-	Port        int
-	Email       string
-	password    string
-	Connected   bool
-	ConnectTime time.Time
-	MyName      string
-	Player      *basic.Player
-	auth        *yggdrasil.Access
+	Client        *bot.Client
+	Player        *basic.Player
+	ScreenManager *screen.Manager
+	Hostname      string
+	Port          int
+	Email         string
+	password      string
+	Connected     bool
+	ConnectTime   time.Time
+	MyName        string
+	auth          *yggdrasil.Access
 }
 
 type PingStats struct {
@@ -49,7 +51,6 @@ type PingStats struct {
 func New() (Server, error) {
 	s := Server{}
 	s.Client = bot.NewClient()
-	s.Player = basic.NewPlayer(s.Client, basic.DefaultSettings)
 
 	return s, nil
 }
@@ -80,7 +81,6 @@ func (s *Server) Connect() (err error) {
 	logrus.WithFields(logrus.Fields{
 		"connectTime": s.ConnectTime,
 		"connected":   s.Connected,
-		"auth":        s.auth,
 	}).Debug("mcserver Connect()")
 
 	if s.auth != nil {
@@ -100,7 +100,7 @@ func (s *Server) Connect() (err error) {
 		return err
 	}
 
-	s.Client.Auth.UUID, s.Client.Name = s.auth.SelectedProfile()
+	s.Client.Auth.UUID, s.Client.Auth.Name = s.auth.SelectedProfile()
 	s.Client.Auth.AsTk = s.auth.AccessToken()
 
 	logrus.WithFields(logrus.Fields{
@@ -109,7 +109,7 @@ func (s *Server) Connect() (err error) {
 		"token": s.Client.Auth.AsTk,
 	}).Info("Authenticated with mojang")
 
-	err = s.Client.JoinServer(fmt.Sprintf("%s:%s", s.Hostname, s.Port))
+	err = s.Client.JoinServer(s.Hostname)
 	if err != nil {
 		s.Connected = false
 
@@ -130,6 +130,8 @@ func (s *Server) Connect() (err error) {
 
 	s.Connected = true
 	s.ConnectTime = time.Now()
+
+	s.Player = basic.NewPlayer(s.Client, basic.DefaultSettings)
 
 	basic.EventsListener{
 		GameStart:    s.OnGameStart,
@@ -232,8 +234,13 @@ func (s *Server) Handler() {
 func (s *Server) Status() (ps PingStats, err error) {
 	var resp []byte
 
-	resp, ps.Delay, err = bot.PingAndList(fmt.Sprintf("%s:%s", s.Hostname, s.Port))
+	hostPort := fmt.Sprintf("%s:%d", s.Hostname, s.Port)
+	resp, ps.Delay, err = bot.PingAndList(hostPort)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"addr":  hostPort,
+			"error": err,
+		}).Debug("bot.PingAndList Error")
 		return ps, err
 	}
 

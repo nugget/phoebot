@@ -7,7 +7,7 @@ go 1.16
 //replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20201118172317-e9cb621f23ef
 
 require (
-	github.com/Tnze/go-mc v1.17.1-0.20210802050337-ef89758ede27
+	github.com/Tnze/go-mc v1.17.1-0.20210806203433-99081e1b9cfb
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482 // indirect
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.23.2
