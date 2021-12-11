@@ -3,6 +3,7 @@ package mcserver
 import (
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -70,6 +71,10 @@ func (s *Server) HandleGame() error {
 	logrus.WithError(err).Error("Minecraft HandleGame Exited")
 
 	s.Connected = false
+
+	logrus.Error("Restarting")
+	os.Exit(0)
+
 	return err
 }
 
@@ -333,7 +338,7 @@ func (s *Server) Whisper(who, message string) error {
 
 	//err := s.Client.Chat(command)
 	err := s.Client.Conn.WritePacket(pk.Marshal(
-		packetid.ChatServerbound,
+		packetid.ServerboundChat,
 		pk.String(command),
 	))
 
@@ -347,7 +352,7 @@ func (s *Server) Say(command string) error {
 
 	// err := s.Client.Chat(command)
 	err := s.Client.Conn.WritePacket(pk.Marshal(
-		packetid.ChatServerbound,
+		packetid.ServerboundChat,
 		pk.String(command),
 	))
 

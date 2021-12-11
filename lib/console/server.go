@@ -39,6 +39,10 @@ func (si *ServerInfo) GetTPS() error {
 		return err
 	}
 
+	if len(res) != 4 {
+		return fmt.Errorf("Unexpected tps result: '%v'", res)
+	}
+
 	si.Tps1, err = tpsfloat(res[1])
 	if err != nil {
 		return err
