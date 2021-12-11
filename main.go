@@ -788,7 +788,9 @@ func main() {
 
 	mc.WaitForServer(5)
 
-	go SignLoop(5)
+	if ffCP > 0 {
+		go SignLoop(5)
+	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
