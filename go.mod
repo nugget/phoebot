@@ -10,7 +10,7 @@ require (
 	github.com/Tnze/go-mc v1.17.1-0.20210806203433-99081e1b9cfb
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.23.2
-	github.com/gemnasium/logrus-graylog-hook/v3 v3.0.3
+	github.com/gemnasium/logrus-graylog-hook/v3 v3.1.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2 // indirect
