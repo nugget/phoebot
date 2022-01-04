@@ -6,9 +6,9 @@ DOCKER_ORG = "nugget"
 NAME = "phoebot"
 DOCKER_REPO = DOCKER_ORG + "/" + NAME
 
-CLUSTER = "nuggethaus"
+CLUSTER = "lke42894"
 NAMESPACE = "phoebot"
-USER = "nuggethaus"
+USER = "lke42894-admin"
 
 def k8s_global():
     k8s_object(

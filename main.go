@@ -26,11 +26,9 @@ import (
 	"github.com/nugget/phoebot/lib/phoelib"
 	"github.com/nugget/phoebot/lib/player"
 	"github.com/nugget/phoebot/lib/postal"
-	"github.com/nugget/phoebot/lib/products"
 	"github.com/nugget/phoebot/lib/subscriptions"
 	"github.com/nugget/phoebot/models"
 	"github.com/nugget/phoebot/products/mojang"
-	"github.com/nugget/phoebot/products/papermc"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gemnasium/logrus-graylog-hook/v3"
@@ -54,6 +52,7 @@ func setupvc() *viper.Viper {
 	c.SetDefault("MAILBOX_SCAN_INTERVAL", 7200)
 	c.SetDefault("MAILBOX_POLL_INTERVAL", 300)
 	c.SetDefault("MERCHANT_POLL_INTERVAL", 300)
+	c.SetDefault("FF_COREPROTECT", 0)
 
 	return c
 }
@@ -682,6 +681,8 @@ func main() {
 		}
 	}
 
+	ffCP := vc.GetInt("FF_COREPROTECT")
+
 	interval := vc.GetInt("MC_CHECK_INTERVAL")
 	discordBotToken := vc.GetString("DISCORD_BOT_TOKEN")
 	debugLevel := vc.GetString("PHOEBOT_DEBUG")
@@ -703,9 +704,11 @@ func main() {
 	LoadTriggers()
 	ipc.InitStreams()
 
-	err = coreprotect.Connect(cpURI)
-	if err != nil {
-		logrus.WithError(err).Fatal("Unable to connect to CoreProtect")
+	if ffCP > 0 {
+		err = coreprotect.Connect(cpURI)
+		if err != nil {
+			logrus.WithError(err).Fatal("Unable to connect to CoreProtect")
+		}
 	}
 
 	discord.Session, err = discordgo.New("Bot " + discordBotToken)
@@ -730,7 +733,6 @@ func main() {
 	go processAnnounceStream()
 	go processMojangStream()
 
-	go products.Poller("PaperMC", "paper", interval, papermc.LatestVersion)
 	go mojang.Poller(interval)
 
 	go housekeeping(600)
@@ -786,7 +788,9 @@ func main() {
 
 	mc.WaitForServer(5)
 
-	go SignLoop(5)
+	if ffCP > 0 {
+		go SignLoop(5)
+	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
