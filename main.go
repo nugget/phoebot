@@ -384,6 +384,7 @@ func LoadTriggers() error {
 	triggers = append(triggers, hooks.RegLinkVerify())
 
 	triggers = append(triggers, hooks.RegAvengeMe())
+	triggers = append(triggers, hooks.RegDespawnAvengers())
 
 	return nil
 }

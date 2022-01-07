@@ -364,6 +364,10 @@ func ChatMsgClass(m chat.Message) string {
 		return "whisper"
 	}
 
+	if m.Translate == "sleep.skipping_night" {
+		return "ignore"
+	}
+
 	if m.Translate == "commands.message.display.outgoing" {
 		return "ignore"
 	}
@@ -440,6 +444,10 @@ func ChatMsgClass(m chat.Message) string {
 
 	if strings.Contains(text, "Granted the advancement") {
 		return "ignore"
+	}
+
+	if strings.HasPrefix(text, "[WEB]") {
+		return "chat"
 	}
 
 	if strings.HasPrefix(text, "[") {

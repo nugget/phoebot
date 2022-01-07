@@ -64,5 +64,15 @@ change the verbosity of the console logging.  This is useful for debugging.
 
 
 
+```
 /data modify block x y z CustomName set value '{"text":"MOO"}'
+
+
+
+/summon zombie ~ ~1 ~ {IsBaby:1,HandItems:[{Count:1,id:golden_sword,tag:{display:{Name:"\"Phoebot's Revenge\""}}},{}],ArmorItems:[{Count:1,id:golden_boots},{Count:1,id:golden_leggings},{Count:1,id:golden_chestplate},{Count:1,id:golden_helmet}],HandDropChances:[0.1f,0.0f]}
+
+
+/summon zombie 15 70 -17 {IsBaby:1,LeftHanded:1b,HandItems:[{Count:1,id:golden_sword,tag:{Enchantments:[{id:knockback,lvl:2},{id:fire_aspect,lvl:2}]}},{}],ArmorItems:[{Count:1,id:golden_boots},{Count:1,id:golden_leggings},{Count:1,id:golden_chestplate},{Count:1,id:golden_helmet,tag:{display:{Name:"\"Phoebot's Revenge\""}}}],CustomName:"\"Phoebot's Avenger\"",ArmorDropChances:[0.0f,0.0f,0.0f,1.0f],ActiveEffects:[{Id:1,Amplifier:1,Duration:999999},{Id:24,Amplifier:0,Duration:999999}]}
+
+```
 
