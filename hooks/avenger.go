@@ -9,6 +9,7 @@ import (
 	"github.com/nugget/phoebot/lib/console"
 	"github.com/nugget/phoebot/lib/ipc"
 	"github.com/nugget/phoebot/lib/phoelib"
+	"github.com/nugget/phoebot/lib/player"
 
 	"github.com/sirupsen/logrus"
 )
@@ -99,7 +100,7 @@ func summonRandom(player string) {
 }
 
 func RegAvengeMe() (t Trigger) {
-	t.Regexp = regexp.MustCompile("(?i)Phoebot was (slain|killed) by (.+)")
+	t.Regexp = regexp.MustCompile("(?i)^Phoebot was (slain|killed) by (.+)")
 	t.GameHook = ProcAvengeMe
 	t.InGame = true
 
@@ -117,6 +118,14 @@ func ProcAvengeMe(message string) (string, error) {
 	}
 
 	who := res[2]
+
+	p, err := player.GetPlayerFromMinecraftName("MacNugget")
+	if err != nil {
+		logrus.WithError(err).Error("Cannot get MacNugget player info")
+	} else {
+		p.SendMessage(message)
+
+	}
 
 	//painCmd := fmt.Sprintf(PAIN, who)
 

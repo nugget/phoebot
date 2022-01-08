@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -23,8 +22,6 @@ func RegSay() (t Trigger) {
 }
 
 func ProcSay(dm *discordgo.MessageCreate) error {
-	fmt.Println("ProcSay")
-
 	var err error
 
 	t := RegSay()
@@ -62,7 +59,6 @@ func sendToChannel(target, message string) error {
 	}
 
 	_, err = discord.Session.ChannelMessageSend(c.ID, message)
-	fmt.Println("SAY1", err)
 	return err
 }
 
