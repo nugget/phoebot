@@ -89,7 +89,6 @@ container_image(
         "Builder": "{BUILD_USER}@{BUILD_HOST} on {STABLE_PLATFORM}",
     },
     repository = DOCKER_ORG,
-    stamp = True,
     tars = ["//assets:ca-root.tar"],
 )
 
