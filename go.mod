@@ -17,7 +17,7 @@ require (
 	github.com/seeruk/minecraft-rcon v0.0.0-20190221212056-6ab996d90449
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.11.0
-	github.com/tidwall/gjson v1.14.1
+	github.com/tidwall/gjson v1.14.3
 )
 
 require (
