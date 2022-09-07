@@ -13,7 +13,7 @@ require (
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.1.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/lib/pq v1.10.5
+	github.com/lib/pq v1.10.7
 	github.com/seeruk/minecraft-rcon v0.0.0-20190221212056-6ab996d90449
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.11.0
