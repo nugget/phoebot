@@ -11,7 +11,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.25.0
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.1.0
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.5
 	github.com/seeruk/minecraft-rcon v0.0.0-20190221212056-6ab996d90449
