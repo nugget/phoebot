@@ -7,7 +7,7 @@ go 1.17
 //replace github.com/Tnze/go-mc => github.com/nugget/go-mc v1.14.5-0.20201118172317-e9cb621f23ef
 
 require (
-	github.com/Tnze/go-mc v1.18.2-0.20220416105455-39d6998cdaf7
+	github.com/Tnze/go-mc v1.19.2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bwmarrin/discordgo v0.25.0
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.1.0
